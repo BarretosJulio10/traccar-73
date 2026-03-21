@@ -15,16 +15,36 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link id="pwa-manifest" rel="manifest" href="/manifest.webmanifest" />
   <script>
-    // Dynamic PWA Manifest - Replaced Blob with simple URL update if needed
-    // (Note: Blob URLs often break PWA Installability in Chrome)
+    // Dynamic PWA Manifest to preserve Tenant context
     (function() {
       const params = new URLSearchParams(window.location.search);
       const tenant = params.get('tenant') || localStorage.getItem('tenantSlug') || 'mabtracker';
+      
       if (params.get('tenant')) {
         localStorage.setItem('tenantSlug', params.get('tenant'));
       }
-      // Just keep the default manifest for now for maximum stability
-      console.log('PWA: Current tenant context:', tenant);
+
+      const manifestLink = document.getElementById('pwa-manifest');
+      if (manifestLink) {
+        // Use the actual manifest URL from the link
+        const originalHref = manifestLink.getAttribute('href');
+        fetch(originalHref)
+          .then(response => response.json())
+          .then(manifest => {
+            // Update start_url and id with tenant context to ensure it opens in the right place
+            const connector = manifest.start_url.includes('?') ? '&' : '?';
+            manifest.start_url = `${manifest.start_url}${connector}tenant=${tenant}`;
+            // Keep ID stable but prefixed with tenant for unique app per tenant if desired
+            // or keep it same as start_url for direct matching
+            manifest.id = manifest.start_url;
+            
+            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+            const manifestUrl = URL.createObjectURL(blob);
+            manifestLink.setAttribute('href', manifestUrl);
+            console.log('PWA: Dynamic manifest loaded for tenant:', tenant);
+          })
+          .catch(err => console.error('PWA: Failed to load/modify manifest:', err));
+      }
     })();
 
     // Early capture of Install Prompt to avoid missing it

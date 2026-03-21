@@ -44,6 +44,7 @@ import { apiUrl } from '../common/util/apiUrl';
 import { DEFAULT_TENANT_SLUG, DEMO_USER } from '../common/util/constants';
 import { lightInputSx } from './loginStyles';
 import usePwaInstallPrompt from '../common/util/usePwaInstallPrompt';
+import useDevicePermissions from '../common/util/useDevicePermissions';
 import { auditLog } from '../common/util/audit';
 
 const useStyles = makeStyles()((theme) => ({
@@ -98,7 +99,8 @@ const LoginPage = () => {
   const theme = useTheme();
   const t = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { isInstalled } = usePwaInstallPrompt();
+  const { canInstall, isInstalled, promptInstall, isIos } = usePwaInstallPrompt();
+  const { requestAllPermissions } = useDevicePermissions();
 
   const { languages, language, setLocalLanguage } = useLocalization();
   const languageList = Object.entries(languages).map((values) => ({
@@ -132,6 +134,24 @@ const LoginPage = () => {
   const announcement = useSelector((state) => state.session.server.announcement);
 
   const [dismissedBanner, setDismissedBanner] = useState(false);
+
+  const handleInstallClick = async () => {
+    // 1. Request permissions first to bundle them with the installation intent
+    try {
+      await requestAllPermissions();
+    } catch (e) {
+      console.warn('PWA: Permission request ignored or failed', e);
+    }
+
+    // 2. Direct install for Android/Chrome/Edge
+    if (canInstall) {
+      const success = await promptInstall();
+      if (success) return; // User accepted or native dialog shown
+    }
+
+    // 3. Fallback to guide for iOS or if native prompt is not supported/ready
+    navigate('/install');
+  };
 
   const [sessionExpired, setSessionExpired] = useState(false);
   useEffect(() => {
@@ -232,7 +252,7 @@ const LoginPage = () => {
           <Button
             size="small"
             variant="contained"
-            onClick={() => navigate('/install')}
+            onClick={handleInstallClick}
             sx={{
               bgcolor: '#39ff14',
               color: '#000',

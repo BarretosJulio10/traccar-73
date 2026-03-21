@@ -10,7 +10,12 @@ Formato: [Semantic Versioning](https://semver.org/)
 - **PWA: Smart Install Banner no `LoginPage` (UX-2)**
   - Contexto: Melhorar a taxa de conversão de usuários mobile para o App instalado.
   - Implementação: Banner deslizante no topo da tela com glassmorphism. Detecta mobile e estado de instalação.
-  - Funcionalidade: Botão "OBTER" para instalação e botão de descarte (X) persistente na sessão.
+  - Funcionalidade: Botão "INSTALAR" para instalação e botão de descarte (X) persistente na sessão.
+
+- **PWA: Fluxo de instalação direta ("One-Click Install") (UX-3)**
+  - Contexto: Reduzir fricção e tornar a instalação tão simples quanto um app nativo.
+  - Implementação: O botão "INSTALAR" agora solicita permissões de Geolocation e Notification e dispara o prompt nativo do browser imediatamente em dispositivos compatíveis.
+  - UX: Remove a necessidade de navegar para a tela de guia em Android/Chrome/Edge.
 
 - **Tracking: Toggle de Rastro em Tempo Real no Mapa (TRACK-3)**
   - Contexto: Usuários solicitaram controle rápido sobre o rastro visual dos veículos sem ir às configurações.

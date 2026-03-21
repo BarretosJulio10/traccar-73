@@ -23,8 +23,13 @@ Formato: [Semantic Versioning](https://semver.org/)
   - Eventos: Logins (Sucesso/Demo) e Logouts agora são registrados permanentemente com metadados do cliente.
 
 ### Fixed
+- **PWA: Correção de erro de runtime `TypeError: o is not a function` na `InstallPage.jsx`**
+  - Causa: Tentativa de desestruturar `t` do hook `useLocalization` ao invés do `useTranslation`.
+  - Correção: Refatorado para usar os hooks corretos do `LocalizationProvider`.
+- **UI: Botão Smart Banner renomeado para "INSTALAR"**
+  - O botão de ação no smart banner do `LoginPage` foi renomeado de "OBTER" para "INSTALAR" para maior clareza visual e UX.
 - **UI: Erros de sintaxe JSX no `LoginPage.jsx`**
-  - Correção de tags mal fechadas e restauração do conteúdo do botão de login Demo que foi acidentalmente removido.
+  - Correção de tags mal fechadas e restauração do conteúdo do botão de login Demo.
 
 ---
 

@@ -89,7 +89,6 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
   const protocol = device?.protocol || attrs.protocol || '---';
   const ignition = attrs.ignition;
   const isOnline = device?.status === 'online';
-  const direction = position?.course || 0;
 
   const timeGPS = position ? dayjs(position.fixTime).format('DD/MM HH:mm:ss') : '---';
   const timeGSM = position ? dayjs(position.deviceTime).format('DD/MM HH:mm:ss') : '---';
@@ -186,8 +185,8 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
 
       {/* Main Content Area */}
       <div className={`flex-1 flex flex-col no-scrollbar ${!isExpanded ? 'justify-start pt-4' : 'overflow-y-auto py-2'}`}>
-        {/* Primary Data Row */}
-        <div className="flex justify-between items-center px-4 gap-3 mb-4">
+        {/* Primary Data Row (Optimized without Rumo) */}
+        <div className="flex justify-between items-center px-4 gap-4 mb-5">
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center border bg-white/[0.03] border-white/10 text-[#10b981]"
             onClick={() => onCommand('unblock')}
@@ -195,10 +194,9 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
             <LockOpenIcon sx={{ fontSize: 20 }} />
           </div>
 
-          <div className="flex flex-1 justify-around items-center gap-2">
+          <div className="flex flex-1 justify-around items-center gap-4 px-2">
             <DataCard label="BATERIA" value={Math.round(battery)} unit="%" color={battery > 20 ? secondaryAccent : '#ef4444'} />
             <DataCard label="VELOCIDADE" value={speed} unit="KM/H" color={accentColor} isLarge />
-            <DataCard label="RUMO" value={direction} unit="°" color={accentColor} />
           </div>
 
           <div

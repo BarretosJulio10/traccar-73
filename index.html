@@ -13,7 +13,38 @@
   <meta name="apple-mobile-web-app-title" content="HyperTraccar">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="/manifest.webmanifest" />
+  <link id="pwa-manifest" rel="manifest" href="/manifest.webmanifest" />
+  <script>
+    // Dynamic PWA Manifest to preserve Tenant context
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const tenant = params.get('tenant') || localStorage.getItem('tenantSlug') || 'mabtracker';
+      
+      // Save tenant for consistency
+      if (params.get('tenant')) {
+        localStorage.setItem('tenantSlug', params.get('tenant'));
+      }
+
+      const manifestLink = document.getElementById('pwa-manifest');
+      if (manifestLink) {
+        fetch(manifestLink.href)
+          .then(response => response.json())
+          .then(manifest => {
+            // Update start_url and id with tenant context
+            const connector = manifest.start_url.includes('?') ? '&' : '?';
+            manifest.start_url = `${manifest.start_url}${connector}tenant=${tenant}`;
+            manifest.id = `${manifest.id || '/'}${connector}tenant=${tenant}`;
+            
+            // Create a dynamic blob for the modified manifest
+            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+            const manifestUrl = URL.createObjectURL(blob);
+            manifestLink.setAttribute('href', manifestUrl);
+            console.log('PWA: Dynamic manifest loaded for tenant:', tenant);
+          })
+          .catch(err => console.error('PWA: Failed to load/modify manifest:', err));
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="/styles.css">
   <title>HyperTraccar - Rastreador GPS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">

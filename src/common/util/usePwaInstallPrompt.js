@@ -45,6 +45,7 @@ const usePwaInstallPrompt = () => {
 
     // Captura o evento beforeinstallprompt (Android/Chrome/Edge)
     const handleBeforeInstall = (e) => {
+      console.log('PWA: browser prompted installability (beforeinstallprompt fired)');
       e.preventDefault();
       deferredPromptRef.current = e;
       setCanInstall(true);
@@ -54,6 +55,7 @@ const usePwaInstallPrompt = () => {
 
     // Escuta instalação concluída
     const handleInstalled = () => {
+      console.log('PWA: application successfully installed');
       setIsInstalled(true);
       setCanInstall(false);
       deferredPromptRef.current = null;
@@ -70,14 +72,23 @@ const usePwaInstallPrompt = () => {
 
   const promptInstall = useCallback(async () => {
     const prompt = deferredPromptRef.current;
-    if (!prompt) return false;
+    if (!prompt) {
+      console.warn('PWA: attempt to prompt installation but deferredPrompt is null');
+      return false;
+    }
 
-    prompt.prompt();
-    const { outcome } = await prompt.userChoice;
-    deferredPromptRef.current = null;
-    setCanInstall(false);
-
-    return outcome === 'accepted';
+    try {
+      console.log('PWA: triggering native install prompt...');
+      prompt.prompt();
+      const { outcome } = await prompt.userChoice;
+      console.log('PWA: install prompt outcome:', outcome);
+      deferredPromptRef.current = null;
+      setCanInstall(false);
+      return outcome === 'accepted';
+    } catch (err) {
+      console.error('PWA: error during install prompt:', err);
+      return false;
+    }
   }, []);
 
   return {

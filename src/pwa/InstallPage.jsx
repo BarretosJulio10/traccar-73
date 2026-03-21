@@ -185,6 +185,7 @@ const InstallPage = () => {
   } = useDevicePermissions();
 
   const [installing, setInstalling] = useState(false);
+  const [installError, setInstallError] = useState(false);
 
   const allGranted = Object.values(permissions).every(
     (s) => s === 'granted' || s === 'unsupported',
@@ -192,8 +193,14 @@ const InstallPage = () => {
 
   const handleInstall = async () => {
     setInstalling(true);
+    setInstallError(false);
     try {
-      await promptInstall();
+      const result = await promptInstall();
+      if (!result) {
+        setInstallError(true);
+      }
+    } catch (err) {
+      setInstallError(true);
     } finally {
       setInstalling(false);
     }
@@ -277,13 +284,21 @@ const InstallPage = () => {
                         onClick={handleInstall} disabled={installing}
                         sx={{
                           borderRadius: 3, textTransform: 'none', fontWeight: 700, px: 4, py: 1.5,
-                          background: 'linear-gradient(135deg, #0d9488, #06b6d4)',
-                          boxShadow: '0 4px 14px rgba(13,148,136,0.4)',
-                          '&:hover': { boxShadow: '0 6px 20px rgba(13,148,136,0.6)' },
+                          background: installError ? 'rgba(239, 68, 68, 0.1)' : 'linear-gradient(135deg, #0d9488, #06b6d4)',
+                          color: installError ? 'error.main' : '#fff',
+                          boxShadow: installError ? 'none' : '0 4px 14px rgba(13,148,136,0.4)',
+                          border: installError ? '1px solid rgba(239, 68, 68, 0.5)' : 'none',
+                          '&:hover': { boxShadow: installError ? 'none' : '0 6px 20px rgba(13,148,136,0.6)' },
                         }}
                       >
-                        {installing ? 'Instalando...' : (t('pwaInstallButton') || 'Instalar App')}
+                        {installing ? 'Instalando...' : installError ? 'Usar Menu do Navegador' : (t('pwaInstallButton') || 'Instalar App')}
                       </Button>
+
+                      {installError && (
+                        <Typography variant="caption" color="error" textAlign="center" sx={{ mt: 1, fontWeight: 600 }}>
+                          O navegador bloqueou o prompt. Toque no menu (⋮) e escolha "Instalar App".
+                        </Typography>
+                      )}
                     </>
                   ) : isIos ? (
                     <IosGuide />

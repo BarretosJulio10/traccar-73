@@ -22,7 +22,6 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import LoginIcon from '@mui/icons-material/Login';
-import GetAppIcon from '@mui/icons-material/GetApp';
 import { useTheme } from '@mui/material/styles';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -36,13 +35,14 @@ import {
   nativeEnvironment,
   nativePostMessage,
 } from '../common/components/NativeInterface';
-import LogoImage from './LogoImage';
 import { useCatch } from '../reactHelper';
 import QrCodeDialog from '../common/components/QrCodeDialog';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { apiUrl } from '../common/util/apiUrl';
 import { DEFAULT_TENANT_SLUG, DEMO_USER } from '../common/util/constants';
 import { lightInputSx } from './loginStyles';
+import usePwaInstallPrompt from '../common/util/usePwaInstallPrompt';
+import useDevicePermissions from '../common/util/useDevicePermissions';
 import { auditLog } from '../common/util/audit';
 import { useHudTheme } from '../common/util/ThemeContext';
 
@@ -98,7 +98,7 @@ const LoginPage = () => {
   const theme = useTheme();
   const t = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { canInstall, isInstalled, promptInstall, isIos } = usePwaInstallPrompt();
+  const { canInstall, isInstalled, promptInstall } = usePwaInstallPrompt();
   const { requestAllPermissions } = useDevicePermissions();
 
   const { languages, language, setLocalLanguage } = useLocalization();
@@ -137,7 +137,7 @@ const LoginPage = () => {
   const handleInstallClick = async () => {
     // 1. Double-check if the prompt is available (even globally)
     const promptAvailable = canInstall || !!window.deferredPwaPrompt;
-    
+
     // 2. Trigger install prompt IMMEDIATELY to preserve user gesture
     if (promptAvailable) {
       const success = await promptInstall();
@@ -236,13 +236,30 @@ const LoginPage = () => {
           <Box
             component="img"
             src="/apple-touch-icon-180x180.png"
-            sx={{ width: 44, height: 44, borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: '10px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            }}
           />
           <Box sx={{ flex: 1, overflow: 'hidden' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 800, color: '#fff', lineHeight: 1.2 }}
+            >
               HyperTraccar
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'rgba(255,255,255,0.5)',
+                display: 'block',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+              }}
+            >
               Instale para melhor experiência
             </Typography>
           </Box>
@@ -257,12 +274,16 @@ const LoginPage = () => {
               fontSize: '0.7rem',
               px: 2,
               borderRadius: '6px',
-              '&:hover': { bgcolor: '#32e612' }
+              '&:hover': { bgcolor: '#32e612' },
             }}
           >
             INSTALAR
           </Button>
-          <IconButton size="small" onClick={() => setDismissedBanner(true)} sx={{ color: 'rgba(255,255,255,0.3)' }}>
+          <IconButton
+            size="small"
+            onClick={() => setDismissedBanner(true)}
+            sx={{ color: 'rgba(255,255,255,0.3)' }}
+          >
             <CloseIcon fontSize="small" />
           </IconButton>
         </div>
@@ -423,7 +444,8 @@ const LoginPage = () => {
           >
             {t('loginOpenId')}
           </Button>
-        )}        <Button
+        )}
+        <Button
           onClick={handleDemoLogin}
           variant="outlined"
           type="button"
@@ -493,7 +515,6 @@ const LoginPage = () => {
         onClose={() => setSessionExpired(false)}
       />
     </LoginLayout>
-
   );
 };
 

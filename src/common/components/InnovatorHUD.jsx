@@ -19,33 +19,34 @@ import dayjs from 'dayjs';
 
 const DataCard = ({ label, value, unit, color, isLarge = false }) => (
   <div
-    className="flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300"
+    className="flex flex-col items-center justify-center p-2 rounded-2xl border transition-all duration-300"
     style={{
       background: 'rgba(255,255,255,0.03)',
       borderColor: 'rgba(255,255,255,0.05)',
       flex: 1,
-      minHeight: isLarge ? '100px' : '80px',
+      minHeight: isLarge ? '90px' : '70px',
     }}
   >
     <Typography
-      className="uppercase tracking-[0.2em] font-black opacity-40 mb-1"
-      style={{ color: '#fff', fontSize: '8px' }}
+      className="uppercase tracking-[0.2em] font-black opacity-30 mb-0.5"
+      style={{ color: '#fff', fontSize: '7px' }}
     >
       {label}
     </Typography>
-    <div className="flex items-baseline gap-1">
+    <div className="flex items-baseline gap-0.5">
       <span
         className="font-black tracking-tighter"
         style={{
           color: color || '#fff',
-          fontSize: isLarge ? '42px' : '24px',
+          fontSize: isLarge ? '44px' : '22px',
           lineHeight: 1,
+          fontFamily: 'monospace',
         }}
       >
         {value}
       </span>
       {unit && (
-        <span className="font-black opacity-30 uppercase text-[10px]" style={{ color: '#fff' }}>
+        <span className="font-black opacity-20 uppercase text-[8px]" style={{ color: '#fff' }}>
           {unit}
         </span>
       )}
@@ -208,18 +209,48 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
           </div>
         </div>
 
-        {/* Telemetry Grid (Always Visible) */}
-        <div className="px-6 grid grid-cols-2 gap-3 mb-6 animate-in fade-in duration-500">
-          <TelemetryBox icon={<HeightIcon />} label="ALTITUDE" value={`${altitude} m`} theme={theme} />
-          <TelemetryBox icon={<MapIcon />} label="ODÔMETRO" value={`${odometer} km`} theme={theme} />
-          <TelemetryBox icon={<SatelliteAltIcon />} label="SATÉLITES" value={satellites} theme={theme} />
+        {/* Telemetry Grid (3-Column Optimization) */}
+        <div className="px-5 grid grid-cols-3 gap-2 mb-4 animate-in fade-in duration-500">
+          <TelemetryBox icon={<HeightIcon />} label="ALTITUDE" value={`${altitude}m`} theme={theme} />
+          <TelemetryBox icon={<MapIcon />} label="ODÔMETRO" value={`${odometer}km`} theme={theme} />
+          <TelemetryBox icon={<SatelliteAltIcon />} label="SATS" value={satellites} theme={theme} />
           <TelemetryBox
             icon={<SpeedIcon />}
-            label="HORÍMETRO"
-            value={`${attrs.hours ? Math.round(attrs.hours / 3600000) : 0} h`}
+            label="MOTOR"
+            value={`${attrs.hours ? Math.round(attrs.hours / 3600000) : 0}h`}
             theme={theme}
           />
-          <div className="col-span-2">
+          <TelemetryBox
+            icon={<InfoIcon />}
+            label="ESTADO"
+            value={ignition ? 'LIGADO' : 'DESLIG'}
+            theme={{ accent: ignition ? '#10b981' : '#555' }}
+          />
+          <TelemetryBox
+            icon={<InfoIcon />}
+            label="MOVIM."
+            value={attrs.motion ? 'MOVENDO' : 'PARADO'}
+            theme={{ accent: attrs.motion ? '#3b82f6' : '#555' }}
+          />
+          <TelemetryBox
+            icon={<GpsFixedIcon />}
+            label="PRECISÃO"
+            value={`${attrs.hdop || 1.0}m`}
+            theme={theme}
+          />
+          <TelemetryBox
+            icon={<GpsFixedIcon />}
+            label="SINAL"
+            value={`${attrs.rssi || 0}dB`}
+            theme={theme}
+          />
+          <TelemetryBox
+            icon={<InfoIcon />}
+            label="POWER"
+            value={`${attrs.power || '---'}V`}
+            theme={theme}
+          />
+          <div className="col-span-3">
             <TelemetryBox
               icon={<GpsFixedIcon />}
               label="COORDENADAS"

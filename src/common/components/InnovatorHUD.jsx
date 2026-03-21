@@ -78,7 +78,6 @@ const ArcGauge = ({
       style={{
         width: size,
         height: size * 0.85,
-        transform: subtext ? 'scale(1)' : 'scale(0.8)',
       }}
     >
       <svg width={size} height={size} className="absolute top-0">
@@ -190,7 +189,7 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
       className="fixed bottom-0 left-0 right-0 overflow-hidden flex flex-col transition-all duration-500 ease-in-out bg-[#060708] border-t border-white/5"
       style={{
         zIndex: 1000,
-        height: isExpanded ? 'auto' : '180px',
+        height: isExpanded ? 'auto' : '230px',
         maxHeight: '100vh',
         paddingBottom: isExpanded ? 'env(safe-area-inset-bottom, 24px)' : '10px',
         boxShadow: '0 -20px 60px rgba(0,0,0,0.9)',
@@ -287,7 +286,7 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
           )}
 
           <div
-            className={`flex flex-1 justify-around items-end transition-all duration-500 ${isExpanded ? 'h-[160px]' : 'h-[100px] scale-[0.8]'}`}
+            className={`flex flex-1 justify-around items-end transition-all duration-500 ${isExpanded ? 'h-[160px]' : 'h-[140px]'}`}
           >
             {/* Left Arc: Battery */}
             <ArcGauge

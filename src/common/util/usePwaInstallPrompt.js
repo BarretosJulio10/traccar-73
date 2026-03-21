@@ -38,20 +38,37 @@ const usePwaInstallPrompt = () => {
 
     checkInstalled();
 
+    // Se o evento já foi capturado pelo index.html, usa ele imediatamente
+    if (window.deferredPwaPrompt) {
+      console.log('PWA: Using early captured prompt from window');
+      deferredPromptRef.current = window.deferredPwaPrompt;
+      setCanInstall(true);
+    }
+
     // Escuta mudanças no display-mode
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
     const handleChange = (e) => setIsInstalled(e.matches);
     mediaQuery.addEventListener('change', handleChange);
 
-    // Captura o evento beforeinstallprompt (Android/Chrome/Edge)
+    // Captura o evento beforeinstallprompt (caso ainda não tenha ocorrido)
     const handleBeforeInstall = (e) => {
       console.log('PWA: browser prompted installability (beforeinstallprompt fired)');
       e.preventDefault();
+      window.deferredPwaPrompt = e;
       deferredPromptRef.current = e;
       setCanInstall(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+    // Escuta evento customizado do index.html
+    const handlePromptAvailable = () => {
+      if (window.deferredPwaPrompt) {
+        deferredPromptRef.current = window.deferredPwaPrompt;
+        setCanInstall(true);
+      }
+    };
+    window.addEventListener('pwa-prompt-available', handlePromptAvailable);
 
     // Escuta instalação concluída
     const handleInstalled = () => {
@@ -59,6 +76,7 @@ const usePwaInstallPrompt = () => {
       setIsInstalled(true);
       setCanInstall(false);
       deferredPromptRef.current = null;
+      window.deferredPwaPrompt = null;
     };
 
     window.addEventListener('appinstalled', handleInstalled);
@@ -66,6 +84,7 @@ const usePwaInstallPrompt = () => {
     return () => {
       mediaQuery.removeEventListener('change', handleChange);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('pwa-prompt-available', handlePromptAvailable);
       window.removeEventListener('appinstalled', handleInstalled);
     };
   }, []);
@@ -83,6 +102,7 @@ const usePwaInstallPrompt = () => {
       const { outcome } = await prompt.userChoice;
       console.log('PWA: install prompt outcome:', outcome);
       deferredPromptRef.current = null;
+      window.deferredPwaPrompt = null;
       setCanInstall(false);
       return outcome === 'accepted';
     } catch (err) {

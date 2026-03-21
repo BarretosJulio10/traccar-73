@@ -44,6 +44,20 @@
           .catch(err => console.error('PWA: Failed to load/modify manifest:', err));
       }
     })();
+
+    // Early capture of Install Prompt to avoid missing it
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPwaPrompt = e;
+      console.log('PWA: Captured beforeinstallprompt early in index.html');
+      // Dispatch custom event for hooks to react immediately
+      window.dispatchEvent(new CustomEvent('pwa-prompt-available'));
+    });
+    
+    window.addEventListener('appinstalled', () => {
+      window.deferredPwaPrompt = null;
+      console.log('PWA: App installed event captured early');
+    });
   </script>
   <link rel="stylesheet" href="/styles.css">
   <title>HyperTraccar - Rastreador GPS</title>

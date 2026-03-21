@@ -136,21 +136,18 @@ const LoginPage = () => {
   const [dismissedBanner, setDismissedBanner] = useState(false);
 
   const handleInstallClick = async () => {
-    // 1. Request permissions first to bundle them with the installation intent
-    try {
-      await requestAllPermissions();
-    } catch (e) {
-      console.warn('PWA: Permission request ignored or failed', e);
-    }
-
-    // 2. Direct install for Android/Chrome/Edge
+    // 1. Trigger install prompt IMMEDIATELY to preserve user gesture
     if (canInstall) {
       const success = await promptInstall();
-      if (success) return; // User accepted or native dialog shown
+      // Permissions can be asked after or in parallel
+      requestAllPermissions();
+      if (success) return;
+    } else {
+      // 2. Fallback to guide for iOS or if native prompt is not ready
+      // Still ask for permissions for the guide to show correct status
+      requestAllPermissions();
+      navigate('/install');
     }
-
-    // 3. Fallback to guide for iOS or if native prompt is not supported/ready
-    navigate('/install');
   };
 
   const [sessionExpired, setSessionExpired] = useState(false);

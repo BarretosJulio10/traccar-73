@@ -1,0 +1,99 @@
+/* Switcher container – needs relative for popup anchoring */
+.maplibregl-ctrl-group.switcher-control {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Popup card – floating, glassmorphism */
+.maplibregl-style-list {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 12px);
+  min-width: 200px;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 14px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  padding: 6px;
+  z-index: 40;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(-50%) translateX(0);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.maplibregl-style-list.visible {
+  display: flex;
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Force reflow for animation */
+.maplibregl-style-list.animating {
+  display: flex;
+}
+
+/* Buttons inside popup */
+.maplibregl-style-list button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: block;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 14px;
+  text-align: left;
+  width: 100%;
+  height: auto;
+  color: rgba(255, 255, 255, 0.75);
+  border-radius: 10px;
+  transition: background 0.2s ease, color 0.2s ease;
+  border-left: 3px solid transparent;
+  letter-spacing: 0.01em;
+}
+
+.maplibregl-style-list button:hover {
+  background: rgba(45, 212, 191, 0.12);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.maplibregl-style-list button.active {
+  color: #2dd4bf;
+  font-weight: 600;
+  border-left-color: #2dd4bf;
+  background: rgba(45, 212, 191, 0.08);
+}
+
+.maplibregl-style-list button + button {
+  border-top: none;
+  margin-top: 2px;
+}
+
+/* Switcher icon button */
+.maplibregl-style-switcher {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 54.849 54.849'%3E%3Cpath fill='%23e2e8f0' d='M54.497 39.614l-10.363-4.49-14.917 5.968c-.537.214-1.165.319-1.793.319-.627 0-1.254-.104-1.79-.318l-14.921-5.968L.351 39.614c-.472.203-.467.524.01.716L26.56 50.81c.477.191 1.251.191 1.729 0l26.199-10.48c.476-.191.481-.513.009-.716zM54.497 27.512l-10.364-4.491-14.916 5.966c-.536.215-1.165.321-1.792.321-.628 0-1.256-.106-1.793-.321l-14.918-5.966L.351 27.512c-.472.203-.467.523.01.716L26.56 38.706c.477.19 1.251.19 1.729 0l26.199-10.479c.476-.192.481-.512.009-.715zM.361 16.125l13.662 5.465 12.537 5.015c.477.191 1.251.191 1.729 0l12.541-5.016 13.658-5.463c.477-.191.48-.511.01-.716L28.277 4.048c-.471-.204-1.236-.204-1.708 0L.351 15.41c-.472.204-.467.525.01.715z'/%3E%3C/svg%3E") !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 70% !important;
+  filter: none !important;
+  transition: background-image 0.2s ease !important;
+}
+
+.maplibregl-style-switcher:hover,
+.maplibregl-style-switcher:focus-visible {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 54.849 54.849'%3E%3Cpath fill='%232dd4bf' d='M54.497 39.614l-10.363-4.49-14.917 5.968c-.537.214-1.165.319-1.793.319-.627 0-1.254-.104-1.79-.318l-14.921-5.968L.351 39.614c-.472.203-.467.524.01.716L26.56 50.81c.477.191 1.251.191 1.729 0l26.199-10.48c.476-.191.481-.513.009-.716zM54.497 27.512l-10.364-4.491-14.916 5.966c-.536.215-1.165.321-1.792.321-.628 0-1.256-.106-1.793-.321l-14.918-5.966L.351 27.512c-.472.203-.467.523.01.716L26.56 38.706c.477.19 1.251.19 1.729 0l26.199-10.479c.476-.192.481-.512.009-.715zM.361 16.125l13.662 5.465 12.537 5.015c.477.191 1.251.191 1.729 0l12.541-5.016 13.658-5.463c.477-.191.48-.511.01-.716L28.277 4.048c-.471-.204-1.236-.204-1.708 0L.351 15.41c-.472.204-.467.525.01.715z'/%3E%3C/svg%3E") !important;
+  filter: none !important;
+}
+
+.maplibregl-style-switcher:focus-visible {
+  outline: 2px solid rgba(45, 212, 191, 0.7);
+  outline-offset: -2px;
+}

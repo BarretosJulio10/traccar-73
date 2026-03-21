@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  /* Radical Radar HUD Theme */
+  --color-hud-bg: #0a0a0f;
+  --color-hud-panel: #14141d;
+  --color-hud-border: #232331;
+
+  --color-hud-acid: #00f5a0;
+  --color-hud-cyan: #00d9f5;
+  --color-hud-alert: #ff2a46;
+  --color-hud-warn: #fbbf24;
+  --color-hud-offline: #64748b;
+
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Base resets for the specific HUD aesthetic */
+body,
+html {
+  background-color: var(--color-hud-bg);
+  color: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Typography Clarity Overrides */
+.font-black {
+  font-weight: 800 !important;
+  /* Soften from 900 to 800 for better legibility on dark backgrounds */
+}
+
+[class*="tracking-tighter"] {
+  letter-spacing: -0.01em !important;
+  /* Relax the tightest tracking */
+}
+
+/* Custom scrollbar for deep dark aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-hud-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-hud-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-hud-offline);
+}
+
+/* Maplibre Control Overrides */
+.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E") !important;
+  background-size: 20px 20px;
+}

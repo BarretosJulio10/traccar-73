@@ -1,0 +1,13 @@
+project_id = "foifugnuaehjtjftpkrk"
+
+[functions.traccar-proxy]
+verify_jwt = false
+
+[functions.create-tenant]
+verify_jwt = false
+
+[functions.whatsapp-proxy]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false

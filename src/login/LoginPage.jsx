@@ -44,6 +44,7 @@ import { apiUrl } from '../common/util/apiUrl';
 import { DEFAULT_TENANT_SLUG, DEMO_USER } from '../common/util/constants';
 import { lightInputSx } from './loginStyles';
 import usePwaInstallPrompt from '../common/util/usePwaInstallPrompt';
+import { auditLog } from '../common/util/audit';
 
 const useStyles = makeStyles()((theme) => ({
   options: {
@@ -119,6 +120,7 @@ const LoginPage = () => {
   }, []);
 
   const handleDemoLogin = () => {
+    auditLog('login_demo', { email: DEMO_USER.email });
     dispatch(sessionActions.updateUser(DEMO_USER));
     dispatch(devicesActions.refresh([]));
     dispatch(eventsActions.deleteAll());
@@ -144,6 +146,7 @@ const LoginPage = () => {
       });
       if (response.ok) {
         const user = await response.json();
+        auditLog('login_success', { email, user_id: user.id });
         localStorage.setItem('traccarEmail', email);
         generateLoginToken();
         dispatch(sessionActions.updateUser(user));

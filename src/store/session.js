@@ -33,7 +33,7 @@ const { reducer, actions } = createSlice({
     },
     updatePositions(state, action) {
       const liveRoutes =
-        state.user?.attributes?.mapLiveRoutes || state.server?.attributes?.mapLiveRoutes || 'none';
+        state.liveRoutesOverride || state.user?.attributes?.mapLiveRoutes || state.server?.attributes?.mapLiveRoutes || 'none';
       const liveRoutesLimit =
         state.user?.attributes?.['web.liveRouteLength'] ||
         state.server?.attributes?.['web.liveRouteLength'] ||
@@ -53,6 +53,12 @@ const { reducer, actions } = createSlice({
           state.history = {};
         }
       });
+    },
+    updateLiveRoutes(state, action) {
+      state.liveRoutesOverride = action.payload;
+      if (action.payload === 'none') {
+        state.history = {};
+      }
     },
   },
 });

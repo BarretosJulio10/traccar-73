@@ -8,8 +8,9 @@ const MapLiveRoutes = ({ deviceIds }) => {
   const id = useId();
 
   const theme = useTheme();
-
-  const type = useAttributePreference('mapLiveRoutes', 'none');
+  
+  const liveRoutesOverride = useSelector((state) => state.session.liveRoutesOverride);
+  const type = liveRoutesOverride || useAttributePreference('mapLiveRoutes', 'none');
 
   const devices = useSelector((state) => state.devices.items);
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);

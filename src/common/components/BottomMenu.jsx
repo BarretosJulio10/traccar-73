@@ -10,6 +10,7 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import { sessionActions } from '../../store';
 import { nativePostMessage } from './NativeInterface';
 import { apiUrl } from '../util/apiUrl';
+import { auditLog } from '../util/audit';
 
 const NavItem = ({ icon, active, onClick }) => (
   <button
@@ -44,6 +45,7 @@ const BottomMenu = () => {
     if (notificationToken && !user.readonly) {
       window.localStorage.removeItem('notificationToken');
     }
+    auditLog('logout', { user_id: user.id, email: user.email });
     await fetch(apiUrl('/api/session'), { method: 'DELETE' });
     nativePostMessage('logout');
     navigate('/login');

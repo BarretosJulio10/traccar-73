@@ -189,11 +189,15 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
       className="fixed bottom-0 left-0 right-0 overflow-hidden flex flex-col transition-all duration-500 ease-in-out bg-[#060708] border-t border-white/5"
       style={{
         zIndex: 1000,
-        height: isExpanded ? 'auto' : '230px',
+        height: isExpanded ? 'auto' : '50vh',
         maxHeight: '100vh',
-        paddingBottom: isExpanded ? 'env(safe-area-inset-bottom, 24px)' : '10px',
-        boxShadow: '0 -20px 60px rgba(0,0,0,0.9)',
+        paddingBottom: isExpanded ? 'env(safe-area-inset-bottom, 24px)' : 'calc(env(safe-area-inset-bottom, 24px) + 10px)',
+        boxShadow: '0 -20px 60px rgba(0,0,0,0.95), 0 0 40px rgba(0,0,0,0.5)',
         touchAction: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
       }}
     >
       {/* Drag Handle & Gesture Area */}
@@ -267,39 +271,33 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar py-2">
+      <div className={`flex-1 flex flex-col no-scrollbar ${!isExpanded ? 'justify-center py-4' : 'overflow-y-auto py-2'}`}>
         {/* Gauges & Side Controls Row */}
-        <div className="flex justify-between items-center px-4 gap-2 mb-2">
+        <div className={`flex justify-between items-center px-4 gap-2 ${isExpanded ? 'mb-2' : 'my-auto'}`}>
           {/* Mini-Button Left (Unblock) */}
           {!isExpanded && (
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center border animate-in fade-in zoom-in duration-500"
-              style={{
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                borderColor: 'rgba(16, 185, 129, 0.2)',
-                color: '#10b981',
-              }}
+              className="w-14 h-14 rounded-full flex items-center justify-center border animate-in fade-in zoom-in duration-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+              style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}
               onClick={() => onCommand('unblock')}
             >
-              <LockOpenIcon sx={{ fontSize: 16 }} />
+              <LockOpenIcon sx={{ fontSize: 24 }} />
             </div>
           )}
 
-          <div
-            className={`flex flex-1 justify-around items-end transition-all duration-500 ${isExpanded ? 'h-[160px]' : 'h-[140px]'}`}
-          >
+          <div className={`flex flex-1 justify-around items-end transition-all duration-500 ${isExpanded ? 'h-[160px]' : 'h-[200px]'}`}>
             {/* Left Arc: Battery */}
             <ArcGauge
               value={battery}
               max={100}
-              label={isExpanded ? 'BATERIA' : ''}
+              label={isExpanded ? 'BATERIA' : 'BATERIA'}
               unit="%"
               subtext={isExpanded ? batteryVolts : ''}
-              size={isExpanded ? 100 : 70}
-              thickness={isExpanded ? 6 : 5}
+              size={isExpanded ? 100 : 110}
+              thickness={isExpanded ? 6 : 8}
               color={battery > 20 ? secondaryAccent : '#ef4444'}
               trackColor="rgba(255,255,255,0.1)"
-              fontSize={isExpanded ? 22 : 18}
+              fontSize={isExpanded ? 22 : 24}
             />
 
             {/* Center Arc: SPEED */}
@@ -308,40 +306,36 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
               max={160}
               label={isExpanded ? 'SPEED' : 'KM/H'}
               unit=""
-              size={isExpanded ? 160 : 100}
-              thickness={isExpanded ? 10 : 7}
+              size={isExpanded ? 160 : 180}
+              thickness={isExpanded ? 10 : 12}
               color={accentColor}
               trackColor="rgba(255,255,255,0.1)"
-              fontSize={isExpanded ? 52 : 36}
+              fontSize={isExpanded ? 52 : 64}
             />
 
             {/* Right Arc: Movement */}
             <ArcGauge
               value={direction}
               max={360}
-              label={isExpanded ? 'DIREÇÃO' : ''}
+              label={isExpanded ? 'DIREÇÃO' : 'RUMO'}
               unit="°"
               subtext={isExpanded ? (ignition ? 'MOTOR ON' : 'MOTOR OFF') : ''}
-              size={isExpanded ? 100 : 70}
-              thickness={isExpanded ? 6 : 5}
+              size={isExpanded ? 100 : 110}
+              thickness={isExpanded ? 6 : 8}
               color={ignition ? accentColor : '#555'}
               trackColor="rgba(255,255,255,0.1)"
-              fontSize={isExpanded ? 22 : 18}
+              fontSize={isExpanded ? 22 : 24}
             />
           </div>
 
           {/* Mini-Button Right (Block) */}
           {!isExpanded && (
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center border animate-in fade-in zoom-in duration-500"
-              style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                borderColor: 'rgba(239, 68, 68, 0.2)',
-                color: '#ef4444',
-              }}
+              className="w-14 h-14 rounded-full flex items-center justify-center border animate-in fade-in zoom-in duration-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+              style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}
               onClick={() => onCommand('block')}
             >
-              <LockIcon sx={{ fontSize: 16 }} />
+              <LockIcon sx={{ fontSize: 24 }} />
             </div>
           )}
         </div>

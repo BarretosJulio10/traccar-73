@@ -37,7 +37,13 @@ Slices: `devices`, `session`, `events`, `geofences`, `groups`, `drivers`, `maint
 - Demo mode normaliza categoria `pickup` → `car`
 - Push notifications nativas via Web Notifications API (modular: notificationManager, notificationEvents, useNotifications)
 - Página `/install` para instalação PWA + solicitação de permissões (Notification, Geolocation, Camera)
-- Hooks modulares: `usePwaInstallPrompt`, `useDevicePermissions`
+- Hooks modulares: `usePwaInstallPrompt`, `useDevicePermissions`, `usePwaInstallTracker`
+- `usePwaInstallPrompt` refatorado com `useMemo` — detecta iOS (incl. iPadOS 13+), Android, Samsung, Firefox, Edge
+- `useGeofenceAlerts` — alertas sonoros (Web Audio API) + Web Notification para geocercas em tempo real
+- PWA manifest: ícones separados `any`/`maskable`, `scope`, `id`, `lang: pt-BR`, `screenshots`
+- SW: `registerType: autoUpdate`, `skipWaiting`, `clientsClaim`, `cleanupOutdatedCaches`
+- Chave Supabase removida do código — exclusivamente via `import.meta.env`
+- Security headers em `vercel.json`: CSP, HSTS, X-Frame-Options, Permissions-Policy
 
 ## Última Atualização
-2026-03-09
+2026-03-21

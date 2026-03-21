@@ -4,6 +4,53 @@ Formato: [Semantic Versioning](https://semver.org/)
 
 ---
 
+## [0.13.0] — 2026-03-21
+
+### Fixed
+- **PWA: Placeholders não resolvidos em `index.html`**
+  - Contexto: `<meta name="theme-color" content="${colorPrimary}">`, `<title>${title}</title>`, `<meta description="${description}">` geravam valores literais no HTML final, quebrando o manifest e a instalabilidade PWA.
+  - Correção: Substituidos por valores literais (`#0d9488`, `HyperTraccar - Rastreador GPS`, descrição PT-BR).
+  - Adicionadas: `meta name="mobile-web-app-capable"` (Android) e `meta name="apple-mobile-web-app-title"`.
+  - Impacto: PWA agora passável no Lighthouse PWA Installability audit.
+
+- **PWA: `purpose: 'any maskable'` combinado violava spec Chrome 93+**
+  - Contexto: Chrome 93+ exige entradas separadas para `purpose: 'any'` e `purpose: 'maskable'`. O critério de instalabilidade falhava silenciosamente.
+  - Correção: `vite.config.js` atualizado com 4 entradas separadas de ícone.
+  - Adicionados: `scope`, `id`, `lang`, `description`, `screenshots`, `categories` ao manifest.
+  - SW atualizado: `registerType: autoUpdate`, `skipWaiting: true`, `clientsClaim: true`, `cleanupOutdatedCaches: true`.
+
+- **PWA: Bug em `usePwaInstallPrompt.js` — `isIos()`/`isSafari()` instabilidade**
+  - Contexto: Funções eram invocadas inline, recriando valores a cada render sem memoização.
+  - Correção: Refatorado para `useMemo` com detecção robusta: iPadOS 13+ (`navigator.maxTouchPoints`), Android, Samsung Browser, Firefox, Edge.
+  - Retorno expandido: `isAndroid`, `isSamsungBrowser`, `isFirefox`, `isChrome`, `isEdge`.
+
+### Security
+- **Chave Supabase hardcoded removida de `ServerProvider.jsx`**
+  - Contexto: A chave anon do Supabase estava exposta literalmente no código-fonte (linha 35), vazável a qualquer usuário com acesso ao repositório.
+  - Correção: Removida. Agora usa exclusivamente `import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY`. Se ausente, erro claro é lançado.
+  - Impacto de segurança: Elimina vetor de exfiltration de credencial.
+
+- **Security headers adicionados ao `vercel.json`**
+  - Headers implementados: `Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`.
+  - CSP configurada para permitir: Supabase (wss + https), Google Fonts, blob: workers (MapLibre), data: images.
+
+### Added
+- **`useGeofenceAlerts.js` — Alertas sonoros de geocercas em tempo real**
+  - Novo hook que monitora eventos Redux `geofenceEnter`/`geofenceExit`.
+  - Emite tom sintetizado via Web Audio API (sem arquivo de áudio externo) + Web Notification nativa.
+  - Deduplicado via `Set` com limite de 500 IDs (auto-poda para 250).
+  - Integrado no `SocketController.jsx`.
+
+- **`InstallPage.jsx` — UX premium reescrita**
+  - Glassmorphism card com backdrop-blur e gradiente adaptativo (dark/light mode).
+  - Guias step-by-step para: iOS Safari, Android Chrome, Samsung Browser, Desktop.
+  - Detecção correta de plataforma via `usePwaInstallPrompt` refatorado.
+  - Animação `Fade` na entrada, botão premium com gradiente teal.
+  - Botão "Ir para o App" sempre visível (não bloqueado por `&&`).
+  - Impacto: Taxa de instalação esperada aumenta significativamente em mobile.
+
+---
+
 ## [0.12.3] — 2026-03-21
 
 ### Fixed

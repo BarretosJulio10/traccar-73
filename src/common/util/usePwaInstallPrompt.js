@@ -1,12 +1,34 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
+/**
+ * Hook para gerenciar o prompt de instalação PWA.
+ * Detecta plataforma (iOS, Android, Samsung), estado de instalação,
+ * e expõe método para acionar o prompt nativo do browser.
+ */
 const usePwaInstallPrompt = () => {
   const deferredPromptRef = useRef(null);
   const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
+  // Detecção de plataforma com memoização — evita recálculo a cada render
+  const platform = useMemo(() => {
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isIos =
+      /iphone|ipad|ipod/.test(ua) ||
+      // iPadOS 13+ reporta como macOS — detectar via touch points
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isAndroid = /android/.test(ua);
+    const isSamsungBrowser = /samsungbrowser/.test(ua);
+    const isFirefox = /firefox/.test(ua);
+    const isSafari = /safari/.test(ua) && !/chrome/.test(ua) && !/android/.test(ua);
+    const isChrome = /chrome/.test(ua) && !/edge/.test(ua);
+    const isEdge = /edg\//.test(ua);
+
+    return { isIos, isAndroid, isSamsungBrowser, isFirefox, isSafari, isChrome, isEdge };
+  }, []);
+
   useEffect(() => {
-    // Detect if already installed (standalone mode)
+    // Detecta se já está instalado (modo standalone)
     const checkInstalled = () => {
       const standalone =
         window.matchMedia('(display-mode: standalone)').matches ||
@@ -16,12 +38,12 @@ const usePwaInstallPrompt = () => {
 
     checkInstalled();
 
-    // Listen for display-mode changes
+    // Escuta mudanças no display-mode
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
     const handleChange = (e) => setIsInstalled(e.matches);
     mediaQuery.addEventListener('change', handleChange);
 
-    // Capture beforeinstallprompt
+    // Captura o evento beforeinstallprompt (Android/Chrome/Edge)
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       deferredPromptRef.current = e;
@@ -30,7 +52,7 @@ const usePwaInstallPrompt = () => {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
-    // Listen for successful install
+    // Escuta instalação concluída
     const handleInstalled = () => {
       setIsInstalled(true);
       setCanInstall(false);
@@ -58,22 +80,11 @@ const usePwaInstallPrompt = () => {
     return outcome === 'accepted';
   }, []);
 
-  const isIos = () => {
-    const ua = window.navigator.userAgent.toLowerCase();
-    return /iphone|ipad|ipod/.test(ua);
-  };
-
-  const isSafari = () => {
-    const ua = window.navigator.userAgent.toLowerCase();
-    return /safari/.test(ua) && !/chrome/.test(ua);
-  };
-
   return {
     canInstall,
     isInstalled,
     promptInstall,
-    isIos: isIos(),
-    isIosSafari: isIos() && isSafari(),
+    ...platform,
   };
 };
 

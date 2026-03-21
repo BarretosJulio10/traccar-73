@@ -20,6 +20,7 @@ import MainMap from './main/MainMap';
 import FleetSidebar from './main/FleetSidebar';
 import MapSideMenu from './main/MapSideMenu';
 import VehicleDetailsPanel from './main/VehicleDetailsPanel';
+import StatusCard from './common/components/StatusCard';
 import { devicesActions } from './store';
 import usePwaInstallTracker from './common/util/usePwaInstallTracker';
 import { useTenant } from './common/components/TenantProvider';
@@ -67,6 +68,8 @@ const App = () => {
   const termsUrl = useSelector((state) => state.session.server.attributes.termsUrl);
   const user = useSelector((state) => state.session.user);
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
+  const positions = useSelector((state) => state.session.positions);
+  const selectedPosition = positions[selectedDeviceId];
   const [fleetSearch, setFleetSearch] = useState('');
 
   const handleClosePanel = () => {
@@ -156,35 +159,12 @@ const App = () => {
         </div>
       )}
       {!desktop && selectedDeviceId && (
-        <SwipeableDrawer
-          anchor="bottom"
-          open={Boolean(selectedDeviceId)}
+        <StatusCard
+          deviceId={selectedDeviceId}
+          position={selectedPosition}
           onClose={handleClosePanel}
-          onOpen={() => { }}
-          swipeAreaWidth={56}
-          disableDiscovery={false}
-          disableSwipeToOpen={false}
-          PaperProps={{
-            sx: {
-              height: 'auto',
-              maxHeight: '85vh',
-              background: hudTheme.isDark ? `${hudTheme.bg}e6` : `${hudTheme.bgSecondary}f0`,
-              backdropFilter: 'blur(20px)',
-              borderTopLeftRadius: '24px',
-              borderTopRightRadius: '24px',
-              border: `1px solid ${hudTheme.border}`,
-              borderBottom: 'none',
-              overflow: 'hidden',
-            },
-          }}
-        >
-          <div className="w-full flex justify-center py-2">
-            <div className="w-10 h-1 rounded-full" style={{ background: hudTheme.border }} />
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <VehicleDetailsPanel deviceId={selectedDeviceId} onClose={handleClosePanel} />
-          </div>
-        </SwipeableDrawer>
+          desktopPadding={theme.dimensions.drawerWidthDesktop}
+        />
       )}
     </div>
   );

@@ -34,9 +34,9 @@ Formato: [Semantic Versioning](https://semver.org/)
 - **UI: Botão Smart Banner renomeado para "INSTALAR"**
   - O botão de ação no smart banner do `LoginPage` foi renomeado de "OBTER" para "INSTALAR" para maior clareza visual e UX.
 - **UI: Restauração do HUD de Detalhes do Veículo no Mobile (UX-4)**
-  - Causa: O `VehicleDetailsPanel` estava restrito apenas ao desktop no `App.jsx`.
-  - Correção: Implementado `SwipeableDrawer` no `App.jsx` para exibir o painel de detalhes (velocidade, bateria, endereço, bloqueios) via bottom sheet em dispositivos móveis.
-  - UX: Suporte a gestos (swipe down) para fechar o painel e design consistente com glassmorphism.
+  - Causa: O `StatusCard` (componente mobile de "meia tela") estava ausente nas rotas novas.
+  - Correção: Integrado `StatusCard` diretamente no `App.jsx` para usuários mobile.
+  - UX: Restaura a visualização de velocidade, bateria, endereço e botões de bloqueio (Vermelho/Verde) no smartphone.
 - **UI: Erros de sintaxe JSX no `LoginPage.jsx`**
   - Correção de tags mal fechadas e restauração do conteúdo do botão de login Demo.
 

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { IconButton, Typography, Button, Grid, Divider } from '@mui/material';
-import { useTranslation } from './LocalizationProvider';
+import { IconButton, Typography, Button, Divider } from '@mui/material';
 import { useHudTheme } from '../util/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import LockIcon from '@mui/icons-material/Lock';
@@ -12,9 +11,6 @@ import GridViewIcon from '@mui/icons-material/GridView';
 import PendingIcon from '@mui/icons-material/Pending';
 import CloseIcon from '@mui/icons-material/Close';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import NavigationIcon from '@mui/icons-material/Navigation';
 import HeightIcon from '@mui/icons-material/Height';
 import SpeedIcon from '@mui/icons-material/Speed';
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt';
@@ -78,8 +74,12 @@ const ArcGauge = ({
 
   return (
     <div
-      className="flex flex-col items-center justify-center relative"
-      style={{ width: size, height: size * 0.85 }}
+      className="flex flex-col items-center justify-center relative transition-transform duration-500"
+      style={{
+        width: size,
+        height: size * 0.85,
+        transform: subtext ? 'scale(1)' : 'scale(0.8)',
+      }}
     >
       <svg width={size} height={size} className="absolute top-0">
         {/* Ticks */}
@@ -187,175 +187,254 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-700 bg-[#060708] border-t border-white/5"
+      className="fixed bottom-0 left-0 right-0 overflow-hidden flex flex-col transition-all duration-500 ease-in-out bg-[#060708] border-t border-white/5"
       style={{
         zIndex: 1000,
+        height: isExpanded ? 'auto' : '180px',
         maxHeight: '100vh',
-        paddingBottom: 'env(safe-area-inset-bottom, 24px)',
+        paddingBottom: isExpanded ? 'env(safe-area-inset-bottom, 24px)' : '10px',
         boxShadow: '0 -20px 60px rgba(0,0,0,0.9)',
+        touchAction: 'none',
       }}
     >
-      {/* Top Bar - High Precision */}
-      <div className="flex justify-between items-center px-6 py-4 border-b border-white/5 bg-white/5">
+      {/* Drag Handle & Gesture Area */}
+      <div
+        className="flex flex-col items-center justify-center py-2 cursor-grab active:cursor-grabbing w-full"
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{ background: 'rgba(255,255,255,0.02)' }}
+      >
+        <div className="w-12 h-1 rounded-full bg-white/20 mb-1" />
+        {!isExpanded && (
+          <span className="text-[6px] font-black uppercase tracking-[0.3em] opacity-30">
+            Arraste para Detalhes
+          </span>
+        )}
+      </div>
+
+      {/* Top Bar - Compact in Mini mode */}
+      <div
+        className={`flex justify-between items-center px-6 transition-all duration-500 ${isExpanded ? 'py-4 border-b border-white/5 bg-white/5' : 'py-1'}`}
+      >
         <div className="flex items-center gap-3">
-          <div className="w-1.5 h-6 rounded-full" style={{ background: accentColor }} />
+          <div
+            className="w-1 h-4 rounded-full"
+            style={{ background: accentColor, height: isExpanded ? '24px' : '16px' }}
+          />
           <div className="flex flex-col">
             <Typography
-              className="text-[16px] font-black uppercase tracking-tight"
-              style={{ color: '#fff' }}
+              className="font-black uppercase tracking-tight"
+              style={{ color: '#fff', fontSize: isExpanded ? '16px' : '12px' }}
             >
-              {device?.name}
+              {isExpanded ? device?.name : device?.name?.split(' ')[0]}
             </Typography>
-            <Typography
-              className="text-[9px] font-bold opacity-40 tracking-widest"
-              style={{ color: '#fff' }}
-            >
-              ID: {device?.uniqueId} • {protocol}
-            </Typography>
+            {isExpanded && (
+              <Typography
+                className="text-[9px] font-bold opacity-40 tracking-widest"
+                style={{ color: '#fff' }}
+              >
+                ID: {device?.uniqueId} • {protocol}
+              </Typography>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
+          <div
+            className={`flex items-center gap-2 ${isExpanded ? 'px-3 py-1 rounded-full border border-white/10' : ''}`}
+          >
             <div
               className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'animate-pulse' : ''}`}
               style={{ background: isOnline ? accentColor : '#555' }}
             />
-            <span
-              className="text-[9px] font-black uppercase tracking-widest"
-              style={{ color: isOnline ? accentColor : '#555' }}
-            >
-              {isOnline ? 'Online' : 'Offline'}
-            </span>
+            {isExpanded && (
+              <span
+                className="text-[9px] font-black uppercase tracking-widest"
+                style={{ color: isOnline ? accentColor : '#555' }}
+              >
+                {isOnline ? 'Online' : 'Offline'}
+              </span>
+            )}
           </div>
           <IconButton
             size="small"
             onClick={onClose}
-            style={{ color: '#fff', background: 'rgba(255,255,255,0.05)' }}
+            style={{
+              color: '#fff',
+              background: 'rgba(255,255,255,0.05)',
+              padding: isExpanded ? '6px' : '2px',
+            }}
           >
-            <CloseIcon fontSize="small" />
+            <CloseIcon sx={{ fontSize: isExpanded ? 20 : 14 }} />
           </IconButton>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar py-6">
-        {/* Gauges Hub - Image 2 Style */}
-        <div className="flex justify-around items-end px-4 gap-2 mb-8 h-[160px]">
-          {/* Left Arc: Battery */}
-          <div className="flex-1 flex justify-center">
+      <div className="flex-1 overflow-y-auto no-scrollbar py-2">
+        {/* Gauges & Side Controls Row */}
+        <div className="flex justify-between items-center px-4 gap-2 mb-2">
+          {/* Mini-Button Left (Unblock) */}
+          {!isExpanded && (
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center border animate-in fade-in zoom-in duration-500"
+              style={{
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderColor: 'rgba(16, 185, 129, 0.2)',
+                color: '#10b981',
+              }}
+              onClick={() => onCommand('unblock')}
+            >
+              <LockOpenIcon sx={{ fontSize: 16 }} />
+            </div>
+          )}
+
+          <div
+            className={`flex flex-1 justify-around items-end transition-all duration-500 ${isExpanded ? 'h-[160px]' : 'h-[100px] scale-[0.8]'}`}
+          >
+            {/* Left Arc: Battery */}
             <ArcGauge
               value={battery}
               max={100}
-              label="BATERIA"
+              label={isExpanded ? 'BATERIA' : ''}
               unit="%"
-              subtext={batteryVolts}
-              size={100}
-              thickness={6}
+              subtext={isExpanded ? batteryVolts : ''}
+              size={isExpanded ? 100 : 70}
+              thickness={isExpanded ? 6 : 5}
               color={battery > 20 ? secondaryAccent : '#ef4444'}
               trackColor="rgba(255,255,255,0.1)"
-              fontSize={22}
+              fontSize={isExpanded ? 22 : 18}
             />
-          </div>
 
-          {/* Center Arc: SPEED */}
-          <div className="flex-[1.5] flex justify-center">
+            {/* Center Arc: SPEED */}
             <ArcGauge
               value={speed}
               max={160}
-              label="SPEED"
-              unit="km/h"
-              size={160}
-              thickness={10}
+              label={isExpanded ? 'SPEED' : 'KM/H'}
+              unit=""
+              size={isExpanded ? 160 : 100}
+              thickness={isExpanded ? 10 : 7}
               color={accentColor}
               trackColor="rgba(255,255,255,0.1)"
-              fontSize={52}
+              fontSize={isExpanded ? 52 : 36}
             />
-          </div>
 
-          {/* Right Arc: Movement/Direction */}
-          <div className="flex-1 flex justify-center">
+            {/* Right Arc: Movement */}
             <ArcGauge
               value={direction}
               max={360}
-              label="DIREÇÃO"
+              label={isExpanded ? 'DIREÇÃO' : ''}
               unit="°"
-              subtext={ignition ? 'MOTOR ON' : 'MOTOR OFF'}
-              size={100}
-              thickness={6}
+              subtext={isExpanded ? (ignition ? 'MOTOR ON' : 'MOTOR OFF') : ''}
+              size={isExpanded ? 100 : 70}
+              thickness={isExpanded ? 6 : 5}
               color={ignition ? accentColor : '#555'}
               trackColor="rgba(255,255,255,0.1)"
-              fontSize={22}
+              fontSize={isExpanded ? 22 : 18}
             />
           </div>
+
+          {/* Mini-Button Right (Block) */}
+          {!isExpanded && (
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center border animate-in fade-in zoom-in duration-500"
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderColor: 'rgba(239, 68, 68, 0.2)',
+                color: '#ef4444',
+              }}
+              onClick={() => onCommand('block')}
+            >
+              <LockIcon sx={{ fontSize: 16 }} />
+            </div>
+          )}
         </div>
 
-        {/* Status Chips */}
-        <div className="flex flex-wrap justify-center gap-2 px-6 mb-8">
-          {[
-            { label: ignition ? 'LIGADO' : 'DESLIGADO', color: ignition ? '#10b981' : '#555' },
-            {
-              label: attrs.motion ? 'MOVENDO' : 'PARADO',
-              color: attrs.motion ? '#3b82f6' : '#555',
-            },
-            {
-              label: attrs.blocked ? 'BLOQUEADO' : 'DESBLOQ.',
-              color: attrs.blocked ? '#ef4444' : '#10b981',
-            },
-            {
-              label: position?.geofenceIds?.length > 0 ? 'ÂNCORA ATIVA' : 'ÂNCORA OFF',
-              color: '#8b5cf6',
-              hide: !position?.geofenceIds?.length,
-            },
-          ]
-            .filter((c) => !c.hide)
-            .map((chip, idx) => (
-              <div
-                key={idx}
-                className="px-3 py-1 rounded-lg border text-[8px] font-black tracking-widest transition-all duration-300"
-                style={{
-                  background: `${chip.color}15`,
-                  borderColor: `${chip.color}30`,
-                  color: chip.color,
-                }}
-              >
-                {chip.label}
+        {/* Status Chips - Only in Expanded mode */}
+        {isExpanded && (
+          <div className="flex flex-wrap justify-center gap-2 px-6 mb-8 animate-in fade-in duration-500">
+            {[
+              { label: ignition ? 'LIGADO' : 'DESLIGADO', color: ignition ? '#10b981' : '#555' },
+              {
+                label: attrs.motion ? 'MOVENDO' : 'PARADO',
+                color: attrs.motion ? '#3b82f6' : '#555',
+              },
+              {
+                label: attrs.blocked ? 'BLOQUEADO' : 'DESBLOQ.',
+                color: attrs.blocked ? '#ef4444' : '#10b981',
+              },
+              {
+                label: position?.geofenceIds?.length > 0 ? 'ÂNCORA ATIVA' : 'ÂNCORA OFF',
+                color: '#8b5cf6',
+                hide: !position?.geofenceIds?.length,
+              },
+            ]
+              .filter((c) => !c.hide)
+              .map((chip, idx) => (
+                <div
+                  key={idx}
+                  className="px-3 py-1 rounded-lg border text-[8px] font-black tracking-widest transition-all duration-300"
+                  style={{
+                    background: `${chip.color}15`,
+                    borderColor: `${chip.color}30`,
+                    color: chip.color,
+                  }}
+                >
+                  {chip.label}
+                </div>
+              ))}
+          </div>
+        )}
+        {isExpanded && (
+          <div className="px-6 mb-4 animate-in fade-in duration-500">
+            <div className="py-3 px-4 rounded-2xl border flex items-center gap-4 bg-white/[0.02] border-white/5">
+              <InfoIcon sx={{ color: accentColor, fontSize: 18 }} />
+              <div className="flex-1 min-w-0">
+                <span
+                  className="text-[8px] font-black uppercase opacity-40 tracking-[0.2em]"
+                  style={{ color: '#fff' }}
+                >
+                  Localização Atual
+                </span>
+                <Typography className="text-[12px] font-bold truncate" style={{ color: '#fff' }}>
+                  {position?.address || 'Processando endereço...'}
+                </Typography>
               </div>
-            ))}
-        </div>
-        {/* Address Section - Always Visible */}
-        <div className="px-6 mb-4">
-          <div className="py-3 px-4 rounded-2xl border flex items-center gap-4 bg-white/[0.02] border-white/5">
-            <InfoIcon sx={{ color: accentColor, fontSize: 18 }} />
-            <div className="flex-1 min-w-0">
-              <span
-                className="text-[8px] font-black uppercase opacity-40 tracking-[0.2em]"
-                style={{ color: '#fff' }}
-              >
-                Localização Atual
-              </span>
-              <Typography className="text-[12px] font-bold truncate" style={{ color: '#fff' }}>
-                {position?.address || 'Processando endereço...'}
-              </Typography>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Expand/Collapse Trigger */}
-        <div className="px-6 mb-4">
-          <Button
-            fullWidth
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="rounded-xl py-2 border transition-all duration-300 active:scale-95"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              borderColor: 'rgba(255,255,255,0.05)',
-              color: accentColor,
-            }}
-          >
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {isExpanded ? 'Ver menos' : 'Ver mais detalhes'}
-            </span>
-          </Button>
-        </div>
+        {/* Expand Trigger (Fallback button) */}
+        {!isExpanded && (
+          <div className="px-6 mb-2">
+            <Button
+              fullWidth
+              onClick={() => setIsExpanded(true)}
+              className="rounded-xl py-1 border transition-all duration-300 active:scale-95"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                borderColor: 'rgba(255,255,255,0.05)',
+                color: accentColor,
+              }}
+            >
+              <span className="text-[9px] font-black uppercase tracking-[0.2em]">Ver mais</span>
+            </Button>
+          </div>
+        )}
+
+        {isExpanded && (
+          <div className="px-6 mb-4">
+            <Button
+              fullWidth
+              onClick={() => setIsExpanded(false)}
+              className="rounded-xl py-2 border transition-all duration-300 active:scale-95"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                borderColor: 'rgba(255,255,255,0.05)',
+                color: accentColor,
+              }}
+            >
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Ver menos</span>
+            </Button>
+          </div>
+        )}
 
         {isExpanded && (
           <>
@@ -445,67 +524,69 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
         )}
       </div>
 
-      {/* Bottom Actions - Real-time Control */}
-      <div className="px-6 py-6 border-t border-white/5 bg-black/40 backdrop-blur-md">
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            fullWidth
-            onClick={() => onCommand('unblock')}
-            className="rounded-2xl py-3 border transition-all duration-300 active:scale-95"
-            style={{
-              background: 'rgba(16, 185, 129, 0.08)',
-              borderColor: 'rgba(16, 185, 129, 0.2)',
-              color: '#10b981',
-            }}
-          >
-            <LockOpenIcon sx={{ mr: 1, fontSize: 18 }} />
-            <span className="text-[11px] font-black uppercase tracking-widest">DESBLOQUEAR</span>
-          </Button>
-          <Button
-            fullWidth
-            onClick={() => onCommand('block')}
-            className="rounded-2xl py-3 border transition-all duration-300 active:scale-95"
-            style={{
-              background: 'rgba(239, 68, 68, 0.08)',
-              borderColor: 'rgba(239, 68, 68, 0.2)',
-              color: '#ef4444',
-            }}
-          >
-            <LockIcon sx={{ mr: 1, fontSize: 18 }} />
-            <span className="text-[11px] font-black uppercase tracking-widest">BLOQUEAR</span>
-          </Button>
-        </div>
-        <div className="flex justify-around items-center mt-6 px-4">
-          {[
-            {
-              icon: <GridViewIcon />,
-              label: 'Histórico',
-              path: `/app/replay?deviceId=${device?.id}`,
-            },
-            { icon: <EditIcon />, label: 'Editar', path: `/app/settings/device/${device?.id}` },
-            {
-              icon: <ShareIcon />,
-              label: 'Partilhar',
-              path: `/app/settings/device/${device?.id}/share`,
-            },
-            { icon: <PendingIcon />, label: 'Mais', path: '/app/settings/device' },
-          ].map((item, idx) => (
-            <div
-              key={idx}
-              className="flex flex-col items-center gap-2 opacity-50 active:opacity-100"
-              onClick={() => navigate(item.path)}
+      {/* Bottom Actions - Only in Expanded mode */}
+      {isExpanded && (
+        <div className="px-6 py-6 border-t border-white/5 bg-black/40 backdrop-blur-md animate-in slide-in-from-bottom duration-500">
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              fullWidth
+              onClick={() => onCommand('unblock')}
+              className="rounded-2xl py-3 border transition-all duration-300 active:scale-95"
+              style={{
+                background: 'rgba(16, 185, 129, 0.08)',
+                borderColor: 'rgba(16, 185, 129, 0.2)',
+                color: '#10b981',
+              }}
             >
-              {React.cloneElement(item.icon, { sx: { fontSize: 20, color: '#fff' } })}
-              <span
-                className="text-[7px] font-black uppercase tracking-widest"
-                style={{ color: '#fff' }}
+              <LockOpenIcon sx={{ mr: 1, fontSize: 18 }} />
+              <span className="text-[11px] font-black uppercase tracking-widest">DESBLOQUEAR</span>
+            </Button>
+            <Button
+              fullWidth
+              onClick={() => onCommand('block')}
+              className="rounded-2xl py-3 border transition-all duration-300 active:scale-95"
+              style={{
+                background: 'rgba(239, 68, 68, 0.08)',
+                borderColor: 'rgba(239, 68, 129, 0.2)',
+                color: '#ef4444',
+              }}
+            >
+              <LockIcon sx={{ mr: 1, fontSize: 18 }} />
+              <span className="text-[11px] font-black uppercase tracking-widest">BLOQUEAR</span>
+            </Button>
+          </div>
+          <div className="flex justify-around items-center mt-6 px-4">
+            {[
+              {
+                icon: <GridViewIcon />,
+                label: 'Histórico',
+                path: `/app/replay?deviceId=${device?.id}`,
+              },
+              { icon: <EditIcon />, label: 'Editar', path: `/app/settings/device/${device?.id}` },
+              {
+                icon: <ShareIcon />,
+                label: 'Partilhar',
+                path: `/app/settings/device/${device?.id}/share`,
+              },
+              { icon: <PendingIcon />, label: 'Mais', path: '/app/settings/device' },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col items-center gap-2 opacity-50 active:opacity-100"
+                onClick={() => navigate(item.path)}
               >
-                {item.label}
-              </span>
-            </div>
-          ))}
+                {React.cloneElement(item.icon, { sx: { fontSize: 20, color: '#fff' } })}
+                <span
+                  className="text-[7px] font-black uppercase tracking-widest"
+                  style={{ color: '#fff' }}
+                >
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

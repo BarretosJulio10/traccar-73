@@ -4,9 +4,38 @@ Formato: [Semantic Versioning](https://semver.org/)
 
 ---
 
+## [0.13.1] — 2026-03-21
+
+### Added
+- **PWA: Smart Install Banner no `LoginPage` (UX-2)**
+  - Contexto: Melhorar a taxa de conversão de usuários mobile para o App instalado.
+  - Implementação: Banner deslizante no topo da tela com glassmorphism. Detecta mobile e estado de instalação.
+  - Funcionalidade: Botão "OBTER" para instalação e botão de descarte (X) persistente na sessão.
+
+- **Tracking: Toggle de Rastro em Tempo Real no Mapa (TRACK-3)**
+  - Contexto: Usuários solicitaram controle rápido sobre o rastro visual dos veículos sem ir às configurações.
+  - Implementação: Botão flutuante no mapa (`MapLiveTrailToggle`) com 3 estados: Desativado, Selecionado (Blue) e Todos (Neon Green).
+  - Backend: Utiliza `liveRoutesOverride` no Redux para controle instantâneo.
+
+- **Security: Sistema de Auditoria de Sessão (SEC-3)**
+  - Contexto: Necessidade de rastrear acessos e saídas por motivos de segurança e conformidade.
+  - Implementação: Nova tabela `audit_logs` no Supabase e utilitário `audit.js`.
+  - Eventos: Logins (Sucesso/Demo) e Logouts agora são registrados permanentemente com metadados do cliente.
+
+### Fixed
+- **UI: Erros de sintaxe JSX no `LoginPage.jsx`**
+  - Correção de tags mal fechadas e restauração do conteúdo do botão de login Demo que foi acidentalmente removido.
+
+---
+
 ## [0.13.0] — 2026-03-21
 
 ### Fixed
+- **PWA: Hotfix para erro de runtime `TypeError: o is not a function`**
+  - Contexto: A página `/install` estava crashando em produção (Android/iOS) devido à instabilidade dos componentes `Stepper`/`StepContent` do MUI v7 em ambientes builds.
+  - Correção: `InstallPage.jsx` reescrito para usar componentes base (`Box`, `Typography`) simulando visualmente os passos.
+  - Adicionado: Proteção (Optional Chaining) no `useTenant` para prevenir crash caso o provider retorne null.
+
 - **PWA: Placeholders não resolvidos em `index.html`**
   - Contexto: `<meta name="theme-color" content="${colorPrimary}">`, `<title>${title}</title>`, `<meta description="${description}">` geravam valores literais no HTML final, quebrando o manifest e a instalabilidade PWA.
   - Correção: Substituidos por valores literais (`#0d9488`, `HyperTraccar - Rastreador GPS`, descrição PT-BR).

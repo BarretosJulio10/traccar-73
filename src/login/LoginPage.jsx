@@ -69,6 +69,26 @@ const useStyles = makeStyles()((theme) => ({
   link: {
     cursor: 'pointer',
   },
+  smartBanner: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 2000,
+    background: 'rgba(30, 31, 36, 0.9)',
+    backdropFilter: 'blur(12px)',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    padding: theme.spacing(1.5, 2),
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    boxShadow: '0 4px 25px rgba(0,0,0,0.5)',
+    animation: '$slideDown 0.5s ease-out',
+  },
+  '@keyframes slideDown': {
+    from: { transform: 'translateY(-100%)' },
+    to: { transform: 'translateY(0)' },
+  },
 }));
 
 const LoginPage = () => {
@@ -110,6 +130,8 @@ const LoginPage = () => {
 
   const [announcementShown, setAnnouncementShown] = useState(false);
   const announcement = useSelector((state) => state.session.server.announcement);
+
+  const [dismissedBanner, setDismissedBanner] = useState(false);
 
   const [sessionExpired, setSessionExpired] = useState(false);
   useEffect(() => {
@@ -192,6 +214,42 @@ const LoginPage = () => {
 
   return (
     <LoginLayout>
+      {isMobile && !isInstalled && !dismissedBanner && (
+        <div className={classes.smartBanner}>
+          <Box
+            component="img"
+            src="/apple-touch-icon-180x180.png"
+            sx={{ width: 44, height: 44, borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
+          />
+          <Box sx={{ flex: 1, overflow: 'hidden' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
+              HyperTraccar
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              Instale para melhor experiência
+            </Typography>
+          </Box>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => navigate('/install')}
+            sx={{
+              bgcolor: '#39ff14',
+              color: '#000',
+              fontWeight: 800,
+              fontSize: '0.7rem',
+              px: 2,
+              borderRadius: '6px',
+              '&:hover': { bgcolor: '#32e612' }
+            }}
+          >
+            OBTER
+          </Button>
+          <IconButton size="small" onClick={() => setDismissedBanner(true)} sx={{ color: 'rgba(255,255,255,0.3)' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </div>
+      )}
       <div className={classes.options}>
         {nativeEnvironment && changeEnabled && (
           <IconButton
@@ -348,8 +406,7 @@ const LoginPage = () => {
           >
             {t('loginOpenId')}
           </Button>
-        )}
-        <Button
+        )}        <Button
           onClick={handleDemoLogin}
           variant="outlined"
           type="button"
@@ -367,26 +424,6 @@ const LoginPage = () => {
         >
           {t('loginDemoButton')}
         </Button>
-        {isMobile && !isInstalled && (
-          <Button
-            onClick={() => navigate('/install')}
-            variant="contained"
-            color="primary"
-            type="button"
-            startIcon={<GetAppIcon />}
-            sx={{
-              py: 1,
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              boxShadow: '0 4px 14px 0 rgba(0, 245, 160, 0.39)',
-              '&:hover': {
-                boxShadow: '0 6px 20px rgba(0, 245, 160, 0.5)',
-              },
-            }}
-          >
-            Instalar App
-          </Button>
-        )}
         {!openIdForced && (
           <div className={classes.extraContainer}>
             {registrationEnabled && (
@@ -439,6 +476,7 @@ const LoginPage = () => {
         onClose={() => setSessionExpired(false)}
       />
     </LoginLayout>
+
   );
 };
 

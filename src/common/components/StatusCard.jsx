@@ -60,6 +60,8 @@ import ShareIcon from '@mui/icons-material/Share';
 import GridViewIcon from '@mui/icons-material/GridView';
 import dayjs from 'dayjs';
 
+import InnovatorHUD from './InnovatorHUD';
+
 import { useTranslation } from './LocalizationProvider';
 import RemoveDialog from './RemoveDialog';
 import { useDeviceReadonly, useRestriction } from '../util/permissions';
@@ -417,6 +419,17 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
     if (level > 30) return <Battery60Icon sx={sx} />;
     return <Battery20Icon sx={sx} />;
   };
+
+  if (!desktop) {
+    return (
+      <InnovatorHUD
+        device={device}
+        position={position}
+        onClose={onClose}
+        onCommand={(type) => handleEngineCommand(type === 'block' ? 'engineStop' : 'engineResume')}
+      />
+    );
+  }
 
   return (
     <>

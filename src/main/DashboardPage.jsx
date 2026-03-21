@@ -72,11 +72,12 @@ const DashboardPage = () => {
             <div
               key={device.id}
               onClick={() => handleDeviceClick(device.id)}
-              className="w-full rounded-[24px] p-5 flex items-center gap-5 cursor-pointer transition-all duration-300 active:scale-[0.97] border shadow-md relative overflow-hidden"
+              className="w-full rounded-[28px] p-5 flex items-center gap-5 cursor-pointer transition-all duration-300 active:scale-[0.96] border shadow-lg relative overflow-hidden mb-1"
               style={{
-                background: theme.bgSecondary,
-                borderColor: theme.borderCard,
-                color: theme.textPrimary
+                background: theme.isDark ? 'rgba(22, 23, 25, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+                borderColor: theme.border,
+                color: theme.textPrimary,
+                backdropFilter: 'blur(10px)',
               }}
             >
               {/* Status Glow Indicator */}
@@ -123,13 +124,16 @@ const DashboardPage = () => {
 
               {/* Telemetry Block */}
               <div 
-                className="rounded-2xl flex flex-col items-center justify-center p-3 min-w-[75px] border"
-                style={{ background: theme.bg, borderColor: theme.border }}
+                className="rounded-2xl flex flex-col items-center justify-center p-3 min-w-[75px] border shadow-inner"
+                style={{ 
+                    background: theme.isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)', 
+                    borderColor: theme.borderCard 
+                }}
               >
-                <p className="text-[15px] font-black leading-none" style={{ color: theme.textPrimary }}>
+                <p className="text-[17px] font-black leading-none italic" style={{ color: theme.textPrimary }}>
                   {speed}
                 </p>
-                <span className="text-[8px] font-black uppercase tracking-widest mt-1 opacity-50" style={{ color: theme.textMuted }}>km/h</span>
+                <span className="text-[8px] font-black uppercase tracking-[0.1em] mt-1 opacity-50" style={{ color: theme.textMuted }}>km/h</span>
               </div>
             </div>
           );

@@ -11,16 +11,19 @@ import { sessionActions } from '../../store';
 import { nativePostMessage } from './NativeInterface';
 import { apiUrl } from '../util/apiUrl';
 import { auditLog } from '../util/audit';
+import { useHudTheme } from '../util/ThemeContext';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 
-const NavItem = ({ icon, active, onClick }) => (
+const NavItem = ({ icon, active, onClick, color }) => (
   <button
     onClick={onClick}
     className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 focus:outline-none border border-transparent ${active
-      ? 'bg-[#39ff14]/10 border-[#39ff14]/20 shadow-[0_0_15px_rgba(57,255,20,0.1)]'
-      : 'hover:bg-slate-800/40'
+      ? 'bg-[var(--hud-accent)]/10 border-[var(--hud-accent)]/20 shadow-[0_0_15px_rgba(var(--hud-accent-rgb),0.1)]'
+      : 'hover:bg-black/10'
       }`}
   >
-    <div className={`transition-all duration-300 ${active ? 'text-[#39ff14] drop-shadow-[0_0_8px_rgba(57,255,20,0.5)] scale-110' : 'text-slate-500'}`}>
+    <div className={`transition-all duration-300 ${active ? 'text-[var(--hud-accent)] drop-shadow-[0_0_8px_rgba(var(--hud-accent-rgb),0.5)] scale-110' : 'text-[var(--hud-text2)]'}`}>
       {icon}
     </div>
   </button>
@@ -53,9 +56,16 @@ const BottomMenu = () => {
   };
 
   const active = currentSelection();
+  const { themeKey, toggleTheme, theme } = useHudTheme();
 
   return (
-    <div className="mx-auto flex h-[60px] items-center justify-around gap-2 px-3 bg-[#1e1f24]/85 backdrop-blur-xl rounded-full border border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.5)] no-scrollbar border-slate-700/10">
+    <div 
+      className="mx-auto flex h-[64px] items-center justify-around gap-2 px-3 backdrop-blur-3xl rounded-full border shadow-2xl no-scrollbar"
+      style={{ 
+        background: theme.isDark ? 'rgba(8, 9, 10, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+        borderColor: theme.border,
+      }}
+    >
       <NavItem
         icon={<DirectionsCarIcon sx={{ fontSize: 20 }} />}
         active={active === 'vehicles'}
@@ -66,6 +76,17 @@ const BottomMenu = () => {
         active={active === 'map'}
         onClick={() => navigate('/app/map')}
       />
+      
+      <div className="w-[1px] h-6 mx-1 opacity-20" style={{ background: theme.textSecondary }} />
+
+      <NavItem
+        icon={themeKey === 'dark' ? <LightModeIcon sx={{ fontSize: 20 }} /> : <DarkModeIcon sx={{ fontSize: 20 }} />}
+        active={false}
+        onClick={toggleTheme}
+      />
+
+      <div className="w-[1px] h-6 mx-1 opacity-20" style={{ background: theme.textSecondary }} />
+
       <NavItem
         icon={<NotificationsIcon sx={{ fontSize: 20 }} />}
         active={active === 'alerts'}

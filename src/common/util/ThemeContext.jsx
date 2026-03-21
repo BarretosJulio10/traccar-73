@@ -4,37 +4,39 @@ const ThemeContext = createContext(null);
 
 export const THEMES = {
     dark: {
-        name: 'Escuro',
-        bg: '#1e1f24',
-        bgSecondary: '#24262b',
-        bgCard: '#121418',
-        border: 'rgba(57,255,20,0.10)',
-        borderCard: 'rgba(100,116,139,0.15)',
-        textPrimary: '#f1f5f9',
-        textSecondary: '#94a3b8',
-        textMuted: '#475569',
-        accent: '#39ff14',
-        accentSecondary: '#00d9f5',
-        sidebarShadow: '4px 0 30px rgba(0,0,0,0.5)',
-        scrollbarTrack: '#0f1013',
-        scrollbarThumb: '#313236',
+        name: 'Escuro Vision',
+        bg: '#08090a',
+        bgSecondary: '#111214',
+        bgCard: '#161719',
+        border: 'rgba(57,255,20,0.12)',
+        borderCard: 'rgba(255,255,255,0.06)',
+        textPrimary: '#ffffff',
+        textSecondary: '#a1a1aa',
+        textMuted: '#52525b',
+        accent: '#39ff14', // Neon Green
+        accentSecondary: '#00e5ff', // Cyber Blue
+        accentRgb: '57, 255, 20',
+        sidebarShadow: '10px 0 50px rgba(0,0,0,0.8)',
+        scrollbarTrack: '#050505',
+        scrollbarThumb: '#27272a',
         isDark: true,
     },
     light: {
-        name: 'Claro',
-        bg: '#f0f4f8',
+        name: 'Claro Crystal',
+        bg: '#f8fafc',
         bgSecondary: '#ffffff',
-        bgCard: '#e8edf3',
-        border: 'rgba(0,130,50,0.20)',
-        borderCard: 'rgba(0,0,0,0.07)',
+        bgCard: '#f1f5f9',
+        border: 'rgba(0,140,60,0.15)',
+        borderCard: 'rgba(0,0,0,0.04)',
         textPrimary: '#0f172a',
-        textSecondary: '#334155',
-        textMuted: '#64748b',
-        accent: '#008c32',
-        accentSecondary: '#0071a8',
-        sidebarShadow: '4px 0 20px rgba(0,0,0,0.10)',
-        scrollbarTrack: '#dde3ea',
-        scrollbarThumb: '#b0bcc8',
+        textSecondary: '#475569',
+        textMuted: '#94a3b8',
+        accent: '#059669', // Emerald
+        accentSecondary: '#0284c7', // Sky Blue
+        accentRgb: '5, 150, 105',
+        sidebarShadow: '4px 0 20px rgba(0,0,0,0.05)',
+        scrollbarTrack: '#f1f5f9',
+        scrollbarThumb: '#cbd5e1',
         isDark: false,
     },
 };
@@ -67,6 +69,7 @@ export const ThemeProvider = ({ children }) => {
         root.style.setProperty('--hud-muted', theme.textMuted);
         root.style.setProperty('--hud-accent', theme.accent);
         root.style.setProperty('--hud-accent2', theme.accentSecondary);
+        root.style.setProperty('--hud-accent-rgb', theme.accentRgb);
     }, [theme]);
 
     return (

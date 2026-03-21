@@ -43,9 +43,8 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import { apiUrl } from '../common/util/apiUrl';
 import { DEFAULT_TENANT_SLUG, DEMO_USER } from '../common/util/constants';
 import { lightInputSx } from './loginStyles';
-import usePwaInstallPrompt from '../common/util/usePwaInstallPrompt';
-import useDevicePermissions from '../common/util/useDevicePermissions';
 import { auditLog } from '../common/util/audit';
+import { useHudTheme } from '../common/util/ThemeContext';
 
 const useStyles = makeStyles()((theme) => ({
   options: {
@@ -76,9 +75,9 @@ const useStyles = makeStyles()((theme) => ({
     left: 0,
     right: 0,
     zIndex: 2000,
-    background: 'rgba(30, 31, 36, 0.9)',
+    background: 'var(--hud-bg2)',
     backdropFilter: 'blur(12px)',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    borderBottom: '1px solid var(--hud-border)',
     padding: theme.spacing(1.5, 2),
     display: 'flex',
     alignItems: 'center',

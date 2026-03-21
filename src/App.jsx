@@ -138,7 +138,7 @@ const App = () => {
         <div className="flex-1 relative overflow-auto z-10 scrollbar-hide">
           <Outlet context={{ demoMode, setDemoMode }} />
         </div>
-        {!desktop && <BottomMenu />}
+        {!desktop && !selectedDeviceId && <BottomMenu />}
         {desktop && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100]">
             <BottomMenu />

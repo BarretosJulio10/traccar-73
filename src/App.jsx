@@ -159,12 +159,14 @@ const App = () => {
         </div>
       )}
       {!desktop && selectedDeviceId && (
-        <StatusCard
-          deviceId={selectedDeviceId}
-          position={selectedPosition}
-          onClose={handleClosePanel}
-          desktopPadding={theme.dimensions.drawerWidthDesktop}
-        />
+        <div style={{ position: 'relative', zIndex: 1000 }}>
+          <StatusCard
+            deviceId={selectedDeviceId}
+            position={selectedPosition}
+            onClose={handleClosePanel}
+            desktopPadding={theme.dimensions.drawerWidthDesktop}
+          />
+        </div>
       )}
     </div>
   );

@@ -10,7 +10,7 @@ import { apiUrl } from './common/util/apiUrl';
 import { DEFAULT_TENANT_SLUG } from './common/util/constants';
 
 // Routes that don't need the Traccar server to be loaded
-const PUBLIC_ROUTES = ['/', '/landing', '/onboarding', '/admin/login', '/admin'];
+const PUBLIC_ROUTES = ['/', '/landing', '/onboarding', '/admin/login', '/admin', '/login', '/register', '/reset-password', '/change-server', '/install'];
 
 const ServerProvider = ({ children }) => {
   const dispatch = useDispatch();

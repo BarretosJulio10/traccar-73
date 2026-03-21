@@ -4,6 +4,19 @@ Formato: [Semantic Versioning](https://semver.org/)
 
 ---
 
+## [0.12.3] — 2026-03-21
+
+### Fixed
+- **Login Page 404 em Produção (Routing/ServerProvider)**
+  - Contexto: Ao acessar `https://traccar-73.vercel.app/login?tenant=hyper-tracker`, o usuário recebia erro 404.
+  - Causa raiz: `/login`, `/register`, `/reset-password`, `/change-server` e `/install` não estavam na lista `PUBLIC_ROUTES` do `ServerProvider.jsx`. Isso fazia com que o app tentasse buscar a API Traccar antes de renderizar o formulário de login, resultando em falha silenciosa e página em branco interpretada como 404 pelo Vercel.
+  - Justificativa técnica: Rotas de autenticação devem ser públicas — não dependem de nenhum servidor Traccar configurado.
+  - Impacto em banco: Nenhum.
+  - Impacto em APIs: Nenhum (o proxy não é mais chamado em rotas de autenticação).
+  - Impacto em regras de negócio: A página de login agora carrega corretamente para qualquer tenant, mesmo sem `traccar_url` configurado.
+
+---
+
 ## [0.12.2] — 2026-03-21
 
 ### Fixed

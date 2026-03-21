@@ -26,14 +26,14 @@ import {
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { useLocalization } from '../common/components/LocalizationProvider';
+import { useLocalization, useTranslation } from '../common/components/LocalizationProvider';
 import { useTenant } from '../common/components/TenantProvider';
 import usePwaInstallPrompt from '../common/util/usePwaInstallPrompt';
 import useDevicePermissions from '../common/util/useDevicePermissions';
 
 // ─── Status Chip ─────────────────────────────────────────────────────────────
 const StatusChip = ({ status }) => {
-  const { t } = useLocalization();
+  const t = useTranslation();
   const config = {
     granted: { label: t('pwaPermissionGranted') || 'Concedida', color: 'success', icon: <CheckIcon /> },
     denied: { label: t('pwaPermissionDenied') || 'Negada', color: 'error', icon: <DeniedIcon /> },
@@ -162,7 +162,7 @@ const PermissionCard = ({ icon, label, status, onRequest }) => (
 const InstallPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { t } = useLocalization();
+  const t = useTranslation();
 
   // TenantProvider pode retornar null — proteger desestruturação
   const tenantCtx = useTenant();

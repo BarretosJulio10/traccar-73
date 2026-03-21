@@ -243,7 +243,7 @@ const LoginPage = () => {
               '&:hover': { bgcolor: '#32e612' }
             }}
           >
-            OBTER
+            INSTALAR
           </Button>
           <IconButton size="small" onClick={() => setDismissedBanner(true)} sx={{ color: 'rgba(255,255,255,0.3)' }}>
             <CloseIcon fontSize="small" />

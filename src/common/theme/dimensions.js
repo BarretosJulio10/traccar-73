@@ -1,0 +1,15 @@
+export default {
+  sidebarWidth: '380px',
+  sidebarWidthTablet: '52px',
+  drawerWidthDesktop: '380px',
+  drawerWidthTablet: '340px',
+  drawerHeightPhone: '250px',
+  filterFormWidth: '160px',
+  eventsDrawerWidth: '340px',
+  bottomBarHeight: 64,
+  popupMapOffset: 300,
+  popupMaxWidth: 320,
+  popupImageHeight: 160,
+  cardContentMaxHeight: '40vh',
+  qrCodeSize: 192,
+};

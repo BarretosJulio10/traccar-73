@@ -16,7 +16,8 @@ const ServerProvider = ({ children }) => {
   const dispatch = useDispatch();
   const location = useLocation();
 
-  const initialized = useSelector((state) => !!state.session.server);
+  const initialized = useSelector((state) => state.session.server?.id != null);
+
   const [error, setError] = useState(null);
 
   const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname);

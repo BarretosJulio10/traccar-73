@@ -3,7 +3,8 @@ import { createSlice } from '@reduxjs/toolkit';
 const { reducer, actions } = createSlice({
   name: 'session',
   initialState: {
-    server: null,
+    server: { attributes: {} },
+
     user: null,
     socket: null,
     includeLogs: false,

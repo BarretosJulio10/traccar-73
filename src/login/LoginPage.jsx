@@ -136,15 +136,16 @@ const LoginPage = () => {
   const [dismissedBanner, setDismissedBanner] = useState(false);
 
   const handleInstallClick = async () => {
-    // 1. Trigger install prompt IMMEDIATELY to preserve user gesture
-    if (canInstall) {
+    // 1. Double-check if the prompt is available (even globally)
+    const promptAvailable = canInstall || !!window.deferredPwaPrompt;
+    
+    // 2. Trigger install prompt IMMEDIATELY to preserve user gesture
+    if (promptAvailable) {
       const success = await promptInstall();
-      // Permissions can be asked after or in parallel
       requestAllPermissions();
       if (success) return;
     } else {
-      // 2. Fallback to guide for iOS or if native prompt is not ready
-      // Still ask for permissions for the guide to show correct status
+      // 3. Fallback to guide for iOS or if native prompt is absolutely not ready
       requestAllPermissions();
       navigate('/install');
     }

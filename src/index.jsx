@@ -14,6 +14,17 @@ import ErrorBoundary from './ErrorBoundary';
 import AppThemeProvider from './AppThemeProvider';
 import { TenantProvider } from './common/components/TenantProvider';
 import { ThemeProvider as HudThemeProvider } from './common/util/ThemeContext';
+import { registerSW } from 'virtual:pwa-register';
+
+// Register Service Worker for PWA
+registerSW({
+  onNeedRefresh() {
+    console.log('PWA: New content available, please refresh.');
+  },
+  onOfflineReady() {
+    console.log('PWA: App ready to work offline.');
+  },
+});
 
 preloadImages();
 

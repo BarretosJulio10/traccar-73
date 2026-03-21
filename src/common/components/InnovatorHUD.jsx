@@ -17,129 +17,41 @@ import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt';
 import MapIcon from '@mui/icons-material/Map';
 import dayjs from 'dayjs';
 
-const ArcGauge = ({
-  value,
-  max,
-  label,
-  unit,
-  subtext,
-  color,
-  trackColor,
-  size = 120,
-  thickness = 10,
-  fontSize = 24,
-}) => {
-  const radius = (size - thickness) / 2;
-  const center = size / 2;
-  // Semi-circle arc (from -210deg to 30deg roughly, or 180deg)
-  const startAngle = -220;
-  const endAngle = 40;
-  const angleRange = endAngle - startAngle;
-  const currentAngle = startAngle + (Math.min(value, max) / max) * angleRange;
-
-  const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
-    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-    return {
-      x: centerX + radius * Math.cos(angleInRadians),
-      y: centerY + radius * Math.sin(angleInRadians),
-    };
-  };
-
-  const describeArc = (x, y, radius, startAngle, endAngle) => {
-    const start = polarToCartesian(x, y, radius, endAngle);
-    const end = polarToCartesian(x, y, radius, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
-    return ['M', start.x, start.y, 'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(' ');
-  };
-
-  // Correcting ticks generation logic
-  const ticks = [];
-  const numTicks = 20;
-  for (let i = 0; i <= numTicks; i++) {
-    const angle = startAngle + (i / numTicks) * angleRange;
-    const p1 = polarToCartesian(center, center, radius + 2, angle);
-    const p2 = polarToCartesian(center, center, radius + (i % 5 === 0 ? 10 : 5), angle);
-    ticks.push(
-      <line
-        key={i}
-        x1={p1.x}
-        y1={p1.y}
-        x2={p2.x}
-        y2={p2.y}
-        stroke="rgba(255,255,255,0.15)"
-        strokeWidth={1}
-      />,
-    );
-  }
-
-  return (
-    <div
-      className="flex flex-col items-center justify-center relative transition-transform duration-500"
-      style={{
-        width: size,
-        height: size * 0.85,
-      }}
+const DataCard = ({ label, value, unit, color, isLarge = false }) => (
+  <div
+    className="flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300"
+    style={{
+      background: 'rgba(255,255,255,0.03)',
+      borderColor: 'rgba(255,255,255,0.05)',
+      flex: 1,
+      minHeight: isLarge ? '100px' : '80px',
+    }}
+  >
+    <Typography
+      className="uppercase tracking-[0.2em] font-black opacity-40 mb-1"
+      style={{ color: '#fff', fontSize: '8px' }}
     >
-      <svg width={size} height={size} className="absolute top-0">
-        {/* Ticks */}
-        {ticks}
-        {/* Background Track */}
-        <path
-          d={describeArc(center, center, radius, startAngle, endAngle)}
-          fill="none"
-          stroke={trackColor}
-          strokeWidth={thickness}
-          strokeLinecap="round"
-          style={{ opacity: 0.2 }}
-        />
-        {/* Value Fill */}
-        <path
-          d={describeArc(center, center, radius, startAngle, currentAngle)}
-          fill="none"
-          stroke={color}
-          strokeWidth={thickness}
-          strokeLinecap="round"
-          style={{
-            transition: 'd 0.8s ease-out',
-            filter: `drop-shadow(0 0 5px ${color})`,
-          }}
-        />
-      </svg>
-      <div className="absolute top-[35%] flex flex-col items-center justify-center w-full">
-        <div className="flex items-baseline justify-center">
-          <span
-            className="font-black italic tracking-tighter leading-none"
-            style={{ color: '#fff', fontSize, filter: `drop-shadow(0 0 10px ${color})` }}
-          >
-            {Math.round(value)}
-          </span>
-          {unit && (
-            <span
-              className="ml-1 font-black italic opacity-40 uppercase"
-              style={{ color: '#fff', fontSize: fontSize * 0.25 }}
-            >
-              {unit}
-            </span>
-          )}
-        </div>
-        <span
-          className="uppercase tracking-[0.3em] font-black opacity-30 text-[6px] mt-1"
-          style={{ color: '#fff' }}
-        >
-          {label}
+      {label}
+    </Typography>
+    <div className="flex items-baseline gap-1">
+      <span
+        className="font-black tracking-tighter"
+        style={{
+          color: color || '#fff',
+          fontSize: isLarge ? '42px' : '24px',
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </span>
+      {unit && (
+        <span className="font-black opacity-30 uppercase text-[10px]" style={{ color: '#fff' }}>
+          {unit}
         </span>
-        {subtext && (
-          <span
-            className="text-[7px] font-black mt-1 opacity-80 uppercase tracking-widest px-2 py-0.5 rounded-full"
-            style={{ background: `${color}15`, color }}
-          >
-            {subtext}
-          </span>
-        )}
-      </div>
+      )}
     </div>
-  );
-};
+  </div>
+);
 
 const TelemetryBox = ({ icon, label, value, theme }) => (
   <div
@@ -214,7 +126,7 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
         )}
       </div>
 
-      {/* Top Bar - Compact in Mini mode */}
+      {/* Top Bar */}
       <div
         className={`flex justify-between items-center px-6 transition-all duration-500 ${isExpanded ? 'py-4 border-b border-white/5 bg-white/5' : 'py-1'}`}
       >
@@ -271,253 +183,93 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
         </div>
       </div>
 
-      <div className={`flex-1 flex flex-col no-scrollbar ${!isExpanded ? 'justify-center py-4' : 'overflow-y-auto py-2'}`}>
-        {/* Gauges & Side Controls Row */}
-        <div className={`flex justify-between items-center px-4 gap-2 ${isExpanded ? 'mb-2' : 'my-auto'}`}>
-          {/* Mini-Button Left (Unblock) */}
-          {!isExpanded && (
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center border animate-in fade-in zoom-in duration-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
-              style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}
-              onClick={() => onCommand('unblock')}
-            >
-              <LockOpenIcon sx={{ fontSize: 24 }} />
-            </div>
-          )}
-
-          <div className={`flex flex-1 justify-around items-end transition-all duration-500 ${isExpanded ? 'h-[160px]' : 'h-[200px]'}`}>
-            {/* Left Arc: Battery */}
-            <ArcGauge
-              value={battery}
-              max={100}
-              label={isExpanded ? 'BATERIA' : 'BATERIA'}
-              unit="%"
-              subtext={isExpanded ? batteryVolts : ''}
-              size={isExpanded ? 100 : 110}
-              thickness={isExpanded ? 6 : 8}
-              color={battery > 20 ? secondaryAccent : '#ef4444'}
-              trackColor="rgba(255,255,255,0.1)"
-              fontSize={isExpanded ? 22 : 24}
-            />
-
-            {/* Center Arc: SPEED */}
-            <ArcGauge
-              value={speed}
-              max={160}
-              label={isExpanded ? 'SPEED' : 'KM/H'}
-              unit=""
-              size={isExpanded ? 160 : 180}
-              thickness={isExpanded ? 10 : 12}
-              color={accentColor}
-              trackColor="rgba(255,255,255,0.1)"
-              fontSize={isExpanded ? 52 : 64}
-            />
-
-            {/* Right Arc: Movement */}
-            <ArcGauge
-              value={direction}
-              max={360}
-              label={isExpanded ? 'DIREÇÃO' : 'RUMO'}
-              unit="°"
-              subtext={isExpanded ? (ignition ? 'MOTOR ON' : 'MOTOR OFF') : ''}
-              size={isExpanded ? 100 : 110}
-              thickness={isExpanded ? 6 : 8}
-              color={ignition ? accentColor : '#555'}
-              trackColor="rgba(255,255,255,0.1)"
-              fontSize={isExpanded ? 22 : 24}
-            />
+      {/* Main Content Area */}
+      <div className={`flex-1 flex flex-col no-scrollbar ${!isExpanded ? 'justify-start pt-4' : 'overflow-y-auto py-2'}`}>
+        {/* Primary Data Row */}
+        <div className="flex justify-between items-center px-4 gap-3 mb-4">
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center border bg-white/[0.03] border-white/10 text-[#10b981]"
+            onClick={() => onCommand('unblock')}
+          >
+            <LockOpenIcon sx={{ fontSize: 20 }} />
           </div>
 
-          {/* Mini-Button Right (Block) */}
-          {!isExpanded && (
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center border animate-in fade-in zoom-in duration-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-              style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}
-              onClick={() => onCommand('block')}
-            >
-              <LockIcon sx={{ fontSize: 24 }} />
-            </div>
-          )}
+          <div className="flex flex-1 justify-around items-center gap-2">
+            <DataCard label="BATERIA" value={Math.round(battery)} unit="%" color={battery > 20 ? secondaryAccent : '#ef4444'} />
+            <DataCard label="VELOCIDADE" value={speed} unit="KM/H" color={accentColor} isLarge />
+            <DataCard label="RUMO" value={direction} unit="°" color={accentColor} />
+          </div>
+
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center border bg-white/[0.03] border-white/10 text-[#ef4444]"
+            onClick={() => onCommand('block')}
+          >
+            <LockIcon sx={{ fontSize: 20 }} />
+          </div>
         </div>
 
-        {/* Status Chips - Only in Expanded mode */}
-        {isExpanded && (
-          <div className="flex flex-wrap justify-center gap-2 px-6 mb-8 animate-in fade-in duration-500">
-            {[
-              { label: ignition ? 'LIGADO' : 'DESLIGADO', color: ignition ? '#10b981' : '#555' },
-              {
-                label: attrs.motion ? 'MOVENDO' : 'PARADO',
-                color: attrs.motion ? '#3b82f6' : '#555',
-              },
-              {
-                label: attrs.blocked ? 'BLOQUEADO' : 'DESBLOQ.',
-                color: attrs.blocked ? '#ef4444' : '#10b981',
-              },
-              {
-                label: position?.geofenceIds?.length > 0 ? 'ÂNCORA ATIVA' : 'ÂNCORA OFF',
-                color: '#8b5cf6',
-                hide: !position?.geofenceIds?.length,
-              },
-            ]
-              .filter((c) => !c.hide)
-              .map((chip, idx) => (
-                <div
-                  key={idx}
-                  className="px-3 py-1 rounded-lg border text-[8px] font-black tracking-widest transition-all duration-300"
-                  style={{
-                    background: `${chip.color}15`,
-                    borderColor: `${chip.color}30`,
-                    color: chip.color,
-                  }}
-                >
-                  {chip.label}
-                </div>
-              ))}
+        {/* Telemetry Grid (Always Visible) */}
+        <div className="px-6 grid grid-cols-2 gap-3 mb-6 animate-in fade-in duration-500">
+          <TelemetryBox icon={<HeightIcon />} label="ALTITUDE" value={`${altitude} m`} theme={theme} />
+          <TelemetryBox icon={<MapIcon />} label="ODÔMETRO" value={`${odometer} km`} theme={theme} />
+          <TelemetryBox icon={<SatelliteAltIcon />} label="SATÉLITES" value={satellites} theme={theme} />
+          <TelemetryBox
+            icon={<SpeedIcon />}
+            label="HORÍMETRO"
+            value={`${attrs.hours ? Math.round(attrs.hours / 3600000) : 0} h`}
+            theme={theme}
+          />
+          <div className="col-span-2">
+            <TelemetryBox
+              icon={<GpsFixedIcon />}
+              label="COORDENADAS"
+              value={`${position?.latitude?.toFixed(5)}, ${position?.longitude?.toFixed(5)}`}
+              theme={theme}
+            />
           </div>
-        )}
+        </div>
+
+        {/* Expanded Sections */}
         {isExpanded && (
-          <div className="px-6 mb-4 animate-in fade-in duration-500">
-            <div className="py-3 px-4 rounded-2xl border flex items-center gap-4 bg-white/[0.02] border-white/5">
+          <div className="animate-in fade-in duration-500 px-6">
+            <div className="py-3 px-4 rounded-2xl border flex items-center gap-4 bg-white/[0.02] border-white/5 mb-6">
               <InfoIcon sx={{ color: accentColor, fontSize: 18 }} />
               <div className="flex-1 min-w-0">
-                <span
-                  className="text-[8px] font-black uppercase opacity-40 tracking-[0.2em]"
-                  style={{ color: '#fff' }}
-                >
-                  Localização Atual
+                <span className="text-[8px] font-black uppercase opacity-40 tracking-[0.2em]" style={{ color: '#fff' }}>
+                  Endereço Atual
                 </span>
                 <Typography className="text-[12px] font-bold truncate" style={{ color: '#fff' }}>
                   {position?.address || 'Processando endereço...'}
                 </Typography>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Expand Trigger (Fallback button) */}
-        {!isExpanded && (
-          <div className="px-6 mb-2">
-            <Button
-              fullWidth
-              onClick={() => setIsExpanded(true)}
-              className="rounded-xl py-1 border transition-all duration-300 active:scale-95"
-              style={{
-                background: 'rgba(255,255,255,0.03)',
-                borderColor: 'rgba(255,255,255,0.05)',
-                color: accentColor,
-              }}
-            >
-              <span className="text-[9px] font-black uppercase tracking-[0.2em]">Ver mais</span>
-            </Button>
-          </div>
-        )}
+            {/* Times */}
+            <div className="flex justify-between items-center opacity-30 mb-8 px-2">
+              <div className="flex flex-col items-center">
+                <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: '#fff' }}>GPS TIME</span>
+                <span className="text-[9px] font-bold" style={{ color: '#fff' }}>{timeGPS}</span>
+              </div>
+              <Divider orientation="vertical" flexItem sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+              <div className="flex flex-col items-center">
+                <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: '#fff' }}>DEVICE TIME</span>
+                <span className="text-[9px] font-bold" style={{ color: '#fff' }}>{timeGSM}</span>
+              </div>
+            </div>
 
-        {isExpanded && (
-          <div className="px-6 mb-4">
             <Button
               fullWidth
               onClick={() => setIsExpanded(false)}
-              className="rounded-xl py-2 border transition-all duration-300 active:scale-95"
-              style={{
-                background: 'rgba(255,255,255,0.03)',
-                borderColor: 'rgba(255,255,255,0.05)',
-                color: accentColor,
-              }}
+              className="rounded-xl py-2 border transition-all duration-300 active:scale-95 mb-6"
+              style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.05)', color: accentColor }}
             >
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Ver menos</span>
             </Button>
           </div>
         )}
-
-        {isExpanded && (
-          <>
-            {/* Telemetry Grid (All Data from Image 1) */}
-            <div className="px-6 grid grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-top-2 duration-500">
-              <TelemetryBox
-                icon={<HeightIcon />}
-                label="ALTITUDE"
-                value={`${altitude} m`}
-                theme={theme}
-              />
-              <TelemetryBox
-                icon={<MapIcon />}
-                label="ODÔMETRO"
-                value={`${odometer} km`}
-                theme={theme}
-              />
-              <TelemetryBox
-                icon={<SatelliteAltIcon />}
-                label="SATÉLITES"
-                value={satellites}
-                theme={theme}
-              />
-              <TelemetryBox
-                icon={<SpeedIcon />}
-                label="HORÍMETRO"
-                value={`${attrs.hours ? Math.round(attrs.hours / 3600000) : 0} h`}
-                theme={theme}
-              />
-              <div className="col-span-2">
-                <TelemetryBox
-                  icon={<GpsFixedIcon />}
-                  label="COORDENADAS"
-                  value={`${position?.latitude?.toFixed(5)}, ${position?.longitude?.toFixed(5)}`}
-                  theme={theme}
-                />
-              </div>
-            </div>
-
-            {/* Times Bar */}
-            <div className="px-6 flex justify-between items-center opacity-30 mb-8 animate-in fade-in duration-700">
-              <div className="flex flex-col items-center">
-                <span
-                  className="text-[7px] font-black uppercase tracking-widest"
-                  style={{ color: '#fff' }}
-                >
-                  GPS TIME
-                </span>
-                <span className="text-[9px] font-bold" style={{ color: '#fff' }}>
-                  {timeGPS}
-                </span>
-              </div>
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{ borderColor: 'rgba(255,255,255,0.1)' }}
-              />
-              <div className="flex flex-col items-center">
-                <span
-                  className="text-[7px] font-black uppercase tracking-widest"
-                  style={{ color: '#fff' }}
-                >
-                  DEVICE TIME
-                </span>
-                <span className="text-[9px] font-bold" style={{ color: '#fff' }}>
-                  {timeGSM}
-                </span>
-              </div>
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{ borderColor: 'rgba(255,255,255,0.1)' }}
-              />
-              <div className="flex flex-col items-center">
-                <span
-                  className="text-[7px] font-black uppercase tracking-widest"
-                  style={{ color: '#fff' }}
-                >
-                  LAST UPDATE
-                </span>
-                <span className="text-[9px] font-bold" style={{ color: '#fff' }}>
-                  há poucos segundos
-                </span>
-              </div>
-            </div>
-          </>
-        )}
       </div>
 
-      {/* Bottom Actions - Only in Expanded mode */}
+      {/* Bottom Actions - Only Expanded */}
       {isExpanded && (
         <div className="px-6 py-6 border-t border-white/5 bg-black/40 backdrop-blur-md animate-in slide-in-from-bottom duration-500">
           <div className="grid grid-cols-2 gap-4">
@@ -550,17 +302,9 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
           </div>
           <div className="flex justify-around items-center mt-6 px-4">
             {[
-              {
-                icon: <GridViewIcon />,
-                label: 'Histórico',
-                path: `/app/replay?deviceId=${device?.id}`,
-              },
+              { icon: <GridViewIcon />, label: 'Histórico', path: `/app/replay?deviceId=${device?.id}` },
               { icon: <EditIcon />, label: 'Editar', path: `/app/settings/device/${device?.id}` },
-              {
-                icon: <ShareIcon />,
-                label: 'Partilhar',
-                path: `/app/settings/device/${device?.id}/share`,
-              },
+              { icon: <ShareIcon />, label: 'Partilhar', path: `/app/settings/device/${device?.id}/share` },
               { icon: <PendingIcon />, label: 'Mais', path: '/app/settings/device' },
             ].map((item, idx) => (
               <div
@@ -569,10 +313,7 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
                 onClick={() => navigate(item.path)}
               >
                 {React.cloneElement(item.icon, { sx: { fontSize: 20, color: '#fff' } })}
-                <span
-                  className="text-[7px] font-black uppercase tracking-widest"
-                  style={{ color: '#fff' }}
-                >
+                <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: '#fff' }}>
                   {item.label}
                 </span>
               </div>

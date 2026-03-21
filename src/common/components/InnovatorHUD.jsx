@@ -1,5 +1,5 @@
-import React from 'react';
-import { IconButton, Typography, Box, Button, Grid, Divider } from '@mui/material';
+import React, { useState } from 'react';
+import { IconButton, Typography, Button, Grid, Divider } from '@mui/material';
 import { useTranslation } from './LocalizationProvider';
 import { useHudTheme } from '../util/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -17,7 +17,6 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import HeightIcon from '@mui/icons-material/Height';
 import SpeedIcon from '@mui/icons-material/Speed';
-import BatteryFullIcon from '@mui/icons-material/BatteryFull';
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt';
 import MapIcon from '@mui/icons-material/Map';
 import dayjs from 'dayjs';
@@ -161,8 +160,9 @@ const TelemetryBox = ({ icon, label, value, theme }) => (
 );
 
 const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
-    const { theme } = useHudTheme();
-    const navigate = useNavigate();
+  const { theme } = useHudTheme();
+  const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(false);
   const attrs = position?.attributes || {};
   const speed = position ? Math.round(position.speed * 1.852) : 0;
   const battery = attrs.batteryLevel || attrs.battery || 0;
@@ -321,9 +321,8 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
               </div>
             ))}
         </div>
-
-        {/* Address Section */}
-        <div className="px-6 mb-6">
+        {/* Address Section - Always Visible */}
+        <div className="px-6 mb-4">
           <div className="py-3 px-4 rounded-2xl border flex items-center gap-4 bg-white/[0.02] border-white/5">
             <InfoIcon sx={{ color: accentColor, fontSize: 18 }} />
             <div className="flex-1 min-w-0">
@@ -340,80 +339,110 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
           </div>
         </div>
 
-        {/* Telemetry Grid (All Data from Image 1) */}
-        <div className="px-6 grid grid-cols-2 gap-3 mb-8">
-          <TelemetryBox
-            icon={<HeightIcon />}
-            label="ALTITUDE"
-            value={`${altitude} m`}
-            theme={theme}
-          />
-          <TelemetryBox
-            icon={<MapIcon />}
-            label="ODÔMETRO"
-            value={`${odometer} km`}
-            theme={theme}
-          />
-          <TelemetryBox
-            icon={<SatelliteAltIcon />}
-            label="SATÉLITES"
-            value={satellites}
-            theme={theme}
-          />
-          <TelemetryBox
-            icon={<SpeedIcon />}
-            label="HORÍMETRO"
-            value={`${attrs.hours ? Math.round(attrs.hours / 3600000) : 0} h`}
-            theme={theme}
-          />
-          <div className="col-span-2">
-            <TelemetryBox
-              icon={<GpsFixedIcon />}
-              label="COORDENADAS"
-              value={`${position?.latitude?.toFixed(5)}, ${position?.longitude?.toFixed(5)}`}
-              theme={theme}
-            />
-          </div>
+        {/* Expand/Collapse Trigger */}
+        <div className="px-6 mb-4">
+          <Button
+            fullWidth
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="rounded-xl py-2 border transition-all duration-300 active:scale-95"
+            style={{
+              background: 'rgba(255,255,255,0.03)',
+              borderColor: 'rgba(255,255,255,0.05)',
+              color: accentColor,
+            }}
+          >
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {isExpanded ? 'Ver menos' : 'Ver mais detalhes'}
+            </span>
+          </Button>
         </div>
 
-        {/* Times Bar */}
-        <div className="px-6 flex justify-between items-center opacity-30">
-          <div className="flex flex-col items-center">
-            <span
-              className="text-[7px] font-black uppercase tracking-widest"
-              style={{ color: '#fff' }}
-            >
-              GPS TIME
-            </span>
-            <span className="text-[9px] font-bold" style={{ color: '#fff' }}>
-              {timeGPS}
-            </span>
-          </div>
-          <Divider orientation="vertical" flexItem sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-          <div className="flex flex-col items-center">
-            <span
-              className="text-[7px] font-black uppercase tracking-widest"
-              style={{ color: '#fff' }}
-            >
-              DEVICE TIME
-            </span>
-            <span className="text-[9px] font-bold" style={{ color: '#fff' }}>
-              {timeGSM}
-            </span>
-          </div>
-          <Divider orientation="vertical" flexItem sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-          <div className="flex flex-col items-center">
-            <span
-              className="text-[7px] font-black uppercase tracking-widest"
-              style={{ color: '#fff' }}
-            >
-              LAST UPDATE
-            </span>
-            <span className="text-[9px] font-bold" style={{ color: '#fff' }}>
-              há poucos segundos
-            </span>
-          </div>
-        </div>
+        {isExpanded && (
+          <>
+            {/* Telemetry Grid (All Data from Image 1) */}
+            <div className="px-6 grid grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-top-2 duration-500">
+              <TelemetryBox
+                icon={<HeightIcon />}
+                label="ALTITUDE"
+                value={`${altitude} m`}
+                theme={theme}
+              />
+              <TelemetryBox
+                icon={<MapIcon />}
+                label="ODÔMETRO"
+                value={`${odometer} km`}
+                theme={theme}
+              />
+              <TelemetryBox
+                icon={<SatelliteAltIcon />}
+                label="SATÉLITES"
+                value={satellites}
+                theme={theme}
+              />
+              <TelemetryBox
+                icon={<SpeedIcon />}
+                label="HORÍMETRO"
+                value={`${attrs.hours ? Math.round(attrs.hours / 3600000) : 0} h`}
+                theme={theme}
+              />
+              <div className="col-span-2">
+                <TelemetryBox
+                  icon={<GpsFixedIcon />}
+                  label="COORDENADAS"
+                  value={`${position?.latitude?.toFixed(5)}, ${position?.longitude?.toFixed(5)}`}
+                  theme={theme}
+                />
+              </div>
+            </div>
+
+            {/* Times Bar */}
+            <div className="px-6 flex justify-between items-center opacity-30 mb-8 animate-in fade-in duration-700">
+              <div className="flex flex-col items-center">
+                <span
+                  className="text-[7px] font-black uppercase tracking-widest"
+                  style={{ color: '#fff' }}
+                >
+                  GPS TIME
+                </span>
+                <span className="text-[9px] font-bold" style={{ color: '#fff' }}>
+                  {timeGPS}
+                </span>
+              </div>
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ borderColor: 'rgba(255,255,255,0.1)' }}
+              />
+              <div className="flex flex-col items-center">
+                <span
+                  className="text-[7px] font-black uppercase tracking-widest"
+                  style={{ color: '#fff' }}
+                >
+                  DEVICE TIME
+                </span>
+                <span className="text-[9px] font-bold" style={{ color: '#fff' }}>
+                  {timeGSM}
+                </span>
+              </div>
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ borderColor: 'rgba(255,255,255,0.1)' }}
+              />
+              <div className="flex flex-col items-center">
+                <span
+                  className="text-[7px] font-black uppercase tracking-widest"
+                  style={{ color: '#fff' }}
+                >
+                  LAST UPDATE
+                </span>
+                <span className="text-[9px] font-bold" style={{ color: '#fff' }}>
+                  há poucos segundos
+                </span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Bottom Actions - Real-time Control */}

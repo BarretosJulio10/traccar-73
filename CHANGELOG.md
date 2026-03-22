@@ -12,6 +12,9 @@ Formato: [Semantic Versioning](https://semver.org/)
   - **Design System:** Implementada paleta Cyan (#06b6d4) e arredondamento global de **28px** para todos os containers (Card, Paper, Dialog).
   - **Layout:** Sidebar do desktop agora é "floating" com margens de 16px, removendo o visual monolítico antigo.
   - **Componente `SlideAction.jsx`:** Novo slider de segurança "Slide to Unlock" para ações críticas de bloqueio/desbloqueio no HUD.
+- **Fix: Restauração da API de Listas Virtuais (EV-Fix-Index-2)**
+  - **Contexto:** Crash "Invalid index 0" que persistia na visualização de mapa pelo desktop.
+  - **Correção:** Atualizada a implementação em `DeviceList.jsx` para utilizar o padrão da API customizada (`rowCount`, `rowHeight`, `rowComponent`), substituindo as interfaces incompatíveis do `VariableSizeList` original.
 - **Fix: Erro de Inicialização "Invalid index 0" (EV-Fix-Index)**
   - **Contexto:** Crash ao carregar a lista de dispositivos pela primeira vez (quando vazia).
   - **Correção:** Adicionado guardião no `DeviceList.jsx` para evitar renderização da lista virtual sem itens.

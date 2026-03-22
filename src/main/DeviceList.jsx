@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
@@ -51,10 +51,10 @@ const DeviceList = ({ devices }) => {
     }
   }, []);
 
-  const getRowHeight = (index) => {
+  const getRowHeight = useCallback((index) => {
     const device = devices[index];
     return (device && device.id === selectedId) ? EXPANDED_HEIGHT : COMPACT_HEIGHT;
-  };
+  }, [devices, selectedId]);
 
   if (devices.length === 0) {
     return null; // or a loading/empty state if preferred
@@ -65,21 +65,14 @@ const DeviceList = ({ devices }) => {
       {/* Assuming parent provides height, using a large default if needed */}
       <List
         ref={listRef}
-        itemCount={devices.length}
-        itemSize={getRowHeight}
+        rowCount={devices.length}
+        rowHeight={getRowHeight}
         width="100%"
         height={window.innerHeight - 200} // Dynamic estimate for sidebar height
         overscanCount={5}
-        rowProps={{}}
-      >
-        {(props) => (
-          <DeviceRow
-            {...props}
-            devices={devices}
-            desktop={desktop}
-          />
-        )}
-      </List>
+        rowComponent={DeviceRow}
+        rowProps={{ devices, desktop }}
+      />
     </div>
   );
 };

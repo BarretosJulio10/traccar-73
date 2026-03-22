@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { VariableSizeList as List } from 'react-window';
+import { List } from 'react-window';
 import { devicesActions } from '../store';
 import { useEffectAsync } from '../reactHelper';
 import DeviceRow, { COMPACT_HEIGHT, EXPANDED_HEIGHT } from './DeviceRow';
@@ -25,12 +25,10 @@ const DeviceList = ({ devices }) => {
   const theme = useTheme();
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const selectedId = useSelector((state) => state.devices.selectedId);
-  const listRef = React.useRef();
+  const listRef = useRef();
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.resetAfterIndex(0);
-    }
+    // List component in this version might re-calculate on render if itemSize changes
   }, [selectedId]);
 
   const [, setTime] = useState(Date.now());

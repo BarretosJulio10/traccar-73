@@ -12,6 +12,9 @@ Formato: [Semantic Versioning](https://semver.org/)
   - **Design System:** Implementada paleta Cyan (#06b6d4) e arredondamento global de **28px** para todos os containers (Card, Paper, Dialog).
   - **Layout:** Sidebar do desktop agora é "floating" com margens de 16px, removendo o visual monolítico antigo.
   - **Componente `SlideAction.jsx`:** Novo slider de segurança "Slide to Unlock" para ações críticas de bloqueio/desbloqueio no HUD.
+- **Fix: Erro de Build no Vercel (EV-Fix-Build)**
+  - **Contexto:** Importação incorreta do utilitário `catch` no `DeviceRow.jsx`.
+  - **Correção:** Caminho ajustado para o `reactHelper.js` consolidado.
 - **UI: Correção de Sobreposição no Desktop (EV-Fix)**
   - **Contexto:** A nova Sidebar flutuante estava cobrindo o `MapSideMenu` posicionado à esquerda.
   - **Correção:** O `MapSideMenu` foi movido para `right: 16` e `top: 100`, com visual atualizado para o tema Cyan.

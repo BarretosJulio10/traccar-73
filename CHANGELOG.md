@@ -12,6 +12,9 @@ Formato: [Semantic Versioning](https://semver.org/)
   - **Design System:** Implementada paleta Cyan (#06b6d4) e arredondamento global de **28px** para todos os containers (Card, Paper, Dialog).
   - **Layout:** Sidebar do desktop agora é "floating" com margens de 16px, removendo o visual monolítico antigo.
   - **Componente `SlideAction.jsx`:** Novo slider de segurança "Slide to Unlock" para ações críticas de bloqueio/desbloqueio no HUD.
+- **Fix: Erro de Inicialização "Invalid index 0" (EV-Fix-Index)**
+  - **Contexto:** Crash ao carregar a lista de dispositivos pela primeira vez (quando vazia).
+  - **Correção:** Adicionado guardião no `DeviceList.jsx` para evitar renderização da lista virtual sem itens.
 - **Fix: Erro de Login "ReferenceError: bgImage" (EV-Fix-Login)**
   - **Contexto:** Crash na página de login ao tentar carregar customizações do tenant.
   - **Correção:** Definição correta das variáveis `bgImage` e `bgColor` a partir do Provedor de Tenant.

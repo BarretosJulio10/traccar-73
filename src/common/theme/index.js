@@ -30,7 +30,7 @@ export default (server, darkMode, direction, tenant) =>
           },
         },
         shape: {
-          borderRadius: 12,
+          borderRadius: 28,
         },
         palette: palette(server, darkMode, tenant),
         direction,

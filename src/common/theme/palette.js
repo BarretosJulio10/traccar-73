@@ -5,30 +5,30 @@ const validatedColor = (color) => (/^#([0-9A-Fa-f]{3}){1,2}$/.test(color) ? colo
 export default (server, darkMode, tenant) => ({
   mode: darkMode ? 'dark' : 'light',
   background: {
-    default: darkMode ? '#1a1b1e' : '#f5f7fa',
+    default: darkMode ? '#1a1b1e' : '#f8fafc', // Slate 50
     paper: darkMode ? '#24262b' : '#ffffff',
   },
   primary: {
     main:
       validatedColor(tenant?.color_primary) ||
       validatedColor(server?.attributes?.colorPrimary) ||
-      (darkMode ? '#39ff14' : '#0f766e'),
-    light: darkMode ? '#99f6e4' : '#14b8a6',
-    dark: darkMode ? '#2dd4bf' : '#0d4f47',
-    contrastText: darkMode ? '#0f172a' : '#ffffff',
+      (darkMode ? '#22d3ee' : '#06b6d4'),
+    light: darkMode ? '#67e8f9' : '#22d3ee',
+    dark: darkMode ? '#0891b2' : '#0e7490',
+    contrastText: '#ffffff',
   },
   secondary: {
     main:
       validatedColor(tenant?.color_secondary) ||
       validatedColor(server?.attributes?.colorSecondary) ||
-      (darkMode ? '#a78bfa' : '#1e293b'),
+      (darkMode ? '#94a3b8' : '#1e293b'),
     contrastText: '#ffffff',
   },
   neutral: {
     main: grey[500],
   },
   geometry: {
-    main: '#14b8a6',
+    main: '#06b6d4',
   },
   alwaysDark: {
     main: grey[900],
@@ -43,8 +43,8 @@ export default (server, darkMode, tenant) => ({
     main: '#ef4444',
   },
   text: {
-    primary: darkMode ? '#f1f5f9' : '#1e293b',
-    secondary: darkMode ? '#94a3b8' : '#64748b',
+    primary: darkMode ? '#f1f5f9' : '#0f172a', // Slate 900
+    secondary: darkMode ? '#94a3b8' : '#475569', // Slate 600
   },
-  divider: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+  divider: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
 });

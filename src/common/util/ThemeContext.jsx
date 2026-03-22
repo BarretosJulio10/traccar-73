@@ -22,19 +22,19 @@ export const THEMES = {
         isDark: true,
     },
     light: {
-        name: 'Claro Crystal',
+        name: 'EV Lifestyle',
         bg: '#f8fafc',
         bgSecondary: '#ffffff',
-        bgCard: '#f1f5f9',
-        border: 'rgba(0,140,60,0.15)',
+        bgCard: '#ffffff', // Pure white cards for the new look
+        border: 'rgba(6,182,212,0.08)',
         borderCard: 'rgba(0,0,0,0.04)',
         textPrimary: '#0f172a',
         textSecondary: '#475569',
         textMuted: '#94a3b8',
-        accent: '#059669', // Emerald
-        accentSecondary: '#0284c7', // Sky Blue
-        accentRgb: '5, 150, 105',
-        sidebarShadow: '4px 0 20px rgba(0,0,0,0.05)',
+        accent: '#06b6d4', // Cyan 500
+        accentSecondary: '#22d3ee', // Cyan 400
+        accentRgb: '6, 182, 212',
+        sidebarShadow: '0 10px 40px rgba(0,0,0,0.04)',
         scrollbarTrack: '#f1f5f9',
         scrollbarThumb: '#cbd5e1',
         isDark: false,

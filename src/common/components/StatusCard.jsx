@@ -81,16 +81,17 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     [theme.breakpoints.down('md')]: {
       width: '92vw',
       maxWidth: 380,
-      borderRadius: 14,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+      borderRadius: 28,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
     },
     [theme.breakpoints.up('md')]: {
       width: '100%',
-      borderRadius: 12,
-      boxShadow: '0 -4px 24px rgba(0,0,0,0.18)',
+      borderRadius: 28,
+      boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'stretch',
+      background: '#FFFFFF',
     },
   },
   media: {
@@ -115,13 +116,14 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     },
   },
   vehicleAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: theme.palette.primary.main,
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: '#06b6d4', // Cyan 500
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    boxShadow: '0 8px 16px rgba(6,182,212,0.2)',
   },
   vehicleAvatarImg: {
     width: 26,
@@ -154,8 +156,8 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     [theme.breakpoints.up('md')]: { display: 'none' },
   },
   headerIconImg: {
-    width: 14,
-    height: 14,
+    width: 20,
+    height: 20,
     filter: 'brightness(0) invert(1)',
   },
   headerInfo: {
@@ -204,9 +206,9 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     padding: '1px 0',
   },
   dataIcon: {
-    fontSize: '0.75rem !important',
-    opacity: 0.5,
-    color: theme.palette.text.secondary,
+    fontSize: '0.85rem !important',
+    opacity: 0.6,
+    color: '#64748b',
   },
   dataLabel: {
     fontSize: '0.52rem',
@@ -465,7 +467,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                     </IconButton>
                   </CardMedia>
                 ) : (
-                  <div className={`${classes.header} draggable-header`}>
+                    <div className={`${classes.header} draggable-header`}>
                     <div className={classes.headerIcon}>
                       <img
                         className={classes.headerIconImg}
@@ -474,13 +476,14 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                       />
                     </div>
                     <div className={classes.headerInfo}>
-                      <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', lineHeight: 1.2 }}>
+                      <Typography sx={{ fontWeight: 900, fontSize: '1rem', color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
                         {device.name}
                       </Typography>
                       <Typography
                         sx={{
-                          fontSize: '0.6rem',
-                          color: 'text.secondary',
+                          fontSize: '0.65rem',
+                          color: '#64748b',
+                          fontWeight: 600,
                           fontFamily: 'monospace',
                         }}
                       >
@@ -490,23 +493,24 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                     </div>
                     <Chip
                       size="small"
-                      label={device.status === 'online' ? 'Online' : 'Offline'}
+                      label={device.status === 'online' ? 'Acoplado' : 'Offline'}
                       sx={{
-                        height: 20,
-                        fontSize: '0.6rem',
-                        fontWeight: 700,
-                        backgroundColor: `${device.status === 'online' ? '#10b981' : '#ef4444'}18`,
-                        color: device.status === 'online' ? '#10b981' : '#ef4444',
-                        border: `1px solid ${device.status === 'online' ? '#10b981' : '#ef4444'}30`,
+                        height: 24,
+                        fontSize: '0.65rem',
+                        px: 1,
+                        fontWeight: 800,
+                        backgroundColor: `${device.status === 'online' ? '#06b6d4' : '#ef4444'}12`,
+                        color: device.status === 'online' ? '#06b6d4' : '#ef4444',
+                        border: `1px solid ${device.status === 'online' ? '#06b6d4' : '#ef4444'}20`,
                       }}
                     />
                     <IconButton
                       size="small"
                       onClick={onClose}
                       onTouchStart={onClose}
-                      sx={{ padding: '4px' }}
+                      sx={{ background: '#F1F5F9', ml: 1 }}
                     >
-                      <CloseIcon sx={{ fontSize: '1rem' }} />
+                      <CloseIcon sx={{ fontSize: '1rem', color: '#64748b' }} />
                     </IconButton>
                   </div>
                 )}

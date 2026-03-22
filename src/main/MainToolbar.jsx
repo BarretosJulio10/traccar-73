@@ -47,14 +47,14 @@ const MainToolbar = ({
 
   return (
     <div 
-      className="px-4 py-4 flex items-center gap-3 transition-colors duration-500 z-20 relative border-b"
-      style={{ background: theme.bgSecondary, borderColor: theme.border }}
+      className="px-5 py-4 flex items-center gap-3 transition-colors duration-500 z-20 relative border-b border-slate-100"
+      style={{ background: '#FFFFFF' }}
     >
       {/* Search Input */}
       <div className="flex-1 relative flex items-center">
         <div 
-          className="absolute left-3.5 flex items-center justify-center pointer-events-none"
-          style={{ color: theme.textMuted }}
+          className="absolute left-4 flex items-center justify-center pointer-events-none"
+          style={{ color: '#94a3b8' }}
         >
           <SearchIcon sx={{ fontSize: 20 }} />
         </div>
@@ -63,12 +63,12 @@ const MainToolbar = ({
           placeholder={t('sharedSearchDevices')}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          className="w-full text-sm font-medium rounded-xl py-2.5 pl-10 pr-12 focus:outline-none focus:ring-2 transition-all shadow-inner border"
+          className="w-full text-[14px] font-bold rounded-2xl py-3 pl-11 pr-12 focus:outline-none focus:ring-2 transition-all border border-slate-100 placeholder:text-slate-400"
           style={{ 
-            background: theme.bg, 
-            borderColor: theme.border, 
-            color: theme.textPrimary,
-            '--tw-ring-color': theme.accent 
+            background: '#F8FAFC', 
+            borderColor: '#F1F5F9', 
+            color: '#0f172a',
+            '--tw-ring-color': theme.accent + '33'
           }}
         />
 
@@ -76,8 +76,8 @@ const MainToolbar = ({
         <button
           ref={filterRef}
           onClick={() => setFilterAnchorEl(filterRef.current)}
-          className="absolute right-2 p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer pointer-events-auto"
-          style={{ color: theme.textMuted }}
+          className="absolute right-2.5 p-1.5 rounded-xl transition-colors flex items-center justify-center cursor-pointer pointer-events-auto hover:bg-slate-200/50"
+          style={{ color: '#64748b' }}
           title={t('sharedSearch')}
         >
           <Badge
@@ -94,11 +94,11 @@ const MainToolbar = ({
       {!deviceReadonly && (
         <button
           onClick={() => navigate('/app/settings/device')}
-          className="w-11 h-11 flex-shrink-0 rounded-xl shadow-md flex items-center justify-center transition-transform active:scale-95"
-          style={{ background: theme.accent, color: theme.isDark ? 'black' : 'white' }}
+          className="w-12 h-12 flex-shrink-0 rounded-2xl shadow-lg shadow-cyan-500/20 flex items-center justify-center transition-transform active:scale-95"
+          style={{ background: theme.accent, color: 'white' }}
           title={t('sharedAdd')}
         >
-          <AddIcon sx={{ fontSize: 22 }} />
+          <AddIcon sx={{ fontSize: 24, fontWeight: 'bold' }} />
         </button>
       )}
 

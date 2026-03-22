@@ -4,7 +4,32 @@ Formato: [Semantic Versioning](https://semver.org/)
 
 ---
 
-## [0.13.1] — 2026-03-21
+## [0.14.0] — 2026-03-21
+ 
+### Added
+- **UI: Rebranding Total "EV Lifestyle" (Phase 9)**
+  - **Contexto:** Transformar a interface em uma experiência premium e tecnológica inspirada em EVs (Tesla/Rivian style).
+  - **Design System:** Implementada paleta Cyan (#06b6d4) e arredondamento global de **28px** para todos os containers (Card, Paper, Dialog).
+  - **Layout:** Sidebar do desktop agora é "floating" com margens de 16px, removendo o visual monolítico antigo.
+  - **Componente `SlideAction.jsx`:** Novo slider de segurança "Slide to Unlock" para ações críticas de bloqueio/desbloqueio no HUD.
+- **Mobile: Gestos de Swipe no `InnovatorHUD.jsx` (EV-4)**
+  - **Contexto:** Melhorar a ergonomia mobile permitindo expansão/colapso via gestos naturais.
+  - **Implementação:** Handlers `onTouchStart`/`onTouchEnd` para detecção de deslize vertical. O HUD agora alterna entre 50vh e 85vh suavemente.
+
+### Changed
+- **Mapa: Marcadores no estilo "Pill" (EV-5)**
+  - **Contexto:** Alinhar os ícones do mapa com a nova linguagem visual arredondada.
+  - **Mudança:** `background.svg` alterado de círculo para retângulo arredondado (pill).
+  - **Cores:** Todos os veículos agora usam Cyan como cor base de status ativo.
+- **HUD: Gauge Circular de Bateria (EV-3)**
+  - **Contexto:** Visualização mais intuitiva e moderna do nível de energia.
+  - **Implementação:** Novo componente `CircularBattery` baseado em SVG com animação de stroke-dashoffset.
+- **Login: Refatoração para Visual "Pure White" (EV-2)**
+  - **Contexto:** Criar uma primeira impressão de leveza e tecnologia.
+  - **Design:** Inputs arredondados (16px), botões pill, e glassmorphism refinado na barra lateral de boas-vindas.
+
+---
+
 
 ### Added
 - **PWA: Smart Install Banner no `LoginPage` (UX-2)**

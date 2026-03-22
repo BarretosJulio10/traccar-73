@@ -29,10 +29,11 @@ const useStyles = makeStyles()((theme) => ({
       position: 'fixed',
       left: 0,
       top: 0,
-      height: `calc(100% - ${theme.spacing(2)})`,
+      height: `calc(100% - ${theme.spacing(4)})`,
       width: theme.dimensions.drawerWidthDesktop,
-      margin: theme.spacing(1),
+      margin: theme.spacing(2),
       zIndex: 3,
+      gap: theme.spacing(2),
     },
     [theme.breakpoints.down('md')]: {
       height: '100%',
@@ -42,14 +43,16 @@ const useStyles = makeStyles()((theme) => ({
   header: {
     pointerEvents: 'auto',
     zIndex: 6,
-    borderRadius: '16px 16px 0 0',
+    borderRadius: '28px',
     overflow: 'hidden',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
   },
   footer: {
     pointerEvents: 'auto',
     zIndex: 5,
-    borderRadius: '0 0 16px 16px',
+    borderRadius: '28px',
     overflow: 'hidden',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
   },
   middle: {
     flex: 1,
@@ -66,6 +69,8 @@ const useStyles = makeStyles()((theme) => ({
     zIndex: 4,
     display: 'flex',
     minHeight: 0,
+    borderRadius: '28px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
   },
 }));
 

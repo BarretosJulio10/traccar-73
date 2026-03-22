@@ -239,21 +239,21 @@ const LoginPage = () => {
             sx={{
               width: 44,
               height: 44,
-              borderRadius: '10px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             }}
           />
           <Box sx={{ flex: 1, overflow: 'hidden' }}>
             <Typography
               variant="subtitle2"
-              sx={{ fontWeight: 800, color: '#fff', lineHeight: 1.2 }}
+              sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}
             >
               HyperTraccar
             </Typography>
             <Typography
               variant="caption"
               sx={{
-                color: 'rgba(255,255,255,0.5)',
+                color: 'text.secondary',
                 display: 'block',
                 whiteSpace: 'nowrap',
                 textOverflow: 'ellipsis',
@@ -268,13 +268,9 @@ const LoginPage = () => {
             variant="contained"
             onClick={handleInstallClick}
             sx={{
-              bgcolor: '#39ff14',
-              color: '#000',
-              fontWeight: 800,
               fontSize: '0.7rem',
               px: 2,
-              borderRadius: '6px',
-              '&:hover': { bgcolor: '#32e612' },
+              borderRadius: '8px',
             }}
           >
             INSTALAR
@@ -282,7 +278,7 @@ const LoginPage = () => {
           <IconButton
             size="small"
             onClick={() => setDismissedBanner(true)}
-            sx={{ color: 'rgba(255,255,255,0.3)' }}
+            sx={{ color: 'text.secondary' }}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -291,7 +287,7 @@ const LoginPage = () => {
       <div className={classes.options}>
         {nativeEnvironment && changeEnabled && (
           <IconButton
-            sx={{ color: 'rgba(255,255,255,0.7)' }}
+            sx={{ color: 'text.secondary' }}
             onClick={() => navigate('/change-server')}
           >
             <Tooltip
@@ -304,7 +300,7 @@ const LoginPage = () => {
           </IconButton>
         )}
         {!nativeEnvironment && (
-          <IconButton sx={{ color: 'rgba(255,255,255,0.7)' }} onClick={() => setShowQr(true)}>
+          <IconButton sx={{ color: 'text.secondary' }} onClick={() => setShowQr(true)}>
             <QrCode2Icon />
           </IconButton>
         )}
@@ -314,16 +310,15 @@ const LoginPage = () => {
               value={language}
               onChange={(e) => setLocalLanguage(e.target.value)}
               sx={{
-                color: '#fff',
-                bgcolor: 'rgba(255,255,255,0.15)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: '10px',
+                color: 'text.primary',
+                bgcolor: 'rgba(0,0,0,0.03)',
+                borderRadius: '12px',
                 fontWeight: 600,
-                '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.25)' },
+                '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0,0,0,0.08)' },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(255,255,255,0.5)',
+                  borderColor: 'primary.main',
                 },
-                '.MuiSvgIcon-root': { color: '#fff' },
+                '.MuiSvgIcon-root': { color: 'text.secondary' },
               }}
             >
               {languageList.map((it) => (
@@ -339,14 +334,14 @@ const LoginPage = () => {
         )}
       </div>
       <div className={classes.container}>
-        <div>
-          <Typography sx={{ fontWeight: 800, fontSize: '1.4rem', color: '#fff', mb: 0.5 }}>
+        <Box sx={{ mb: 2 }}>
+          <Typography sx={{ fontWeight: 900, fontSize: '1.75rem', color: 'text.primary', letterSpacing: '-0.02em', mb: 0.5 }}>
             {t('loginLogin')}
           </Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', mb: 1 }}>
+          <Typography sx={{ color: 'text.secondary', fontWeight: 500, fontSize: '0.875rem' }}>
             {t('loginCredentialsSubtitle')}
           </Typography>
-        </div>
+        </Box>
         {!openIdForced && (
           <>
             <TextField
@@ -382,7 +377,7 @@ const LoginPage = () => {
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
                         size="small"
-                        sx={{ color: 'rgba(255,255,255,0.6)' }}
+                        sx={{ color: 'text.secondary' }}
                       >
                         {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </IconButton>
@@ -410,21 +405,7 @@ const LoginPage = () => {
               variant="contained"
               disabled={!email || !password || (codeEnabled && !code)}
               startIcon={<LoginIcon />}
-              sx={{
-                bgcolor: '#fff',
-                color: '#1e293b',
-                py: 1.2,
-                fontSize: '0.875rem',
-                fontWeight: 700,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-                '&:hover': {
-                  bgcolor: '#f1f5f9',
-                },
-                '&.Mui-disabled': {
-                  color: '#94a3b8',
-                  bgcolor: 'rgba(255,255,255,0.5)',
-                },
-              }}
+              fullWidth
             >
               {t('loginLogin')}
             </Button>
@@ -433,13 +414,12 @@ const LoginPage = () => {
         {openIdEnabled && (
           <Button
             onClick={() => handleOpenIdLogin()}
-            variant="contained"
+            variant="outlined"
+            fullWidth
             sx={{
-              bgcolor: 'rgba(255,255,255,0.15)',
-              color: '#fff',
               py: 1.2,
-              border: '1px solid rgba(255,255,255,0.2)',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
+              borderColor: 'rgba(0,0,0,0.1)',
+              '&:hover': { borderColor: 'primary.main' },
             }}
           >
             {t('loginOpenId')}
@@ -447,18 +427,13 @@ const LoginPage = () => {
         )}
         <Button
           onClick={handleDemoLogin}
-          variant="outlined"
+          variant="text"
           type="button"
           sx={{
             py: 1,
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            borderColor: 'rgba(255,255,255,0.3)',
-            color: 'rgba(255,255,255,0.8)',
-            '&:hover': {
-              bgcolor: 'rgba(255,255,255,0.1)',
-              borderColor: 'rgba(255,255,255,0.5)',
-            },
+            color: 'text.secondary',
+            fontWeight: 700,
+            '&:hover': { color: 'primary.main' },
           }}
         >
           {t('loginDemoButton')}
@@ -472,9 +447,9 @@ const LoginPage = () => {
                 underline="none"
                 variant="caption"
                 sx={{
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.6)',
-                  '&:hover': { color: '#fff' },
+                  fontWeight: 600,
+                  color: 'primary.main',
+                  '&:hover': { textDecoration: 'underline' },
                 }}
               >
                 {t('loginRegister')}
@@ -487,9 +462,9 @@ const LoginPage = () => {
                 underline="none"
                 variant="caption"
                 sx={{
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.6)',
-                  '&:hover': { color: '#fff' },
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary' },
                 }}
               >
                 {t('loginReset')}

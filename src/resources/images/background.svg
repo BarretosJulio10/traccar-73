@@ -1,10 +1,10 @@
 <svg width="48px" height="48px" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <filter id="shadow">
-      <feDropShadow dx="0" dy="0.1" stdDeviation="0.3" flood-color="grey"/>
+      <feDropShadow dx="0" dy="0.1" stdDeviation="0.2" flood-color="rgba(0,0,0,0.15)"/>
     </filter>
   </defs>
 
-  <circle cx="5" cy="50%" r="4"
+  <rect x="0.5" y="0.5" width="9" height="9" rx="3.5" ry="3.5"
       style="fill:white; filter:url(#shadow);"/>
 </svg>

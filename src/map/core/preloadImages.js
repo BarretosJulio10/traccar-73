@@ -68,7 +68,10 @@ export const mapImages = {};
 
 const theme = createTheme({
   palette: {
-    neutral: { main: grey[500] },
+    neutral: { main: '#06b6d4' },
+    info: { main: '#06b6d4' },
+    success: { main: '#10b981' },
+    error: { main: '#ef4444' },
   },
 });
 

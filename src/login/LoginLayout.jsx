@@ -26,7 +26,7 @@ const useStyles = makeStyles()((theme) => ({
   sidebarOverlay: {
     position: 'absolute',
     inset: 0,
-    background: 'radial-gradient(circle at 30% 80%, rgba(255,255,255,0.08) 0%, transparent 60%)',
+    background: 'radial-gradient(circle at 10% 10%, rgba(6,182,212,0.05) 0%, transparent 50%)',
     pointerEvents: 'none',
   },
   logoZone: {
@@ -58,7 +58,7 @@ const useStyles = makeStyles()((theme) => ({
   bgOverlay: {
     position: 'absolute',
     inset: 0,
-    background: 'rgba(0,0,0,0.3)',
+    background: 'rgba(255,255,255,0.2)',
     zIndex: 0,
   },
 }));
@@ -70,14 +70,8 @@ const LoginLayout = ({ children }) => {
   const tenantCtx = useTenant();
   const tenant = tenantCtx?.tenant;
 
-  const sidebarColor =
-    tenant?.login_sidebar_color ||
-    tenant?.color_primary ||
-    (theme.palette.mode === 'dark' ? '#134e4a' : '#0f766e');
-  const bgImage = tenant?.login_bg_image;
-  const bgColor = tenant?.login_bg_color;
-
-  const sidebarBg = `linear-gradient(180deg, ${sidebarColor} 0%, ${sidebarColor}dd 50%, ${sidebarColor}bb 100%)`;
+  const sidebarBg = `linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)`;
+  const logoColor = theme.palette.primary.main;
 
   const contentStyle = {};
   if (bgImage) {
@@ -95,17 +89,17 @@ const LoginLayout = ({ children }) => {
 
   return (
     <main className={classes.root}>
-      <div className={classes.sidebar} style={{ background: sidebarBg }}>
+      <div className={classes.sidebar} style={{ background: sidebarBg, borderRight: '1px solid rgba(0,0,0,0.05)' }}>
         <div className={classes.sidebarOverlay} />
         <div className={classes.logoZone}>
-          <LogoImage color="#ffffff" />
+          <LogoImage color={logoColor} />
           <Typography
             sx={{
-              color: 'rgba(255,255,255,0.7)',
-              mt: 0.5,
-              fontWeight: 400,
+              color: 'text.secondary',
+              mt: 1,
+              fontWeight: 600,
               fontSize: '0.9rem',
-              letterSpacing: '0.05em',
+              letterSpacing: '0.02em',
             }}
           >
             {t('loginSmartTracking')}

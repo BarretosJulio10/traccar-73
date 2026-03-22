@@ -4,18 +4,18 @@
  */
 export const lightInputSx = {
   '& .MuiOutlinedInput-root': {
-    color: '#1e293b',
-    backgroundColor: '#fff',
-    borderRadius: '12px',
+    color: '#0f172a', // Slate 900
+    backgroundColor: '#ffffff',
+    borderRadius: '16px',
     '& fieldset': {
-      borderColor: 'transparent',
+      borderColor: 'rgba(0,0,0,0.06)',
     },
     '&:hover fieldset': {
-      borderColor: 'rgba(0,0,0,0.1)',
+      borderColor: 'rgba(6,182,212,0.2)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: 'rgba(0,0,0,0.2)',
-      borderWidth: '1.5px',
+      borderColor: '#06b6d4',
+      borderWidth: '2px',
     },
     '& input::placeholder': {
       color: '#94a3b8',
@@ -26,7 +26,7 @@ export const lightInputSx = {
     display: 'none',
   },
   '& .MuiFormHelperText-root': {
-    color: '#ff8a80',
+    color: '#ef4444',
   },
   '& .MuiIconButton-root': {
     color: '#64748b',

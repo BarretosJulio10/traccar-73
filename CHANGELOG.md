@@ -19,6 +19,10 @@ Formato: [Semantic Versioning](https://semver.org/)
   - **ExpandableRow:** `DeviceRow.jsx` agora conta com modo expandido (240px) exibindo telemetria completa.
   - **Controles Integrados:** Inclusão de sliders `SlideAction` de bloqueio/desbloqueio e botão de 'Âncora' diretamente na lista.
   - **Navegação:** Novo atalho 'Seta' para foco instantâneo do veículo no mapa.
+- **Header Superior Unificado (EV-8)**
+  - **Componente `DesktopHeader.jsx`:** Barra horizontal centralizada a `2px` do topo para Desktop.
+  - **Consolidação:** Reúne ações do `BottomMenu` e `MapSideMenu` em um único lugar, otimizando o espaço de trabalho.
+  - **Estética:** Glassmorphism com bordas arredondadas e sombra dinâmica.
 - **Mobile: Gestos de Swipe no `InnovatorHUD.jsx` (EV-4)**
   - **Contexto:** Melhorar a ergonomia mobile permitindo expansão/colapso via gestos naturais.
   - **Implementação:** Handlers `onTouchStart`/`onTouchEnd` para detecção de deslize vertical. O HUD agora alterna entre 50vh e 85vh suavemente.

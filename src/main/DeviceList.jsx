@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { List } from 'react-window';
+import { VariableSizeList as List } from 'react-window';
 import { devicesActions } from '../store';
 import { useEffectAsync } from '../reactHelper';
-import DeviceRow from './DeviceRow';
+import DeviceRow, { COMPACT_HEIGHT, EXPANDED_HEIGHT } from './DeviceRow';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
 const useStyles = makeStyles()((theme) => ({
@@ -19,15 +19,19 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const COMPACT_HEIGHT = 88;
-const EXPANDED_HEIGHT = 88;
-
 const DeviceList = ({ devices }) => {
   const { classes } = useStyles();
   const dispatch = useDispatch();
   const theme = useTheme();
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const selectedId = useSelector((state) => state.devices.selectedId);
+  const listRef = React.useRef();
+
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.resetAfterIndex(0);
+    }
+  }, [selectedId]);
 
   const [, setTime] = useState(Date.now());
 
@@ -51,18 +55,29 @@ const DeviceList = ({ devices }) => {
 
   const getRowHeight = (index) => {
     const device = devices[index];
-    return device && device.id === selectedId ? EXPANDED_HEIGHT : COMPACT_HEIGHT;
+    return (device && device.id === selectedId) ? EXPANDED_HEIGHT : COMPACT_HEIGHT;
   };
 
   return (
-    <List
-      className={classes.list}
-      rowComponent={DeviceRow}
-      rowCount={devices.length}
-      rowHeight={getRowHeight}
-      rowProps={{ devices, desktop }}
-      overscanCount={5}
-    />
+    <div className={classes.list}>
+      {/* Assuming parent provides height, using a large default if needed */}
+      <List
+        ref={listRef}
+        itemCount={devices.length}
+        itemSize={getRowHeight}
+        width="100%"
+        height={window.innerHeight - 200} // Dynamic estimate for sidebar height
+        overscanCount={5}
+      >
+        {(props) => (
+          <DeviceRow
+            {...props}
+            devices={devices}
+            desktop={desktop}
+          />
+        )}
+      </List>
+    </div>
   );
 };
 

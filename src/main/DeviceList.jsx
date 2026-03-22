@@ -56,6 +56,10 @@ const DeviceList = ({ devices }) => {
     return (device && device.id === selectedId) ? EXPANDED_HEIGHT : COMPACT_HEIGHT;
   };
 
+  if (devices.length === 0) {
+    return null; // or a loading/empty state if preferred
+  }
+
   return (
     <div className={classes.list}>
       {/* Assuming parent provides height, using a large default if needed */}

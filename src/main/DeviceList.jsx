@@ -66,6 +66,7 @@ const DeviceList = ({ devices }) => {
         width="100%"
         height={window.innerHeight - 200} // Dynamic estimate for sidebar height
         overscanCount={5}
+        rowProps={{}}
       >
         {(props) => (
           <DeviceRow

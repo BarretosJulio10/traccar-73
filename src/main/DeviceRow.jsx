@@ -9,7 +9,7 @@ import { useHudTheme } from '../common/util/ThemeContext';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import SlideAction from '../common/components/SlideAction';
-import { useCatchCallback } from '../common/util/catch';
+import { useCatchCallback } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
 dayjs.extend(relativeTime);

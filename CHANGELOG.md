@@ -15,6 +15,10 @@ Formato: [Semantic Versioning](https://semver.org/)
 - **UI: Correção de Sobreposição no Desktop (EV-Fix)**
   - **Contexto:** A nova Sidebar flutuante estava cobrindo o `MapSideMenu` posicionado à esquerda.
   - **Correção:** O `MapSideMenu` foi movido para `right: 16` e `top: 100`, com visual atualizado para o tema Cyan.
+- **Novos Cards de Dispositivos Expansíveis (EV-7)**
+  - **ExpandableRow:** `DeviceRow.jsx` agora conta com modo expandido (240px) exibindo telemetria completa.
+  - **Controles Integrados:** Inclusão de sliders `SlideAction` de bloqueio/desbloqueio e botão de 'Âncora' diretamente na lista.
+  - **Navegação:** Novo atalho 'Seta' para foco instantâneo do veículo no mapa.
 - **Mobile: Gestos de Swipe no `InnovatorHUD.jsx` (EV-4)**
   - **Contexto:** Melhorar a ergonomia mobile permitindo expansão/colapso via gestos naturais.
   - **Implementação:** Handlers `onTouchStart`/`onTouchEnd` para detecção de deslize vertical. O HUD agora alterna entre 50vh e 85vh suavemente.

@@ -13,6 +13,7 @@ import EventsDrawer from './EventsDrawer';
 import useFilter from './useFilter';
 import MainToolbar from './MainToolbar';
 import MainMap from './MainMap';
+import DesktopHeader from './DesktopHeader';
 import MapSideMenu from './MapSideMenu';
 import { useAttributePreference } from '../common/util/preferences';
 
@@ -32,7 +33,7 @@ const useStyles = makeStyles()((theme) => ({
       height: `calc(100% - ${theme.spacing(4)})`,
       width: theme.dimensions.drawerWidthDesktop,
       margin: theme.spacing(2),
-      zIndex: 3,
+      zIndex: 10, // Increased zIndex for sidebar
       gap: theme.spacing(2),
     },
     [theme.breakpoints.down('md')]: {
@@ -123,6 +124,8 @@ const MainPage = () => {
 
   return (
     <div className={classes.root}>
+      {desktop && <DesktopHeader />}
+      
       {desktop && (
         <MainMap
           filteredPositions={filteredPositions}
@@ -164,14 +167,16 @@ const MainPage = () => {
             <DeviceList devices={filteredDevices} />
           </Paper>
         </div>
-        {desktop && (
-          <div className={classes.footer}>
-            <BottomMenu />
-          </div>
-        )}
+        {/* Removed redundant BottomMenu for desktop */}
       </div>
       <EventsDrawer open={eventsOpen} onClose={() => setEventsOpen(false)} />
-      {desktop && <MapSideMenu />}
+      {!desktop && (
+         <div className="fixed bottom-0 left-0 right-0 p-4 z-[5000]">
+           <BottomMenu />
+         </div>
+      )}
+      {/* MapSideMenu removed for desktop as it's unified in DesktopHeader */}
+      {!desktop && <MapSideMenu />}
       {selectedDeviceId && (
         <StatusCard
           deviceId={selectedDeviceId}

@@ -10,7 +10,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import SlideAction from '../common/components/SlideAction';
 import { useCatchCallback } from '../reactHelper';
-import fetchOrThrow from '../common/util/fetchOrThrow';
+import { traccarCommandsAdapter } from '../adapters/traccar/commandsAdapter';
 
 dayjs.extend(relativeTime);
 
@@ -30,14 +30,7 @@ const DeviceRow = ({ devices, index, style, desktop }) => {
   const isOnline = item.status === 'online';
 
   const onCommand = useCatchCallback(async (type) => {
-    const response = await fetchOrThrow('/api/commands/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        deviceId: item.id,
-        type,
-      }),
-    });
+    const response = await traccarCommandsAdapter.sendCommand(item.id, type);
     if (response.ok) {
       // Command sent successfully
     }

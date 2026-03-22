@@ -20,8 +20,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from './LocalizationProvider';
 
-const useStyles = makeStyles()((theme) => ({
-  overlay: {
+import { getGlassmorphismStyle } from '../../themes/tenantTheming';
+
+const useStyles = makeStyles()((theme) => {
+  const glass = getGlassmorphismStyle(theme);
+  return {
+    overlay: {
     position: 'fixed',
     inset: 0,
     zIndex: 1200,
@@ -36,12 +40,10 @@ const useStyles = makeStyles()((theme) => ({
     width: '90vw',
     maxWidth: 1200,
     height: '80vh',
-    borderRadius: 20,
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.25), 0 8px 32px rgba(0,0,0,0.15)',
-    backgroundColor: theme.palette.background.paper,
+    ...glass,
   },
   floatingHeader: {
     display: 'flex',
@@ -98,7 +100,8 @@ const useStyles = makeStyles()((theme) => ({
       paddingBottom: theme.spacing(2),
     },
   },
-}));
+  };
+});
 
 const PageTitle = ({ breadcrumbs }) => {
   const t = useTranslation();

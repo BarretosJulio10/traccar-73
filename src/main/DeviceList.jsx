@@ -6,7 +6,7 @@ import { List } from 'react-window';
 import { devicesActions } from '../store';
 import { useEffectAsync } from '../reactHelper';
 import DeviceRow, { COMPACT_HEIGHT, EXPANDED_HEIGHT } from './DeviceRow';
-import fetchOrThrow from '../common/util/fetchOrThrow';
+import { traccarDevicesAdapter } from '../adapters/traccar/devicesAdapter';
 
 const useStyles = makeStyles()((theme) => ({
   list: {
@@ -44,8 +44,7 @@ const DeviceList = ({ devices }) => {
     if (window.sessionStorage.getItem('demoMode') === 'true') {
       return;
     }
-    const response = await fetchOrThrow('/api/devices');
-    const data = await response.json();
+    const data = await traccarDevicesAdapter.fetchDevices();
     if (Array.isArray(data)) {
       dispatch(devicesActions.refresh(data));
     }

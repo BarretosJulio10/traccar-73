@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { motionActions } from '../store';
 import { useAttributePreference } from '../common/util/preferences';
 import { useEffectAsync } from '../reactHelper';
-import fetchOrThrow from '../common/util/fetchOrThrow';
+import { traccarReportsAdapter } from '../adapters/traccar/reportsAdapter';
 
 const buildSegments = (events, fromTimestamp, toTimestamp) => {
   const segments = [];
@@ -64,10 +64,8 @@ const MotionController = ({ demoMode = false }) => {
       query.append('type', 'deviceMoving');
       query.append('type', 'deviceStopped');
 
-      const response = await fetchOrThrow(`/api/reports/events?${query.toString()}`, {
-        headers: { Accept: 'application/json' },
-      });
-      const events = await response.json();
+      const events = await traccarReportsAdapter.fetchEvents(query);
+
 
       const groupedEvents = {};
       events.forEach((event) => {

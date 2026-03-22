@@ -12,6 +12,9 @@ Formato: [Semantic Versioning](https://semver.org/)
   - **Design System:** Implementada paleta Cyan (#06b6d4) e arredondamento global de **28px** para todos os containers (Card, Paper, Dialog).
   - **Layout:** Sidebar do desktop agora é "floating" com margens de 16px, removendo o visual monolítico antigo.
   - **Componente `SlideAction.jsx`:** Novo slider de segurança "Slide to Unlock" para ações críticas de bloqueio/desbloqueio no HUD.
+- **UI: Correção de Sobreposição no Desktop (EV-Fix)**
+  - **Contexto:** A nova Sidebar flutuante estava cobrindo o `MapSideMenu` posicionado à esquerda.
+  - **Correção:** O `MapSideMenu` foi movido para `right: 16` e `top: 100`, com visual atualizado para o tema Cyan.
 - **Mobile: Gestos de Swipe no `InnovatorHUD.jsx` (EV-4)**
   - **Contexto:** Melhorar a ergonomia mobile permitindo expansão/colapso via gestos naturais.
   - **Implementação:** Handlers `onTouchStart`/`onTouchEnd` para detecção de deslize vertical. O HUD agora alterna entre 50vh e 85vh suavemente.

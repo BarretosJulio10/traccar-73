@@ -12,6 +12,9 @@ Formato: [Semantic Versioning](https://semver.org/)
   - **Design System:** Implementada paleta Cyan (#06b6d4) e arredondamento global de **28px** para todos os containers (Card, Paper, Dialog).
   - **Layout:** Sidebar do desktop agora é "floating" com margens de 16px, removendo o visual monolítico antigo.
   - **Componente `SlideAction.jsx`:** Novo slider de segurança "Slide to Unlock" para ações críticas de bloqueio/desbloqueio no HUD.
+- **Fix: Erro de Execução "TypeError: Object.values" (EV-Fix-Runtime)**
+  - **Contexto:** Crash ao abrir a lista de dispositivos no Vercel.
+  - **Correção:** Fornecido `rowProps={{}}` para o componente `List` evitar falha interna na biblioteca.
 - **Fix: Erro de Build no Vercel (EV-Fix-Build-2)**
   - **Contexto:** Exportação `VariableSizeList` inexistente na versão customizada do `react-window`.
   - **Correção:** Alterado para usar o componente `List` nativo com suporte a `itemSize` dinâmico.

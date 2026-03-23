@@ -126,7 +126,7 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                 await fetchOrThrow('/api/commands/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ deviceId: device.id, type }),
+                    body: JSON.stringify({ deviceId: device.id, type, attributes: {} }),
                 });
             } else {
                 await new Promise(r => setTimeout(r, 800));

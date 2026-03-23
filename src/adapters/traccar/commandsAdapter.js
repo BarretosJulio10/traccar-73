@@ -8,7 +8,7 @@ export const traccarCommandsAdapter = {
     const response = await fetchOrThrow('/api/commands/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, type }),
+      body: JSON.stringify({ deviceId, type, attributes: {} }),
     });
     return response;
   },

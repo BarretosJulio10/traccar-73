@@ -70,6 +70,7 @@ const useStyles = makeStyles()((theme) => {
     flexGrow: 1,
     minWidth: 0,
     overflowY: 'auto',
+    overflowX: 'auto',
     padding: theme.spacing(3),
   },
   mobileRoot: {
@@ -101,6 +102,7 @@ const useStyles = makeStyles()((theme) => {
     display: 'flex',
     flexDirection: 'column',
     overflowY: 'auto',
+    overflowX: 'auto',
     [theme.breakpoints.down('md')]: {
       paddingBottom: `calc(${theme.dimensions.bottomBarHeight}px + ${theme.spacing(4)} + env(safe-area-inset-bottom, 0px))`,
     },

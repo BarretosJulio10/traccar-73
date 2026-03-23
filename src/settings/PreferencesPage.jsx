@@ -392,7 +392,7 @@ const PreferencesPage = () => {
         </NeumorphicSection>
 
         {/* Action Buttons */}
-        <div className="fixed bottom-24 left-4 right-4 z-40 flex gap-4 pointer-events-none">
+        <div className="fixed left-4 right-4 z-40 flex gap-4 pointer-events-none" style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 1rem)' }}>
           <button
             type="button"
             onClick={() => navigate(-1)}

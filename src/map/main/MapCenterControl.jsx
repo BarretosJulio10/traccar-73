@@ -1,7 +1,8 @@
 import { useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import maplibregl from 'maplibre-gl';
 import { map } from '../core/MapView';
+import { devicesActions } from '../../store';
 
 class CenterControl {
     constructor(onClick) {
@@ -33,8 +34,13 @@ class CenterControl {
 
 const MapCenterControl = () => {
     const positions = useSelector((state) => state.session.positions);
+    const dispatch = useDispatch();
 
     const handleCenter = useCallback(() => {
+        // Close any open panel / selected device
+        dispatch(devicesActions.selectId(null));
+        window.dispatchEvent(new CustomEvent('center-all'));
+
         const coordinates = Object.values(positions).map((item) => [item.longitude, item.latitude]);
         if (coordinates.length > 0) {
             const bounds = coordinates.reduce(
@@ -46,7 +52,7 @@ const MapCenterControl = () => {
                 maxZoom: 16,
             });
         }
-    }, [positions]);
+    }, [positions, dispatch]);
 
     useEffect(() => {
         const control = new CenterControl(handleCenter);

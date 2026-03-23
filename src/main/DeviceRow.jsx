@@ -224,34 +224,51 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
     top: typeof style.top === 'number' ? style.top + 5 : style.top,
   };
 
+  // Semantic lock button colors — adapt to dark/light
+  const lockBg = isBlockedLocal
+    ? (theme.isDark ? 'rgba(74,222,128,0.12)' : '#dcfce7')
+    : (theme.isDark ? 'rgba(248,113,113,0.12)' : '#fee2e2');
+  const lockBorder = isBlockedLocal
+    ? (theme.isDark ? 'rgba(74,222,128,0.3)' : '#86efac')
+    : (theme.isDark ? 'rgba(248,113,113,0.3)' : '#fca5a5');
+  const lockColor = isBlockedLocal
+    ? (theme.isDark ? '#4ade80' : '#16a34a')
+    : (theme.isDark ? '#f87171' : '#dc2626');
+
   return (
     <div style={adjustedStyle} className="px-2">
       <div
         onClick={handleClick}
         className={`h-full transition-all duration-300 cursor-pointer flex flex-col group p-3 rounded-2xl border relative overflow-hidden ${isPending ? 'opacity-60 pointer-events-none grayscale-[30%]' : ''}`}
         style={{
-          background: isSelected ? '#FFFFFF' : '#F8FAFC',
-          borderColor: isSelected ? theme.accent : 'rgba(0,0,0,0.03)',
-          boxShadow: isSelected ? `0 10px 25px rgba(6,182,212,0.12)` : 'none',
+          background: isSelected ? theme.bgCard : theme.bg,
+          borderColor: isSelected ? theme.accent : theme.borderCard,
+          boxShadow: isSelected ? `0 10px 25px rgba(${theme.accentRgb},0.12)` : 'none',
         }}
       >
         {isPending && (
-          <div className="absolute inset-0 z-50 flex flex-col gap-2 items-center justify-center bg-white/40 backdrop-blur-[2px]">
-             <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-             <span className="text-[10px] font-black tracking-widest text-cyan-800 uppercase animate-pulse">Processando...</span>
+          <div
+            className="absolute inset-0 z-50 flex flex-col gap-2 items-center justify-center backdrop-blur-[2px]"
+            style={{ background: theme.isDark ? 'rgba(17,18,20,0.75)' : 'rgba(248,250,252,0.75)' }}
+          >
+            <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${theme.accent} transparent transparent transparent` }} />
+            <span className="text-[10px] font-black tracking-widest uppercase animate-pulse" style={{ color: theme.accent }}>Processando...</span>
           </div>
         )}
         {isSelected && (
-          <div 
-            className="absolute left-0 top-0 bottom-0 w-1.5" 
+          <div
+            className="absolute left-0 top-0 bottom-0 w-1.5"
             style={{ background: theme.accent }}
           />
         )}
-        
+
         {/* Header Row */}
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-50 border border-slate-100">
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border"
+              style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
+            >
               <img
                 src={mapIcons[mapIconKey(item.category)]}
                 alt={item.category}
@@ -261,27 +278,42 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
             </div>
 
             <div className="flex flex-col min-w-0">
-              <h3 className="text-[14px] font-black tracking-tight truncate leading-none mb-1" style={{ color: isSelected ? theme.accent : '#0f172a' }}>
+              <h3
+                className="text-[14px] font-black tracking-tight truncate leading-none mb-1"
+                style={{ color: isSelected ? theme.accent : theme.textPrimary }}
+              >
                 {item.name}
               </h3>
               <div className="flex items-center gap-1.5 mb-0.5">
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'animate-pulse' : ''}`} style={{ background: isOnline ? theme.accent : '#cbd5e1' }} />
-                <span className="text-[10px] font-black tracking-widest uppercase" style={{ color: isOnline ? theme.accent : '#94a3b8' }}>
+                <div
+                  className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'animate-pulse' : ''}`}
+                  style={{ background: isOnline ? theme.accent : theme.textMuted }}
+                />
+                <span
+                  className="text-[10px] font-black tracking-widest uppercase"
+                  style={{ color: isOnline ? theme.accent : theme.textMuted }}
+                >
                   {isOnline ? 'Online' : 'Offline'}
                 </span>
               </div>
               {(item.attributes?.plate || item.attributes?.placa || item.contact) && (
                 <div className="flex items-center gap-1 min-w-0 overflow-hidden">
                   {(item.attributes?.plate || item.attributes?.placa) && (
-                    <span className="text-[8.5px] font-bold uppercase tracking-wide text-slate-400 flex-shrink-0">
+                    <span
+                      className="text-[8.5px] font-bold uppercase tracking-wide flex-shrink-0"
+                      style={{ color: theme.textSecondary }}
+                    >
                       {item.attributes.plate || item.attributes.placa}
                     </span>
                   )}
                   {(item.attributes?.plate || item.attributes?.placa) && item.contact && (
-                    <span className="text-[8px] text-slate-300 flex-shrink-0">·</span>
+                    <span className="text-[8px] flex-shrink-0" style={{ color: theme.textMuted }}>·</span>
                   )}
                   {item.contact && (
-                    <span className="text-[8.5px] font-medium text-slate-400 truncate">
+                    <span
+                      className="text-[8.5px] font-medium truncate"
+                      style={{ color: theme.textSecondary }}
+                    >
                       {item.contact}
                     </span>
                   )}
@@ -292,8 +324,14 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
 
           <div className="flex items-center gap-2">
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <div className="bg-slate-100/50 px-2.5 py-1 rounded-xl border border-slate-200/50">
-                <span className="text-[14px] font-black" style={{ color: isOnline ? '#0f172a' : '#94a3b8' }}>
+              <div
+                className="px-2.5 py-1 rounded-xl border"
+                style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
+              >
+                <span
+                  className="text-[14px] font-black"
+                  style={{ color: isOnline ? theme.textPrimary : theme.textMuted }}
+                >
                   {speedKmh}<span className="text-[10px] ml-1 opacity-40">km/h</span>
                 </span>
               </div>
@@ -310,9 +348,17 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
               }}
               className="w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 cursor-pointer"
               style={{
-                background: isPanelOpen ? 'rgba(6,182,212,0.15)' : isSelected ? 'rgba(6,182,212,0.08)' : '#f1f5f9',
-                borderColor: isPanelOpen ? 'rgba(6,182,212,0.6)' : isSelected ? 'rgba(6,182,212,0.3)' : '#e2e8f0',
-                color: isPanelOpen ? '#06b6d4' : isSelected ? '#06b6d4' : '#94a3b8',
+                background: isPanelOpen
+                  ? `rgba(${theme.accentRgb},0.15)`
+                  : isSelected
+                    ? `rgba(${theme.accentRgb},0.08)`
+                    : theme.bgSecondary,
+                borderColor: isPanelOpen
+                  ? `rgba(${theme.accentRgb},0.6)`
+                  : isSelected
+                    ? `rgba(${theme.accentRgb},0.3)`
+                    : theme.borderCard,
+                color: (isPanelOpen || isSelected) ? theme.accent : theme.textMuted,
                 transform: isPanelOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                 transition: 'all 0.25s ease',
               }}
@@ -324,21 +370,23 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
 
         {/* Expanded Section */}
         <div className={`flex flex-col gap-3 mt-4 transition-all duration-300 overflow-hidden ${isSelected ? 'opacity-100' : 'opacity-0 h-0 pointer-events-none'}`}>
-          
+
           {/* Telemetry Strip */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-100 flex flex-col items-center">
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Bateria</span>
-              <span className="text-[11px] font-black text-slate-700">{battery}%</span>
-            </div>
-            <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-100 flex flex-col items-center">
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Odômetro</span>
-              <span className="text-[11px] font-black text-slate-700">{odometer} <span className="text-[8px] opacity-40">km</span></span>
-            </div>
-            <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-100 flex flex-col items-center">
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Altitude</span>
-              <span className="text-[11px] font-black text-slate-700">{altitude} <span className="text-[8px] opacity-40">m</span></span>
-            </div>
+            {[
+              { label: 'Bateria', value: `${battery}%` },
+              { label: 'Odômetro', value: <>{odometer} <span className="text-[8px] opacity-40">km</span></> },
+              { label: 'Altitude', value: <>{altitude} <span className="text-[8px] opacity-40">m</span></> },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                className="p-2 rounded-xl border flex flex-col items-center"
+                style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
+              >
+                <span className="text-[8px] font-bold uppercase tracking-tighter" style={{ color: theme.textMuted }}>{label}</span>
+                <span className="text-[11px] font-black" style={{ color: theme.textPrimary }}>{value}</span>
+              </div>
+            ))}
           </div>
 
           {/* Action Controls */}
@@ -349,30 +397,33 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                 <div
                   className="flex items-center gap-1.5 px-3 h-11 rounded-xl border transition-all duration-300"
                   style={{
-                    background: anchor.enabled ? 'rgba(6,182,212,0.08)' : '#f8fafc',
-                    borderColor: anchor.enabled ? '#06b6d4' : '#e2e8f0',
+                    background: anchor.enabled ? `rgba(${theme.accentRgb},0.08)` : theme.bgSecondary,
+                    borderColor: anchor.enabled ? theme.accent : theme.borderCard,
                   }}
                 >
-                  <AnchorIcon sx={{ fontSize: 15, color: anchor.enabled ? '#06b6d4' : '#94a3b8' }} />
+                  <AnchorIcon sx={{ fontSize: 15, color: anchor.enabled ? theme.accent : theme.textMuted }} />
                   <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-[9px] font-black uppercase tracking-widest leading-none" style={{ color: anchor.enabled ? '#06b6d4' : '#94a3b8' }}>
+                    <span
+                      className="text-[9px] font-black uppercase tracking-widest leading-none"
+                      style={{ color: anchor.enabled ? theme.accent : theme.textMuted }}
+                    >
                       Âncora {anchor.enabled ? 'Ativa' : 'Desligada'}
                     </span>
-                    <span className="text-[8px] text-slate-400 leading-none mt-0.5">
+                    <span className="text-[8px] leading-none mt-0.5" style={{ color: theme.textMuted }}>
                       {anchor.radius}m{anchor.autoBlock ? ' · auto-bloqueio' : ''}
                     </span>
                   </div>
                   {anchor.enabled && (
-                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#06b6d4', flexShrink: 0 }} />
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: theme.accent, flexShrink: 0 }} />
                   )}
                   {/* Toggle on/off */}
                   <button
                     onClick={handleAnchorToggle}
                     className="w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 active:scale-95"
                     style={{
-                      background: anchor.enabled ? 'rgba(6,182,212,0.15)' : '#f1f5f9',
-                      borderColor: anchor.enabled ? '#06b6d4' : '#e2e8f0',
-                      color: anchor.enabled ? '#06b6d4' : '#94a3b8',
+                      background: anchor.enabled ? `rgba(${theme.accentRgb},0.15)` : theme.bgSecondary,
+                      borderColor: anchor.enabled ? theme.accent : theme.borderCard,
+                      color: anchor.enabled ? theme.accent : theme.textMuted,
                     }}
                     title={anchor.enabled ? 'Desligar âncora' : 'Ligar âncora'}
                   >
@@ -381,8 +432,12 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                   {/* Remove */}
                   <button
                     onClick={handleAnchorRemove}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 transition-all duration-200 active:scale-95 hover:border-red-300 hover:text-red-400"
-                    style={{ background: '#f8fafc', color: '#cbd5e1' }}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 active:scale-95"
+                    style={{
+                      background: theme.bgSecondary,
+                      borderColor: theme.borderCard,
+                      color: theme.textMuted,
+                    }}
                     title="Remover âncora"
                   >
                     <DeleteOutlineIcon sx={{ fontSize: 15 }} />
@@ -393,7 +448,12 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                   onClick={openAnchorPanel}
                   disabled={!position}
                   className="h-11 rounded-xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px] border transition-all duration-300 active:scale-95"
-                  style={{ background: '#f8fafc', borderColor: '#e2e8f0', color: '#94a3b8', opacity: !position ? 0.4 : 1 }}
+                  style={{
+                    background: theme.bgSecondary,
+                    borderColor: theme.borderCard,
+                    color: theme.textMuted,
+                    opacity: !position ? 0.4 : 1,
+                  }}
                 >
                   <AnchorIcon sx={{ fontSize: 17 }} />
                   <span>Definir Âncora</span>
@@ -405,9 +465,9 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                 disabled={isLockPending}
                 className="h-11 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase tracking-[1px] text-[10px] transition-all duration-300 border active:scale-95"
                 style={{
-                  background: isBlockedLocal ? '#dcfce7' : '#fee2e2',
-                  borderColor: isBlockedLocal ? '#86efac' : '#fca5a5',
-                  color: isBlockedLocal ? '#16a34a' : '#dc2626',
+                  background: lockBg,
+                  borderColor: lockBorder,
+                  color: lockColor,
                   opacity: isLockPending ? 0.6 : 1,
                 }}
               >
@@ -422,21 +482,25 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
             /* ── Anchor Config Panel ── */
             <div
               className="flex flex-col gap-2.5 p-3 rounded-2xl border"
-              style={{ background: '#f8fafc', borderColor: 'rgba(6,182,212,0.25)' }}
+              style={{ background: theme.bgSecondary, borderColor: `rgba(${theme.accentRgb},0.25)` }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <AnchorIcon sx={{ fontSize: 14, color: '#06b6d4' }} />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Configurar Âncora</span>
+                  <AnchorIcon sx={{ fontSize: 14, color: theme.accent }} />
+                  <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textSecondary }}>Configurar Âncora</span>
                 </div>
-                <button onClick={closeAnchorPanel} className="text-slate-300 hover:text-slate-500 transition-colors text-xs font-bold">✕</button>
+                <button
+                  onClick={closeAnchorPanel}
+                  className="text-xs font-bold transition-colors"
+                  style={{ color: theme.textMuted }}
+                >✕</button>
               </div>
 
               {/* Radius picker */}
               <div className="flex flex-col gap-1">
-                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider px-0.5">Raio da cerca</span>
+                <span className="text-[8px] font-bold uppercase tracking-wider px-0.5" style={{ color: theme.textMuted }}>Raio da cerca</span>
                 <div className="flex gap-1">
                   {RADII.map((r) => (
                     <button
@@ -444,9 +508,9 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                       onClick={() => setAnchorRadius(r)}
                       className="flex-1 h-8 rounded-lg text-[9px] font-black uppercase tracking-wide transition-all duration-150 border"
                       style={{
-                        background: anchorRadius === r ? '#06b6d4' : '#fff',
-                        borderColor: anchorRadius === r ? '#06b6d4' : '#e2e8f0',
-                        color: anchorRadius === r ? '#fff' : '#94a3b8',
+                        background: anchorRadius === r ? theme.accent : theme.bgCard,
+                        borderColor: anchorRadius === r ? theme.accent : theme.borderCard,
+                        color: anchorRadius === r ? (theme.isDark ? theme.bg : '#fff') : theme.textMuted,
                       }}
                     >
                       {r}m
@@ -460,23 +524,26 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                 onClick={() => setAnchorAutoBlock(!anchorAutoBlock)}
                 className="flex items-center justify-between px-3 h-9 rounded-xl border transition-all duration-200"
                 style={{
-                  background: anchorAutoBlock ? 'rgba(239,68,68,0.06)' : '#fff',
-                  borderColor: anchorAutoBlock ? '#fca5a5' : '#e2e8f0',
+                  background: anchorAutoBlock ? 'rgba(239,68,68,0.06)' : theme.bgCard,
+                  borderColor: anchorAutoBlock ? (theme.isDark ? 'rgba(248,113,113,0.4)' : '#fca5a5') : theme.borderCard,
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <LockIcon sx={{ fontSize: 13, color: anchorAutoBlock ? '#ef4444' : '#cbd5e1' }} />
-                  <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: anchorAutoBlock ? '#ef4444' : '#94a3b8' }}>
+                  <LockIcon sx={{ fontSize: 13, color: anchorAutoBlock ? '#ef4444' : theme.textMuted }} />
+                  <span
+                    className="text-[9px] font-black uppercase tracking-wide"
+                    style={{ color: anchorAutoBlock ? (theme.isDark ? '#f87171' : '#ef4444') : theme.textMuted }}
+                  >
                     Bloquear ao sair da cerca
                   </span>
                 </div>
                 <div
                   className="w-8 h-4 rounded-full transition-all duration-200 flex items-center"
-                  style={{ background: anchorAutoBlock ? '#ef4444' : '#e2e8f0', padding: '2px' }}
+                  style={{ background: anchorAutoBlock ? '#ef4444' : theme.borderCard, padding: '2px' }}
                 >
                   <div
-                    className="w-3 h-3 rounded-full bg-white shadow-sm transition-all duration-200"
-                    style={{ marginLeft: anchorAutoBlock ? '16px' : '0px' }}
+                    className="w-3 h-3 rounded-full shadow-sm transition-all duration-200"
+                    style={{ background: '#fff', marginLeft: anchorAutoBlock ? '16px' : '0px' }}
                   />
                 </div>
               </button>
@@ -486,7 +553,7 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                 <button
                   onClick={closeAnchorPanel}
                   className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-colors"
-                  style={{ background: '#fff', borderColor: '#e2e8f0', color: '#94a3b8' }}
+                  style={{ background: theme.bgCard, borderColor: theme.borderCard, color: theme.textMuted }}
                 >
                   Cancelar
                 </button>
@@ -495,13 +562,13 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                   disabled={anchorStatus === 'loading'}
                   className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5"
                   style={{
-                    background: anchorStatus === 'ok' ? '#10b981' : anchorStatus === 'error' ? '#ef4444' : '#06b6d4',
-                    color: '#fff',
+                    background: anchorStatus === 'ok' ? '#10b981' : anchorStatus === 'error' ? '#ef4444' : theme.accent,
+                    color: theme.isDark ? theme.bg : '#fff',
                     opacity: anchorStatus === 'loading' ? 0.7 : 1,
                   }}
                 >
                   {anchorStatus === 'loading'
-                    ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ? <div className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${theme.isDark ? theme.bg : '#fff'} transparent transparent transparent` }} />
                     : <AnchorIcon sx={{ fontSize: 13 }} />
                   }
                   <span>{anchorStatus === 'ok' ? 'Criada!' : anchorStatus === 'error' ? 'Erro' : 'Criar Âncora'}</span>

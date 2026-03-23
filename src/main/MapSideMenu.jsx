@@ -1,25 +1,22 @@
-import { Tooltip, Box, useMediaQuery, useTheme } from '@mui/material';
+import { Tooltip, Box } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useNavigate } from 'react-router-dom';
 import DevicesIcon from '@mui/icons-material/Devices';
-import GroupsIcon from '@mui/icons-material/Groups';
-import PersonIcon from '@mui/icons-material/Person';
 import FenceIcon from '@mui/icons-material/Fence';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import BuildIcon from '@mui/icons-material/Build';
 import SettingsIcon from '@mui/icons-material/Settings';
 import DescriptionIcon from '@mui/icons-material/Description';
-import PeopleIcon from '@mui/icons-material/People';
-import StorageIcon from '@mui/icons-material/Storage';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { useState } from 'react';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { useAdministrator } from '../common/util/permissions';
 import WhatsAppAlertsDialog from '../settings/WhatsAppAlertsDialog';
+import { useHudTheme } from '../common/util/ThemeContext';
 
-const useStyles = makeStyles()((theme) => {
-  const desktop = theme.breakpoints.up('md');
+// Static styles using CSS variables set by ThemeContext on :root
+const useStyles = makeStyles()((muiTheme) => {
+  const desktop = muiTheme.breakpoints.up('md');
   return {
     root: {
       position: 'absolute',
@@ -29,13 +26,13 @@ const useStyles = makeStyles()((theme) => {
       zIndex: 1000,
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
+      gap: muiTheme.spacing(1),
       padding: '8px 6px',
       borderRadius: 14,
-      backgroundColor: '#ffffffcc',
+      backgroundColor: 'var(--hud-bg2)',
       backdropFilter: 'blur(10px)',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-      border: '1px solid rgba(6,182,212,0.1)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+      border: '1px solid var(--hud-border)',
     },
     item: {
       display: 'flex',
@@ -46,14 +43,14 @@ const useStyles = makeStyles()((theme) => {
       borderRadius: 10,
       cursor: 'pointer',
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      color: '#64748b',
-      background: '#f1f5f988',
-      border: '1px solid transparent',
+      color: 'var(--hud-text2)',
+      background: 'var(--hud-bgcard)',
+      border: '1px solid var(--hud-bordercard)',
       '&:hover': {
-        backgroundColor: '#06b6d411',
-        color: '#06b6d4',
-        border: '1px solid #06b6d433',
-        boxShadow: '0 0 15px rgba(6,182,212,0.15)',
+        backgroundColor: 'rgba(var(--hud-accent-rgb), 0.1)',
+        color: 'var(--hud-accent)',
+        border: '1px solid rgba(var(--hud-accent-rgb), 0.3)',
+        boxShadow: '0 0 15px rgba(var(--hud-accent-rgb), 0.15)',
         transform: 'translateX(-2px)',
       },
     },
@@ -67,7 +64,7 @@ const MapSideMenu = ({ inline = false }) => {
   const { classes } = useStyles();
   const navigate = useNavigate();
   const t = useTranslation();
-  const admin = useAdministrator();
+  const { theme } = useHudTheme();
   const [whatsappOpen, setWhatsappOpen] = useState(false);
 
   const items = [
@@ -92,10 +89,10 @@ const MapSideMenu = ({ inline = false }) => {
         gap: 8,
         padding: '6px 10px',
         borderRadius: 14,
-        backgroundColor: '#ffffffcc',
+        backgroundColor: theme.bgSecondary,
         backdropFilter: 'blur(10px)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-        border: '1px solid rgba(6,182,212,0.1)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+        border: `1px solid ${theme.border}`,
       }
     : {};
 

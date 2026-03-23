@@ -81,6 +81,13 @@ const App = () => {
     setPanelDeviceId(id);
   };
 
+  // Close VehicleDetailsPanel when the map center-all button is clicked
+  useEffect(() => {
+    const handler = () => setPanelDeviceId(null);
+    window.addEventListener('center-all', handler);
+    return () => window.removeEventListener('center-all', handler);
+  }, []);
+
   const acceptTerms = useCatch(async () => {
     const response = await fetchOrThrow(`/api/users/${user.id}`, {
       method: 'PUT',

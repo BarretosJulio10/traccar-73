@@ -51,6 +51,7 @@ const App = () => {
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const isSettingsRoute = pathname.startsWith('/app/settings');
+  const isDashboard = pathname === '/app' || pathname === '/app/';
   const [demoMode, setDemoModeState] = useState(
     () => window.sessionStorage.getItem('demoMode') === 'true',
   );
@@ -167,7 +168,7 @@ const App = () => {
           <VehicleDetailsPanel deviceId={panelDeviceId} onClose={handleClosePanel} />
         </div>
       )}
-      {!desktop && selectedDeviceId && (
+      {!desktop && selectedDeviceId && !isDashboard && (
         <StatusCard
           deviceId={selectedDeviceId}
           position={selectedPosition}

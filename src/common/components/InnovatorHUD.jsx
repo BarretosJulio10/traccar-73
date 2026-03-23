@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IconButton, Typography, Button, Divider, Box, Card } from '@mui/material';
+import { IconButton, Typography, Divider } from '@mui/material';
 import { useHudTheme } from '../util/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import LockIcon from '@mui/icons-material/Lock';
@@ -22,35 +22,25 @@ const CircularBattery = ({ level, theme }) => {
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (level / 100) * circumference;
   const color = level > 20 ? theme.accent : '#ef4444';
+  const trackColor = theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
   return (
     <div className="relative flex items-center justify-center w-24 h-24">
       <svg className="transform -rotate-90 w-24 h-24">
+        <circle cx="48" cy="48" r={radius} stroke={trackColor} strokeWidth="8" fill="transparent" />
         <circle
-          cx="48"
-          cy="48"
-          r={radius}
-          stroke="rgba(0,0,0,0.03)"
-          strokeWidth="8"
-          fill="transparent"
-        />
-        <circle
-          cx="48"
-          cy="48"
-          r={radius}
-          stroke={color}
-          strokeWidth="8"
-          fill="transparent"
+          cx="48" cy="48" r={radius}
+          stroke={color} strokeWidth="8" fill="transparent"
           strokeDasharray={circumference}
           style={{ strokeDashoffset: offset, transition: 'stroke-dashoffset 0.5s ease-in-out' }}
           strokeLinecap="round"
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-[18px] font-black leading-none" style={{ color: '#0f172a' }}>
+        <span className="text-[18px] font-black leading-none" style={{ color: theme.textPrimary }}>
           {Math.round(level)}%
         </span>
-        <span className="text-[7px] font-bold opacity-40 uppercase tracking-widest" style={{ color: '#475569' }}>
+        <span className="text-[7px] font-bold uppercase tracking-widest" style={{ color: theme.textMuted }}>
           BATERIA
         </span>
       </div>
@@ -58,36 +48,20 @@ const CircularBattery = ({ level, theme }) => {
   );
 };
 
-const DataCard = ({ label, value, unit, color, isLarge = false }) => (
-  <div
-    className="flex flex-col items-center justify-center p-2 rounded-3xl transition-all duration-300"
-    style={{
-      flex: 1,
-      minHeight: isLarge ? '100px' : '80px',
-    }}
-  >
-    <Typography
-      className="uppercase tracking-[0.2em] font-black opacity-30 mb-0.5"
-      style={{ color: '#475569', fontSize: '8px' }}
-    >
+const DataCard = ({ label, value, unit, color, isLarge = false, theme }) => (
+  <div className="flex flex-col items-center justify-center p-2 rounded-3xl transition-all duration-300" style={{ flex: 1, minHeight: isLarge ? '100px' : '80px' }}>
+    <span className="uppercase tracking-[0.2em] font-black mb-0.5" style={{ color: theme.textMuted, fontSize: '8px', opacity: 0.7 }}>
       {label}
-    </Typography>
+    </span>
     <div className="flex items-baseline gap-0.5">
       <span
         className="font-black tracking-tighter"
-        style={{
-          color: color || '#0f172a',
-          fontSize: isLarge ? '56px' : '28px',
-          lineHeight: 1,
-          fontFamily: 'monospace',
-        }}
+        style={{ color: color || theme.textPrimary, fontSize: isLarge ? '56px' : '28px', lineHeight: 1, fontFamily: 'monospace' }}
       >
         {value}
       </span>
       {unit && (
-        <span className="font-black opacity-30 uppercase text-[10px]" style={{ color: '#475569' }}>
-          {unit}
-        </span>
+        <span className="font-black uppercase text-[10px]" style={{ color: theme.textMuted, opacity: 0.5 }}>{unit}</span>
       )}
     </div>
   </div>
@@ -96,17 +70,13 @@ const DataCard = ({ label, value, unit, color, isLarge = false }) => (
 const TelemetryBox = ({ icon, label, value, theme }) => (
   <div
     className="flex flex-col gap-1 p-2.5 rounded-2xl border"
-    style={{ background: '#F8FAFC', borderColor: 'rgba(0,0,0,0.03)' }}
+    style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
   >
-    <div className="flex items-center gap-1.5 opacity-60">
+    <div className="flex items-center gap-1.5" style={{ opacity: 0.7 }}>
       {React.cloneElement(icon, { sx: { fontSize: 12, color: theme.accent } })}
-      <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: '#475569' }}>
-        {label}
-      </span>
+      <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: theme.textSecondary }}>{label}</span>
     </div>
-    <span className="text-[12px] font-black truncate" style={{ color: '#0f172a' }}>
-      {value}
-    </span>
+    <span className="text-[12px] font-black truncate" style={{ color: theme.textPrimary }}>{value}</span>
   </div>
 );
 
@@ -135,19 +105,14 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
     }
   };
 
-  const onTouchStart = (e) => {
-    setTouchStart(e.targetTouches[0].clientY);
-  };
+  const onTouchStart = (e) => setTouchStart(e.targetTouches[0].clientY);
 
   const onTouchEnd = (e) => {
     if (!touchStart) return;
     const touchEnd = e.changedTouches[0].clientY;
     const distance = touchStart - touchEnd;
-    const isSwipeUp = distance > 50;
-    const isSwipeDown = distance < -50;
-
-    if (isSwipeUp && !isExpanded) setIsExpanded(true);
-    if (isSwipeDown && isExpanded) setIsExpanded(false);
+    if (distance > 50 && !isExpanded) setIsExpanded(true);
+    if (distance < -50 && isExpanded) setIsExpanded(false);
     setTouchStart(null);
   };
 
@@ -163,96 +128,99 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
   const altitude = position?.altitude ? Math.round(position.altitude) : 0;
   const ignition = attrs.ignition;
   const isOnline = device?.status === 'online';
-
   const timeGPS = position ? dayjs(position.fixTime).format('HH:mm') : '--:--';
 
-  const accentColor = theme.accent;
+  // Semantic lock button colors — adapt to dark/light
+  const lockBg = isBlockedLocal
+    ? (theme.isDark ? 'rgba(74,222,128,0.12)' : '#dcfce7')
+    : (theme.isDark ? 'rgba(248,113,113,0.12)' : '#fee2e2');
+  const lockBorder = isBlockedLocal
+    ? (theme.isDark ? 'rgba(74,222,128,0.3)' : '#86efac')
+    : (theme.isDark ? 'rgba(248,113,113,0.3)' : '#fca5a5');
+  const lockColor = isBlockedLocal
+    ? (theme.isDark ? '#4ade80' : '#16a34a')
+    : (theme.isDark ? '#f87171' : '#dc2626');
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 overflow-hidden flex flex-col transition-all duration-500 ease-in-out bg-white"
+      className="fixed bottom-0 left-0 right-0 overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
       style={{
         zIndex: 1000,
         height: isExpanded ? '85vh' : '50vh',
         maxHeight: '100vh',
         borderRadius: '32px 32px 0 0',
         paddingBottom: 'env(safe-area-inset-bottom, 24px)',
-        boxShadow: '0 -15px 50px rgba(0,0,0,0.08)',
+        boxShadow: theme.isDark ? '0 -15px 50px rgba(0,0,0,0.6)' : '0 -15px 50px rgba(0,0,0,0.08)',
         touchAction: 'none',
         display: 'flex',
         flexDirection: 'column',
+        background: theme.bgCard,
+        borderTop: `1px solid ${theme.borderCard}`,
       }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      {/* Drag Handle Area */}
+      {/* Drag Handle */}
       <div
         className="flex flex-col items-center justify-center py-3 cursor-grab active:cursor-grabbing w-full"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="w-14 h-1.5 rounded-full bg-slate-200" />
+        <div className="w-14 h-1.5 rounded-full" style={{ background: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)' }} />
       </div>
 
       {/* Top Bar */}
       <div className="flex justify-between items-center px-6 py-2">
         <div className="flex items-center gap-3">
-          <div className="w-1.5 h-6 rounded-full" style={{ background: accentColor }} />
+          <div className="w-1.5 h-6 rounded-full" style={{ background: theme.accent }} />
           <div className="flex flex-col">
-            <Typography className="font-black text-slate-900 leading-none" style={{ fontSize: '20px', letterSpacing: '-0.03em' }}>
+            <span className="font-black leading-none" style={{ color: theme.textPrimary, fontSize: '20px', letterSpacing: '-0.03em' }}>
               {device?.name}
-            </Typography>
+            </span>
             <div className="flex items-center gap-2 mt-1">
-              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-cyan-500 animate-pulse' : 'bg-slate-300'}`} />
-              <Typography className="text-[10px] font-black uppercase tracking-widest opacity-40">
+              <div className={`w-2 h-2 rounded-full ${isOnline ? 'animate-pulse' : ''}`} style={{ background: isOnline ? theme.accent : theme.textMuted }} />
+              <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textMuted }}>
                 {isOnline ? 'Acoplado / Rastreando' : 'Desconectado'}
-              </Typography>
+              </span>
             </div>
           </div>
         </div>
-        <IconButton
-          size="small"
+        <button
           onClick={onClose}
-          sx={{ background: '#F1F5F9', '&:hover': { background: '#E2E8F0' } }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center border transition-colors"
+          style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
         >
-          <CloseIcon sx={{ fontSize: 20, color: '#475569' }} />
-        </IconButton>
+          <CloseIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+        </button>
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className={`flex-1 flex flex-col no-scrollbar ${!isExpanded ? 'overflow-hidden' : 'overflow-y-auto py-2'}`}>
-        {/* Hero Row: Circular Battery + Speed */}
+        {/* Hero Row: Circular Battery + Speed + Signal */}
         <div className="flex items-center justify-around px-4 py-4">
           <CircularBattery level={battery} theme={theme} />
           <div className="flex flex-col items-center">
-             <DataCard label="VELOCIDADE" value={speed} unit="KM/H" color="#0f172a" isLarge />
+            <DataCard label="VELOCIDADE" value={speed} unit="KM/H" isLarge theme={theme} />
           </div>
           <div className="w-24 h-24 flex items-center justify-center">
-             <div className="flex flex-col items-center opacity-40">
-                <GpsFixedIcon sx={{ fontSize: 18, mb: 0.5 }} />
-                <span className="text-[8px] font-black uppercase tracking-widest">SINAL</span>
-                <span className="text-[12px] font-black">{attrs.rssi || 0}dB</span>
-             </div>
+            <div className="flex flex-col items-center" style={{ opacity: 0.5 }}>
+              <GpsFixedIcon sx={{ fontSize: 18, mb: 0.5, color: theme.textMuted }} />
+              <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: theme.textMuted }}>SINAL</span>
+              <span className="text-[12px] font-black" style={{ color: theme.textPrimary }}>{attrs.rssi || 0}dB</span>
+            </div>
           </div>
         </div>
 
-        {/* Block / Unblock toggle */}
+        {/* Block / Unblock */}
         <div className="px-6 mb-6">
           <button
             onClick={handleLockToggle}
             disabled={isLockPending}
             className="w-full h-14 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-[2px] text-[11px] transition-all duration-300 border active:scale-95 shadow-sm"
-            style={{
-              background: isBlockedLocal ? '#dcfce7' : '#fee2e2',
-              borderColor: isBlockedLocal ? '#86efac' : '#fca5a5',
-              color: isBlockedLocal ? '#16a34a' : '#dc2626',
-              opacity: isLockPending ? 0.6 : 1,
-            }}
+            style={{ background: lockBg, borderColor: lockBorder, color: lockColor, opacity: isLockPending ? 0.6 : 1 }}
           >
             {isLockPending
               ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              : isBlockedLocal
-                ? <LockOpenIcon sx={{ fontSize: 22 }} />
-                : <LockIcon sx={{ fontSize: 22 }} />
+              : isBlockedLocal ? <LockOpenIcon sx={{ fontSize: 22 }} /> : <LockIcon sx={{ fontSize: 22 }} />
             }
             <span>{isBlockedLocal ? 'Liberar Veículo' : 'Bloquear Veículo'}</span>
           </button>
@@ -264,63 +232,69 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
           <TelemetryBox icon={<MapIcon />} label="ODÔMETRO" value={`${odometer}km`} theme={theme} />
           <TelemetryBox icon={<SatelliteAltIcon />} label="SATÉLITES" value={satellites} theme={theme} />
           <TelemetryBox
-            icon={<SpeedIcon />}
-            label="HORÍMETRO"
+            icon={<SpeedIcon />} label="HORÍMETRO"
             value={`${attrs.hours ? Math.round(attrs.hours / 3600000) : 0}h`}
             theme={theme}
           />
           <TelemetryBox
-            icon={<InfoIcon />}
-            label="IGNIÇÃO"
+            icon={<InfoIcon />} label="IGNIÇÃO"
             value={ignition ? 'LIGADA' : 'DESLIG'}
-            theme={{ accent: ignition ? '#10b981' : '#94a3b8' }}
+            theme={{ ...theme, accent: ignition ? '#10b981' : theme.textMuted }}
           />
           <TelemetryBox
-            icon={<InfoIcon />}
-            label="POSIÇÃO"
+            icon={<InfoIcon />} label="POSIÇÃO"
             value={attrs.motion ? 'MOVENDO' : 'PARADO'}
-            theme={{ accent: attrs.motion ? '#3b82f6' : '#94a3b8' }}
+            theme={{ ...theme, accent: attrs.motion ? '#3b82f6' : theme.textMuted }}
           />
         </div>
 
-        {/* Info Card */}
-        <div className="mx-6 p-4 rounded-3xl bg-slate-50 border border-slate-100 flex items-center gap-4 mb-6">
-          <div className="w-10 h-10 rounded-2xl bg-cyan-100 flex items-center justify-center">
-            <MapIcon sx={{ color: 'cyan.500', fontSize: 20 }} />
+        {/* Address Card */}
+        <div
+          className="mx-6 p-4 rounded-3xl flex items-center gap-4 mb-6 border"
+          style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
+        >
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `rgba(${theme.accentRgb},0.12)` }}
+          >
+            <MapIcon sx={{ color: theme.accent, fontSize: 20 }} />
           </div>
           <div className="flex-1 min-w-0">
-            <Typography className="text-[10px] font-black uppercase tracking-widest opacity-40">LOCALIZAÇÃO ATUAL</Typography>
-            <Typography className="text-[13px] font-bold truncate text-slate-900">{position?.address || 'Buscando endereço...'}</Typography>
+            <span className="block text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textMuted }}>LOCALIZAÇÃO ATUAL</span>
+            <span className="block text-[13px] font-bold truncate" style={{ color: theme.textPrimary }}>{position?.address || 'Buscando endereço...'}</span>
           </div>
         </div>
 
         {isExpanded && (
-          <div className="px-6 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <Divider sx={{ mb: 4, borderColor: 'rgba(0,0,0,0.04)' }} />
-             <div className="grid grid-cols-4 gap-4 mb-8">
-               {[
-                 { icon: <GridViewIcon />, label: 'Histórico', path: `/app/replay?deviceId=${device?.id}` },
-                 { icon: <EditIcon />, label: 'Editar', path: `/app/settings/device/${device?.id}` },
-                 { icon: <ShareIcon />, label: 'Partilhar', path: `/app/settings/device/${device?.id}/share` },
-                 { icon: <PendingIcon />, label: 'Config', path: '/app/settings/device' },
-               ].map((item, idx) => (
-                 <div
-                   key={idx}
-                   className="flex flex-col items-center gap-2 group cursor-pointer"
-                   onClick={() => { onClose(); navigate(item.path); }}
-                 >
-                   <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center group-hover:bg-cyan-50 transition-colors">
-                     {React.cloneElement(item.icon, { sx: { fontSize: 22, color: '#64748b' } })}
-                   </div>
-                   <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-cyan-500">
-                     {item.label}
-                   </span>
-                 </div>
-               ))}
-             </div>
-             <Typography className="text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-               Última atualização: {timeGPS}
-             </Typography>
+          <div className="px-6 pb-12">
+            <Divider sx={{ mb: 4, borderColor: theme.borderCard }} />
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              {[
+                { icon: <GridViewIcon />, label: 'Histórico', path: `/app/replay?deviceId=${device?.id}` },
+                { icon: <EditIcon />, label: 'Editar', path: `/app/settings/device/${device?.id}` },
+                { icon: <ShareIcon />, label: 'Partilhar', path: `/app/settings/device/${device?.id}/share` },
+                { icon: <PendingIcon />, label: 'Config', path: '/app/settings/device' },
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col items-center gap-2 cursor-pointer"
+                  onClick={() => { onClose(); navigate(item.path); }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center border"
+                    style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
+                  >
+                    {React.cloneElement(item.icon, { sx: { fontSize: 22, color: theme.textSecondary } })}
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: theme.textMuted }}>
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <span className="block text-center text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textMuted }}>
+              Última atualização: {timeGPS}
+            </span>
           </div>
         )}
       </div>

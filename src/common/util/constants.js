@@ -6,7 +6,7 @@ export const DEFAULT_TENANT_SLUG = import.meta.env.VITE_DEFAULT_TENANT_SLUG || '
 export const PRODUCT_NAME = 'HyperTraccar';
 
 export const COMPACT_HEIGHT = 80;
-export const EXPANDED_HEIGHT = 320;
+export const EXPANDED_HEIGHT = 200;
 export const DEMO_USER = {
   id: 99999,
   name: 'Cliente Demo',

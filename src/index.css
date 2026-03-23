@@ -37,6 +37,12 @@ html {
   /* Relax the tightest tracking */
 }
 
+/* Hide MapLibre attribution / logo */
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-logo {
+  display: none !important;
+}
+
 /* Custom scrollbar for deep dark aesthetic */
 ::-webkit-scrollbar {
   width: 6px;

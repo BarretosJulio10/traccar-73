@@ -1,106 +1,104 @@
 /**
- * Notification Events Formatter Module
+ * Notification Events Formatter
  *
- * Maps Traccar event types to human-readable notification content.
- * Supports all standard Traccar event types: ignition, geofences, alarms,
- * speed, fuel, maintenance, driver changes, etc.
- *
- * @module notificationEvents
+ * Maps Traccar event types to human-readable PT-BR notification content.
+ * Used by SocketController → useNotifications → sendEventNotification.
  */
 
-/**
- * Maps a Traccar event type string to its i18n key.
- */
-const EVENT_TYPE_KEYS = {
-  deviceOnline: 'eventDeviceOnline',
-  deviceOffline: 'eventDeviceOffline',
-  deviceInactive: 'eventDeviceInactive',
-  deviceMoving: 'eventDeviceMoving',
-  deviceStopped: 'eventDeviceStopped',
-  deviceOverspeed: 'eventDeviceOverspeed',
-  deviceFuelDrop: 'eventDeviceFuelDrop',
-  deviceFuelIncrease: 'eventDeviceFuelIncrease',
-  commandResult: 'eventCommandResult',
-  geofenceEnter: 'eventGeofenceEnter',
-  geofenceExit: 'eventGeofenceExit',
-  alarm: 'eventAlarm',
-  ignitionOn: 'eventIgnitionOn',
-  ignitionOff: 'eventIgnitionOff',
-  maintenance: 'eventMaintenance',
-  textMessage: 'eventTextMessage',
-  driverChanged: 'eventDriverChanged',
-  media: 'eventMedia',
-  queuedCommandSent: 'eventQueuedCommandSent',
+const EVENT_CONFIG = {
+  deviceOnline:       { emoji: '🟢', title: 'Veículo Online',            requireInteraction: false },
+  deviceOffline:      { emoji: '🔴', title: 'Veículo Offline',           requireInteraction: false },
+  deviceInactive:     { emoji: '💤', title: 'Veículo Inativo',           requireInteraction: false },
+  deviceMoving:       { emoji: '🚨', title: 'Movimento Detectado',       requireInteraction: true  },
+  deviceStopped:      { emoji: '🅿️', title: 'Veículo Parou',             requireInteraction: false },
+  deviceOverspeed:    { emoji: '⚡', title: 'Velocidade Excessiva',      requireInteraction: true  },
+  deviceFuelDrop:     { emoji: '⛽', title: 'Queda de Combustível',      requireInteraction: true  },
+  deviceFuelIncrease: { emoji: '⛽', title: 'Abastecimento Detectado',   requireInteraction: false },
+  commandResult:      { emoji: '📟', title: 'Resposta do Dispositivo',   requireInteraction: false },
+  geofenceEnter:      { emoji: '📍', title: 'Entrou na Cerca Virtual',   requireInteraction: false },
+  geofenceExit:       { emoji: '🚪', title: 'Saiu da Cerca Virtual',     requireInteraction: true  },
+  alarm:              { emoji: '🚨', title: 'Alarme',                    requireInteraction: true  },
+  ignitionOn:         { emoji: '🔑', title: 'Ignição Ligada',            requireInteraction: false },
+  ignitionOff:        { emoji: '🔑', title: 'Ignição Desligada',         requireInteraction: false },
+  maintenance:        { emoji: '🔧', title: 'Alerta de Manutenção',      requireInteraction: false },
+  textMessage:        { emoji: '💬', title: 'Mensagem de Texto',         requireInteraction: false },
+  driverChanged:      { emoji: '👤', title: 'Motorista Alterado',        requireInteraction: false },
+  media:              { emoji: '📷', title: 'Mídia Recebida',            requireInteraction: false },
+  queuedCommandSent:  { emoji: '📡', title: 'Comando Enfileirado',       requireInteraction: false },
 };
 
-/**
- * Maps event types to emoji prefixes for visual distinction in notifications.
- */
-const EVENT_EMOJIS = {
-  deviceOnline: '🟢',
-  deviceOffline: '🔴',
-  deviceMoving: '🚗',
-  deviceStopped: '🅿️',
-  deviceOverspeed: '⚡',
-  deviceFuelDrop: '⛽',
-  deviceFuelIncrease: '⛽',
-  geofenceEnter: '📍',
-  geofenceExit: '📍',
-  alarm: '🚨',
-  ignitionOn: '🔑',
-  ignitionOff: '🔑',
-  maintenance: '🔧',
-  textMessage: '💬',
-  driverChanged: '👤',
-  commandResult: '📟',
+/** Alarm type labels in PT-BR */
+const ALARM_LABELS = {
+  sos:          '🆘 SOS — Solicitação de Emergência',
+  vibration:    'Vibração detectada',
+  movement:     'Movimento Indevido',
+  lowspeed:     'Velocidade abaixo do mínimo',
+  overspeed:    'Velocidade excessiva',
+  fallDown:     'Queda detectada',
+  lowPower:     'Bateria Fraca',
+  lowBattery:   'Bateria Baixa',
+  fault:        'Falha no dispositivo',
+  powerOff:     'Dispositivo desligado',
+  powerOn:      'Dispositivo ligado',
+  door:         'Porta aberta',
+  lock:         'Trava ativada',
+  unlock:       'Trava desativada',
+  geofence:     'Evento de cerca virtual',
+  gpsAntennaCut: 'Antena GPS cortada',
+  accident:     '💥 Colisão Detectada',
+  hardBraking:  'Freada brusca',
+  hardAcceleration: 'Aceleração brusca',
+  hardCornering: 'Curva agressiva',
+  driverDistraction: 'Distração do motorista',
 };
 
 /**
  * Formats a Traccar event into a notification payload.
  *
- * @param {Object} event - Traccar event object
- * @param {number} event.id - Event ID
- * @param {string} event.type - Event type (e.g., 'ignitionOn', 'geofenceEnter')
- * @param {number} event.deviceId - Device ID
- * @param {Object} [event.attributes] - Event attributes
+ * @param {Object} event   - Traccar event object
  * @param {Object} devices - Redux devices state (keyed by id)
- * @param {Function} t - Translation function from useTranslation
- * @returns {{ title: string, body: string, icon: string, tag: string, data: Object }|null}
+ * @param {Function} t     - Translation function (kept for compatibility)
+ * @returns {{ title, body, icon, tag, data, requireInteraction }|null}
  */
 export const formatEventNotification = (event, devices, t) => {
   if (!event || !event.type) return null;
 
+  const config = EVENT_CONFIG[event.type];
+  if (!config) return null;
+
   const device = devices[event.deviceId];
-  const deviceName = device?.name || `ID ${event.deviceId}`;
-  const emoji = EVENT_EMOJIS[event.type] || '🔔';
-  const typeKey = EVENT_TYPE_KEYS[event.type];
-  const eventTitle = typeKey ? t(typeKey) : event.type;
+  const deviceName = device?.name || `Dispositivo #${event.deviceId}`;
+  const contact = device?.contact ? ` (${device.contact})` : '';
+  const plate = device?.attributes?.plate || device?.attributes?.placa;
+  const plateStr = plate ? ` · ${plate}` : '';
 
-  // Build title with emoji
-  const title = `${emoji} ${eventTitle}`;
+  const title = `${config.emoji} ${config.title}`;
+  let body = `${deviceName}${plateStr}${contact}`;
 
-  // Build body with device name and optional details
-  let body = deviceName;
-
-  // Add alarm type detail
+  // Alarm details
   if (event.type === 'alarm' && event.attributes?.alarm) {
-    const alarmKey = `alarm${event.attributes.alarm.charAt(0).toUpperCase()}${event.attributes.alarm.slice(1)}`;
-    const alarmText = t(alarmKey) || event.attributes.alarm;
-    body += ` — ${alarmText}`;
+    const alarmLabel = ALARM_LABELS[event.attributes.alarm] || event.attributes.alarm;
+    body += ` — ${alarmLabel}`;
   }
 
-  // Add geofence name if available
+  // Geofence name
   if ((event.type === 'geofenceEnter' || event.type === 'geofenceExit') && event.geofenceId) {
-    body += ` (Geofence #${event.geofenceId})`;
+    body += ` — Cerca #${event.geofenceId}`;
   }
 
-  // Add speed for overspeed
+  // Speed for overspeed
   if (event.type === 'deviceOverspeed' && event.attributes?.speed) {
-    body += ` — ${Math.round(event.attributes.speed * 1.852)} km/h`;
+    const kmh = Math.round(event.attributes.speed * 1.852);
+    body += ` — ${kmh} km/h`;
   }
 
-  // Add message content
-  if (event.attributes?.message) {
+  // Command result detail
+  if (event.type === 'commandResult' && event.attributes?.result) {
+    body += ` — ${event.attributes.result}`;
+  }
+
+  // Extra message
+  if (event.attributes?.message && event.type !== 'commandResult') {
     body += ` — ${event.attributes.message}`;
   }
 
@@ -109,6 +107,7 @@ export const formatEventNotification = (event, devices, t) => {
     body,
     icon: '/pwa-192x192.png',
     tag: `traccar-event-${event.id}`,
+    requireInteraction: config.requireInteraction,
     data: {
       eventId: event.id,
       deviceId: event.deviceId,
@@ -118,12 +117,8 @@ export const formatEventNotification = (event, devices, t) => {
 };
 
 /**
- * Checks if an event type should trigger a notification.
- * All event types are enabled by default.
- *
- * @param {string} eventType - Traccar event type
+ * Returns true if this event type should trigger a notification.
+ * @param {string} eventType
  * @returns {boolean}
  */
-export const shouldNotify = (eventType) => {
-  return eventType in EVENT_TYPE_KEYS;
-};
+export const shouldNotify = (eventType) => eventType in EVENT_CONFIG;

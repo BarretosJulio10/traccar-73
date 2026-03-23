@@ -23,6 +23,7 @@ import useFeatures from '../common/util/useFeatures';
 import { useTenant } from '../common/components/TenantProvider';
 import WhatsAppDeviceAlerts from './components/WhatsAppDeviceAlerts';
 import MapLiveTrailToggle from '../map/main/MapLiveTrailToggle';
+import MapAnchorZones from '../map/main/MapAnchorZones';
 
 const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
   const theme = useTheme();
@@ -71,6 +72,7 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
           showStatus
           onSourceReady={handleSourceReady}
         />
+        <MapAnchorZones />
         <MapLiveTrailToggle />
         <MapDefaultCamera />
         <MapSelectedDevice />

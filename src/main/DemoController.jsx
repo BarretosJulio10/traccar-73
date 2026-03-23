@@ -301,7 +301,6 @@ const DemoController = ({ active }) => {
         batteryLevel: 40 + Math.random() * 60,
         ignition: deviceId !== 99904 || Math.random() > 0.5,
         motion: pos.speed > 5,
-        blocked: deviceId === 99904,
         distance: Math.random() * 1000,
         totalDistance: 50000 + Math.random() * 100000,
         hours: 360000000 + Math.random() * 100000000,

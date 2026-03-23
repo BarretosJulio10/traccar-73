@@ -78,7 +78,7 @@ export const showNotification = async (title, options = {}) => {
     body: options.body || '',
     data: options.data || {},
     silent: false,
-    requireInteraction: false,
+    requireInteraction: options.requireInteraction ?? false,
   };
 
   try {

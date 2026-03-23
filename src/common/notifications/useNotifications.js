@@ -66,6 +66,7 @@ const useNotifications = () => {
         icon: notification.icon,
         tag: notification.tag,
         data: notification.data,
+        requireInteraction: notification.requireInteraction ?? false,
       });
 
       // 2. Push servidor (entrega para devices com app FECHADO do mesmo tenant)
@@ -79,6 +80,7 @@ const useNotifications = () => {
           tag: notification.tag,
           url: '/app',
           data: notification.data,
+          requireInteraction: notification.requireInteraction ?? false,
         },
       }).catch(() => {}); // não-crítico: notificação local já foi exibida
     },

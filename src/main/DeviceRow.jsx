@@ -10,13 +10,16 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useCatchCallback } from '../reactHelper';
 import { traccarCommandsAdapter } from '../adapters/traccar/commandsAdapter';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
 dayjs.extend(relativeTime);
 
-import { COMPACT_HEIGHT, EXPANDED_HEIGHT, ANCHOR_EXPANDED_HEIGHT } from '../common/util/constants';
+import { COMPACT_HEIGHT, EXPANDED_HEIGHT, ANCHOR_EXPANDED_HEIGHT, ANCHOR_AUTOBLOCK_KEY, ANCHOR_STORAGE_KEY } from '../common/util/constants';
+import { sendNotification } from '../common/notifications/notifyUtil';
 
 const RADII = [100, 150, 200, 250, 300];
 
@@ -40,6 +43,24 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
   const [anchorRadius, setAnchorRadius] = useState(200);
   const [anchorAutoBlock, setAnchorAutoBlock] = useState(false);
   const [anchorStatus, setAnchorStatus] = useState(null); // null | 'loading' | 'ok' | 'error'
+
+  // Persistent anchor data for this device
+  const [anchor, setAnchor] = useState(() => {
+    const stored = JSON.parse(localStorage.getItem(ANCHOR_STORAGE_KEY) || '{}');
+    return stored[item.id] || null;
+  });
+
+  const saveAnchor = (data) => {
+    const stored = JSON.parse(localStorage.getItem(ANCHOR_STORAGE_KEY) || '{}');
+    if (data) {
+      stored[item.id] = data;
+    } else {
+      delete stored[item.id];
+    }
+    localStorage.setItem(ANCHOR_STORAGE_KEY, JSON.stringify(stored));
+    setAnchor(data);
+    window.dispatchEvent(new CustomEvent('anchors-updated'));
+  };
 
   const openAnchorPanel = (e) => {
     e.stopPropagation();
@@ -77,17 +98,53 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
           body: JSON.stringify({ deviceId: item.id, geofenceId }),
         });
       }
+      const anchorData = {
+        lat: position.latitude,
+        lon: position.longitude,
+        radius: anchorRadius,
+        enabled: true,
+        autoBlock: anchorAutoBlock,
+        geofenceId,
+        name: `Âncora — ${item.name}`,
+      };
       if (anchorAutoBlock && geofenceId) {
-        const stored = JSON.parse(localStorage.getItem('traccar_anchor_autoblock') || '{}');
-        stored[`${item.id}_${geofenceId}`] = true;
-        localStorage.setItem('traccar_anchor_autoblock', JSON.stringify(stored));
+        const rules = JSON.parse(localStorage.getItem(ANCHOR_AUTOBLOCK_KEY) || '{}');
+        rules[`${item.id}_${geofenceId}`] = true;
+        localStorage.setItem(ANCHOR_AUTOBLOCK_KEY, JSON.stringify(rules));
       }
+      saveAnchor(anchorData);
+      sendNotification(
+        '⚓ Âncora Criada',
+        `${item.name} — Cerca de ${anchorRadius}m${anchorAutoBlock ? ' · Auto-bloqueio ativo' : ''}`,
+        { tag: `anchor-created-${item.id}`, data: { deviceId: item.id, type: 'anchorCreated' } },
+      );
       setAnchorStatus('ok');
-      setTimeout(() => { setAnchorStatus(null); setAnchorOpenId(null); }, 2000);
+      setTimeout(() => { setAnchorStatus(null); setAnchorOpenId(null); }, 1500);
     } catch (_) {
       setAnchorStatus('error');
       setTimeout(() => setAnchorStatus(null), 2500);
     }
+  };
+
+  const handleAnchorToggle = (e) => {
+    e.stopPropagation();
+    if (!anchor) return;
+    saveAnchor({ ...anchor, enabled: !anchor.enabled });
+  };
+
+  const handleAnchorRemove = (e) => {
+    e.stopPropagation();
+    if (!anchor) return;
+    // Remove autoblock rule if any
+    const rules = JSON.parse(localStorage.getItem(ANCHOR_AUTOBLOCK_KEY) || '{}');
+    Object.keys(rules).filter((k) => k.startsWith(`${item.id}_`)).forEach((k) => delete rules[k]);
+    localStorage.setItem(ANCHOR_AUTOBLOCK_KEY, JSON.stringify(rules));
+    saveAnchor(null);
+    sendNotification(
+      '🗑️ Âncora Removida',
+      `${item.name} — Cerca virtual excluída`,
+      { tag: `anchor-removed-${item.id}`, data: { deviceId: item.id, type: 'anchorRemoved' } },
+    );
   };
 
   const onCommand = useCatchCallback(async (type) => {
@@ -103,7 +160,9 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
   }, [item.id]);
 
   const attrs = position?.attributes || {};
-  const isBlocked = attrs.blocked ?? item.attributes?.blocked ?? false;
+  // Read blocked from device attributes (source of truth after sending command).
+  // Position attributes are not used here because the demo loop overwrites them every 3s.
+  const isBlocked = item.attributes?.blocked ?? false;
   const [isBlockedLocal, setIsBlockedLocal] = useState(isBlocked);
   const [isLockPending, setIsLockPending] = useState(false);
 
@@ -113,14 +172,29 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
 
   const handleLockToggle = async (e) => {
     e.stopPropagation();
+    const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+    const newBlocked = !isBlockedLocal;
     const newType = isBlockedLocal ? 'engineResume' : 'engineStop';
-    setIsBlockedLocal(!isBlockedLocal);
+    setIsBlockedLocal(newBlocked);
     setIsLockPending(true);
     try {
-      await traccarCommandsAdapter.sendCommand(item.id, newType);
-      dispatch(devicesActions.update([{ ...item, attributes: { ...item.attributes, blocked: newType === 'engineStop' } }]));
+      if (isDemo) {
+        await new Promise((r) => setTimeout(r, 700));
+      } else {
+        await traccarCommandsAdapter.sendCommand(item.id, newType);
+      }
+      dispatch(devicesActions.update([{ ...item, attributes: { ...item.attributes, blocked: newBlocked } }]));
+      sendNotification(
+        newBlocked ? '🔒 Veículo Bloqueado' : '🔓 Veículo Liberado',
+        `${item.name} — Comando enviado com sucesso`,
+        {
+          tag: `lock-${item.id}-${Date.now()}`,
+          data: { deviceId: item.id, type: newBlocked ? 'engineStop' : 'engineResume' },
+          requireInteraction: newBlocked, // bloqueio fica na tela até o usuário ver
+        },
+      );
     } catch (_) {
-      setIsBlockedLocal(isBlockedLocal);
+      setIsBlockedLocal(!newBlocked); // revert on real API failure
     } finally {
       setIsLockPending(false);
     }
@@ -187,15 +261,32 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
             </div>
 
             <div className="flex flex-col min-w-0">
-              <h3 className="text-[15px] font-black tracking-tight truncate leading-none mb-1.5" style={{ color: isSelected ? theme.accent : '#0f172a' }}>
+              <h3 className="text-[14px] font-black tracking-tight truncate leading-none mb-1" style={{ color: isSelected ? theme.accent : '#0f172a' }}>
                 {item.name}
               </h3>
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${isOnline ? 'animate-pulse' : ''}`} style={{ background: isOnline ? theme.accent : '#cbd5e1' }} />
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'animate-pulse' : ''}`} style={{ background: isOnline ? theme.accent : '#cbd5e1' }} />
                 <span className="text-[10px] font-black tracking-widest uppercase" style={{ color: isOnline ? theme.accent : '#94a3b8' }}>
-                  {isOnline ? 'Acoplado' : 'Offline'}
+                  {isOnline ? 'Online' : 'Offline'}
                 </span>
               </div>
+              {(item.attributes?.plate || item.attributes?.placa || item.contact) && (
+                <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                  {(item.attributes?.plate || item.attributes?.placa) && (
+                    <span className="text-[8.5px] font-bold uppercase tracking-wide text-slate-400 flex-shrink-0">
+                      {item.attributes.plate || item.attributes.placa}
+                    </span>
+                  )}
+                  {(item.attributes?.plate || item.attributes?.placa) && item.contact && (
+                    <span className="text-[8px] text-slate-300 flex-shrink-0">·</span>
+                  )}
+                  {item.contact && (
+                    <span className="text-[8.5px] font-medium text-slate-400 truncate">
+                      {item.contact}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -252,20 +343,67 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
 
           {/* Action Controls */}
           {!anchorOpen ? (
-            <div className="flex gap-2">
-              <button
-                onClick={openAnchorPanel}
-                disabled={!position}
-                className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px] border transition-all duration-300 active:scale-95"
-                style={{ background: '#f8fafc', borderColor: '#e2e8f0', color: '#94a3b8', opacity: !position ? 0.4 : 1 }}
-              >
-                <AnchorIcon sx={{ fontSize: 17 }} />
-                <span>Âncora</span>
-              </button>
+            <div className="flex flex-col gap-2">
+              {/* Anchor status row — shows when anchor exists */}
+              {anchor ? (
+                <div
+                  className="flex items-center gap-1.5 px-3 h-11 rounded-xl border transition-all duration-300"
+                  style={{
+                    background: anchor.enabled ? 'rgba(6,182,212,0.08)' : '#f8fafc',
+                    borderColor: anchor.enabled ? '#06b6d4' : '#e2e8f0',
+                  }}
+                >
+                  <AnchorIcon sx={{ fontSize: 15, color: anchor.enabled ? '#06b6d4' : '#94a3b8' }} />
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-[9px] font-black uppercase tracking-widest leading-none" style={{ color: anchor.enabled ? '#06b6d4' : '#94a3b8' }}>
+                      Âncora {anchor.enabled ? 'Ativa' : 'Desligada'}
+                    </span>
+                    <span className="text-[8px] text-slate-400 leading-none mt-0.5">
+                      {anchor.radius}m{anchor.autoBlock ? ' · auto-bloqueio' : ''}
+                    </span>
+                  </div>
+                  {anchor.enabled && (
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#06b6d4', flexShrink: 0 }} />
+                  )}
+                  {/* Toggle on/off */}
+                  <button
+                    onClick={handleAnchorToggle}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 active:scale-95"
+                    style={{
+                      background: anchor.enabled ? 'rgba(6,182,212,0.15)' : '#f1f5f9',
+                      borderColor: anchor.enabled ? '#06b6d4' : '#e2e8f0',
+                      color: anchor.enabled ? '#06b6d4' : '#94a3b8',
+                    }}
+                    title={anchor.enabled ? 'Desligar âncora' : 'Ligar âncora'}
+                  >
+                    <PowerSettingsNewIcon sx={{ fontSize: 15 }} />
+                  </button>
+                  {/* Remove */}
+                  <button
+                    onClick={handleAnchorRemove}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 transition-all duration-200 active:scale-95 hover:border-red-300 hover:text-red-400"
+                    style={{ background: '#f8fafc', color: '#cbd5e1' }}
+                    title="Remover âncora"
+                  >
+                    <DeleteOutlineIcon sx={{ fontSize: 15 }} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={openAnchorPanel}
+                  disabled={!position}
+                  className="h-11 rounded-xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px] border transition-all duration-300 active:scale-95"
+                  style={{ background: '#f8fafc', borderColor: '#e2e8f0', color: '#94a3b8', opacity: !position ? 0.4 : 1 }}
+                >
+                  <AnchorIcon sx={{ fontSize: 17 }} />
+                  <span>Definir Âncora</span>
+                </button>
+              )}
+              {/* Lock button */}
               <button
                 onClick={handleLockToggle}
                 disabled={isLockPending}
-                className="flex-1 h-11 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase tracking-[1px] text-[10px] transition-all duration-300 border active:scale-95"
+                className="h-11 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase tracking-[1px] text-[10px] transition-all duration-300 border active:scale-95"
                 style={{
                   background: isBlockedLocal ? '#dcfce7' : '#fee2e2',
                   borderColor: isBlockedLocal ? '#86efac' : '#fca5a5',
@@ -277,7 +415,7 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                   ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   : isBlockedLocal ? <LockOpenIcon sx={{ fontSize: 17 }} /> : <LockIcon sx={{ fontSize: 17 }} />
                 }
-                <span>{isBlockedLocal ? 'Liberar' : 'Bloquear'}</span>
+                <span>{isBlockedLocal ? 'Liberar Veículo' : 'Bloquear Veículo'}</span>
               </button>
             </div>
           ) : (

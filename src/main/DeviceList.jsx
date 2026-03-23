@@ -27,7 +27,18 @@ const DeviceList = ({ devices, onOpenPanel, onClosePanel, panelDeviceId }) => {
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const selectedId = useSelector((state) => state.devices.selectedId);
   const listRef = useRef();
+  const containerRef = useRef();
+  const [containerHeight, setContainerHeight] = useState(window.innerHeight - 200);
   const [anchorOpenId, setAnchorOpenId] = useState(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerHeight(entry.contentRect.height);
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     // VariableSizeList in 1.x needed resetAfterIndex, 
@@ -67,14 +78,13 @@ const DeviceList = ({ devices, onOpenPanel, onClosePanel, panelDeviceId }) => {
   }
 
   return (
-    <div className={classes.list}>
-      {/* Assuming parent provides height, using a large default if needed */}
+    <div ref={containerRef} className={classes.list}>
       <List
         listRef={listRef}
         rowCount={devices.length}
         rowHeight={getRowHeight}
         width="100%"
-        height={window.innerHeight - 200}
+        height={containerHeight}
         overscanCount={5}
         rowProps={{ devices, selectedId, desktop, onOpenPanel, onClosePanel, panelDeviceId, anchorOpenId, setAnchorOpenId }}
         rowComponent={DeviceRow}

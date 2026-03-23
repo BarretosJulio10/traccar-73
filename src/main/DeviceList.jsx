@@ -5,7 +5,7 @@ import { makeStyles } from 'tss-react/mui';
 import { List } from 'react-window';
 import { devicesActions } from '../store';
 import { useEffectAsync } from '../reactHelper';
-import { COMPACT_HEIGHT, EXPANDED_HEIGHT } from '../common/util/constants';
+import { COMPACT_HEIGHT, EXPANDED_HEIGHT, ANCHOR_EXPANDED_HEIGHT } from '../common/util/constants';
 import DeviceRow from './DeviceRow';
 import { traccarDevicesAdapter } from '../adapters/traccar/devicesAdapter';
 
@@ -27,6 +27,7 @@ const DeviceList = ({ devices, onOpenPanel, onClosePanel, panelDeviceId }) => {
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const selectedId = useSelector((state) => state.devices.selectedId);
   const listRef = useRef();
+  const [anchorOpenId, setAnchorOpenId] = useState(null);
 
   useEffect(() => {
     // VariableSizeList in 1.x needed resetAfterIndex, 
@@ -53,10 +54,10 @@ const DeviceList = ({ devices, onOpenPanel, onClosePanel, panelDeviceId }) => {
   }, []);
 
   const getRowHeight = useCallback((index, rowProps) => {
-    const { devices: listDevices, selectedId: listSelectedId } = rowProps;
+    const { devices: listDevices, selectedId: listSelectedId, anchorOpenId: aId } = rowProps;
     const device = listDevices && listDevices[index];
     if (device && device.id === listSelectedId) {
-      return EXPANDED_HEIGHT || 240;
+      return device.id === aId ? ANCHOR_EXPANDED_HEIGHT : EXPANDED_HEIGHT;
     }
     return COMPACT_HEIGHT || 80;
   }, []);
@@ -75,7 +76,7 @@ const DeviceList = ({ devices, onOpenPanel, onClosePanel, panelDeviceId }) => {
         width="100%"
         height={window.innerHeight - 200}
         overscanCount={5}
-        rowProps={{ devices, selectedId, desktop, onOpenPanel, onClosePanel, panelDeviceId }}
+        rowProps={{ devices, selectedId, desktop, onOpenPanel, onClosePanel, panelDeviceId, anchorOpenId, setAnchorOpenId }}
         rowComponent={DeviceRow}
       />
     </div>

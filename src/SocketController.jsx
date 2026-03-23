@@ -66,6 +66,21 @@ const SocketController = ({ demoMode }) => {
       events.forEach((event) => {
         sendEventNotification(event);
       });
+
+      // Auto-block: if vehicle exits a geofence that has an anchor auto-block rule
+      const autoBlockRules = JSON.parse(localStorage.getItem('traccar_anchor_autoblock') || '{}');
+      events
+        .filter((e) => e.type === 'geofenceExit' && e.geofenceId)
+        .forEach((e) => {
+          const key = `${e.deviceId}_${e.geofenceId}`;
+          if (autoBlockRules[key]) {
+            fetchOrThrow('/api/commands/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ deviceId: e.deviceId, type: 'engineStop', attributes: {} }),
+            }).catch(() => {});
+          }
+        });
     },
     [features, dispatch, soundEvents, soundAlarms, sendEventNotification],
   );

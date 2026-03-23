@@ -16,10 +16,12 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 
 dayjs.extend(relativeTime);
 
-import { COMPACT_HEIGHT, EXPANDED_HEIGHT } from '../common/util/constants';
+import { COMPACT_HEIGHT, EXPANDED_HEIGHT, ANCHOR_EXPANDED_HEIGHT } from '../common/util/constants';
+
+const RADII = [100, 150, 200, 250, 300];
 
 const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
-  const { devices, desktop, onOpenPanel, onClosePanel, panelDeviceId } = rowProps;
+  const { devices, desktop, onOpenPanel, onClosePanel, panelDeviceId, anchorOpenId, setAnchorOpenId } = rowProps;
   const dispatch = useDispatch();
   const { theme } = useHudTheme();
   const selectedId = useSelector((state) => state.devices.selectedId);
@@ -32,33 +34,56 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
   const lastUpdate = position?.fixTime || item.lastUpdate;
   const isOnline = item.status === 'online';
   const [isPending, setIsPending] = useState(false);
+
+  // Anchor config state
+  const anchorOpen = anchorOpenId === item.id;
+  const [anchorRadius, setAnchorRadius] = useState(200);
+  const [anchorAutoBlock, setAnchorAutoBlock] = useState(false);
   const [anchorStatus, setAnchorStatus] = useState(null); // null | 'loading' | 'ok' | 'error'
 
-  const handleAnchor = async (e) => {
+  const openAnchorPanel = (e) => {
     e.stopPropagation();
     if (!position) return;
+    setAnchorOpenId(item.id);
+  };
+
+  const closeAnchorPanel = (e) => {
+    e?.stopPropagation();
+    setAnchorOpenId(null);
+  };
+
+  const handleAnchorCreate = async (e) => {
+    e.stopPropagation();
     setAnchorStatus('loading');
     try {
       const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+      let geofenceId = null;
       if (isDemo) {
         await new Promise((r) => setTimeout(r, 800));
+        geofenceId = Date.now();
       } else {
-        const name = `Âncora — ${item.name}`;
-        const area = `CIRCLE (${position.latitude} ${position.longitude}, 200)`;
+        const name = `Âncora — ${item.name} (${anchorRadius}m)`;
+        const area = `CIRCLE (${position.latitude} ${position.longitude}, ${anchorRadius})`;
         const geoRes = await fetchOrThrow('/api/geofences', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, description: 'Geocerca de âncora automática (200m)', area, calendarId: 0, attributes: {} }),
+          body: JSON.stringify({ name, description: 'Geocerca de âncora automática', area, calendarId: 0, attributes: {} }),
         });
         const geofence = await geoRes.json();
+        geofenceId = geofence.id;
         await fetchOrThrow('/api/permissions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ deviceId: item.id, geofenceId: geofence.id }),
+          body: JSON.stringify({ deviceId: item.id, geofenceId }),
         });
       }
+      if (anchorAutoBlock && geofenceId) {
+        const stored = JSON.parse(localStorage.getItem('traccar_anchor_autoblock') || '{}');
+        stored[`${item.id}_${geofenceId}`] = true;
+        localStorage.setItem('traccar_anchor_autoblock', JSON.stringify(stored));
+      }
       setAnchorStatus('ok');
-      setTimeout(() => setAnchorStatus(null), 2500);
+      setTimeout(() => { setAnchorStatus(null); setAnchorOpenId(null); }, 2000);
     } catch (_) {
       setAnchorStatus('error');
       setTimeout(() => setAnchorStatus(null), 2500);
@@ -118,9 +143,10 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
     }
   };
 
+  const expandedH = anchorOpen ? ANCHOR_EXPANDED_HEIGHT : EXPANDED_HEIGHT;
   const adjustedStyle = {
     ...style,
-    height: isSelected ? (EXPANDED_HEIGHT || 240) - 10 : (COMPACT_HEIGHT || 80) - 10,
+    height: isSelected ? expandedH - 10 : (COMPACT_HEIGHT || 80) - 10,
     top: typeof style.top === 'number' ? style.top + 5 : style.top,
   };
 
@@ -225,47 +251,126 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
           </div>
 
           {/* Action Controls */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleAnchor}
-              disabled={anchorStatus === 'loading' || !position}
-              className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px] border transition-all duration-300 active:scale-95"
-              style={{
-                background: anchorStatus === 'ok' ? '#dcfce7' : anchorStatus === 'error' ? '#fee2e2' : '#f8fafc',
-                borderColor: anchorStatus === 'ok' ? '#86efac' : anchorStatus === 'error' ? '#fca5a5' : '#e2e8f0',
-                color: anchorStatus === 'ok' ? '#16a34a' : anchorStatus === 'error' ? '#dc2626' : '#94a3b8',
-                opacity: anchorStatus === 'loading' || !position ? 0.5 : 1,
-              }}
+          {!anchorOpen ? (
+            <div className="flex gap-2">
+              <button
+                onClick={openAnchorPanel}
+                disabled={!position}
+                className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px] border transition-all duration-300 active:scale-95"
+                style={{ background: '#f8fafc', borderColor: '#e2e8f0', color: '#94a3b8', opacity: !position ? 0.4 : 1 }}
+              >
+                <AnchorIcon sx={{ fontSize: 17 }} />
+                <span>Âncora</span>
+              </button>
+              <button
+                onClick={handleLockToggle}
+                disabled={isLockPending}
+                className="flex-1 h-11 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase tracking-[1px] text-[10px] transition-all duration-300 border active:scale-95"
+                style={{
+                  background: isBlockedLocal ? '#dcfce7' : '#fee2e2',
+                  borderColor: isBlockedLocal ? '#86efac' : '#fca5a5',
+                  color: isBlockedLocal ? '#16a34a' : '#dc2626',
+                  opacity: isLockPending ? 0.6 : 1,
+                }}
+              >
+                {isLockPending
+                  ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  : isBlockedLocal ? <LockOpenIcon sx={{ fontSize: 17 }} /> : <LockIcon sx={{ fontSize: 17 }} />
+                }
+                <span>{isBlockedLocal ? 'Liberar' : 'Bloquear'}</span>
+              </button>
+            </div>
+          ) : (
+            /* ── Anchor Config Panel ── */
+            <div
+              className="flex flex-col gap-2.5 p-3 rounded-2xl border"
+              style={{ background: '#f8fafc', borderColor: 'rgba(6,182,212,0.25)' }}
+              onClick={(e) => e.stopPropagation()}
             >
-              {anchorStatus === 'loading'
-                ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                : <AnchorIcon sx={{ fontSize: 17 }} />
-              }
-              <span>
-                {anchorStatus === 'ok' ? 'Criada!' : anchorStatus === 'error' ? 'Erro' : 'Âncora'}
-              </span>
-            </button>
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <AnchorIcon sx={{ fontSize: 14, color: '#06b6d4' }} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Configurar Âncora</span>
+                </div>
+                <button onClick={closeAnchorPanel} className="text-slate-300 hover:text-slate-500 transition-colors text-xs font-bold">✕</button>
+              </div>
 
-            <button
-              onClick={handleLockToggle}
-              disabled={isLockPending}
-              className="flex-1 h-11 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase tracking-[1px] text-[10px] transition-all duration-300 border active:scale-95"
-              style={{
-                background: isBlockedLocal ? '#dcfce7' : '#fee2e2',
-                borderColor: isBlockedLocal ? '#86efac' : '#fca5a5',
-                color: isBlockedLocal ? '#16a34a' : '#dc2626',
-                opacity: isLockPending ? 0.6 : 1,
-              }}
-            >
-              {isLockPending
-                ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                : isBlockedLocal
-                  ? <LockOpenIcon sx={{ fontSize: 17 }} />
-                  : <LockIcon sx={{ fontSize: 17 }} />
-              }
-              <span>{isBlockedLocal ? 'Liberar' : 'Bloquear'}</span>
-            </button>
-          </div>
+              {/* Radius picker */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider px-0.5">Raio da cerca</span>
+                <div className="flex gap-1">
+                  {RADII.map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setAnchorRadius(r)}
+                      className="flex-1 h-8 rounded-lg text-[9px] font-black uppercase tracking-wide transition-all duration-150 border"
+                      style={{
+                        background: anchorRadius === r ? '#06b6d4' : '#fff',
+                        borderColor: anchorRadius === r ? '#06b6d4' : '#e2e8f0',
+                        color: anchorRadius === r ? '#fff' : '#94a3b8',
+                      }}
+                    >
+                      {r}m
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Auto-block toggle */}
+              <button
+                onClick={() => setAnchorAutoBlock(!anchorAutoBlock)}
+                className="flex items-center justify-between px-3 h-9 rounded-xl border transition-all duration-200"
+                style={{
+                  background: anchorAutoBlock ? 'rgba(239,68,68,0.06)' : '#fff',
+                  borderColor: anchorAutoBlock ? '#fca5a5' : '#e2e8f0',
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <LockIcon sx={{ fontSize: 13, color: anchorAutoBlock ? '#ef4444' : '#cbd5e1' }} />
+                  <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: anchorAutoBlock ? '#ef4444' : '#94a3b8' }}>
+                    Bloquear ao sair da cerca
+                  </span>
+                </div>
+                <div
+                  className="w-8 h-4 rounded-full transition-all duration-200 flex items-center"
+                  style={{ background: anchorAutoBlock ? '#ef4444' : '#e2e8f0', padding: '2px' }}
+                >
+                  <div
+                    className="w-3 h-3 rounded-full bg-white shadow-sm transition-all duration-200"
+                    style={{ marginLeft: anchorAutoBlock ? '16px' : '0px' }}
+                  />
+                </div>
+              </button>
+
+              {/* Confirm / Cancel */}
+              <div className="flex gap-2 mt-0.5">
+                <button
+                  onClick={closeAnchorPanel}
+                  className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-colors"
+                  style={{ background: '#fff', borderColor: '#e2e8f0', color: '#94a3b8' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAnchorCreate}
+                  disabled={anchorStatus === 'loading'}
+                  className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                  style={{
+                    background: anchorStatus === 'ok' ? '#10b981' : anchorStatus === 'error' ? '#ef4444' : '#06b6d4',
+                    color: '#fff',
+                    opacity: anchorStatus === 'loading' ? 0.7 : 1,
+                  }}
+                >
+                  {anchorStatus === 'loading'
+                    ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    : <AnchorIcon sx={{ fontSize: 13 }} />
+                  }
+                  <span>{anchorStatus === 'ok' ? 'Criada!' : anchorStatus === 'error' ? 'Erro' : 'Criar Âncora'}</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

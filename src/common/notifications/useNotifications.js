@@ -16,6 +16,8 @@ import {
 } from './notificationManager';
 import { formatEventNotification, shouldNotify } from './notificationEvents';
 import usePushSubscription from './usePushSubscription';
+import { supabase } from '../../integrations/supabase/client';
+import { DEFAULT_TENANT_SLUG } from '../util/constants';
 
 const useNotifications = () => {
   const t = useTranslation();
@@ -56,14 +58,29 @@ const useNotifications = () => {
       if (!shouldNotify(event.type)) return;
 
       const notification = formatEventNotification(event, devices, t);
-      if (notification) {
-        showNotification(notification.title, {
+      if (!notification) return;
+
+      // 1. Notificação local (funciona com app aberto — PC e mobile)
+      showNotification(notification.title, {
+        body: notification.body,
+        icon: notification.icon,
+        tag: notification.tag,
+        data: notification.data,
+      });
+
+      // 2. Push servidor (entrega para devices com app FECHADO do mesmo tenant)
+      const tenantId = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
+      supabase.functions.invoke('send-push', {
+        body: {
+          tenant_id: tenantId,
+          title: notification.title,
           body: notification.body,
           icon: notification.icon,
           tag: notification.tag,
+          url: '/app',
           data: notification.data,
-        });
-      }
+        },
+      }).catch(() => {}); // não-crítico: notificação local já foi exibida
     },
     [permission, devices, t]
   );

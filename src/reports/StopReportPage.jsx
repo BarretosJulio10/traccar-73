@@ -85,7 +85,7 @@ const StopReportPage = () => {
 
         {/* Map View */}
         <Collapse in={showMap}>
-          <div className="h-[260px] mb-6 rounded-3xl overflow-hidden shadow-[inset_4px_4px_10px_rgba(0,0,0,0.5)] border border-white/5 relative">
+          <div className="h-[35vh] min-h-[200px] max-h-[300px] mb-6 rounded-3xl overflow-hidden shadow-[inset_4px_4px_10px_rgba(0,0,0,0.5)] border border-white/5 relative">
             <MapView>
               <MapGeofence />
               {selectedItem && (

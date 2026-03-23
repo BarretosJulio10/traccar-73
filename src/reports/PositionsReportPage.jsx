@@ -95,7 +95,7 @@ const PositionsReportPage = () => {
 
         {/* Map View Toggle */}
         <Collapse in={showMap} timeout={300}>
-          <div className="h-[300px] mb-6 rounded-3xl overflow-hidden shadow-[inset_4px_4px_10px_rgba(0,0,0,0.5)] border border-white/5 relative z-0">
+          <div className="h-[40vh] min-h-[220px] max-h-[350px] mb-6 rounded-3xl overflow-hidden shadow-[inset_4px_4px_10px_rgba(0,0,0,0.5)] border border-white/5 relative z-0">
             <MapView>
               <MapGeofence />
               {[...new Set(items.map((it) => it.deviceId))].map((deviceId) => {

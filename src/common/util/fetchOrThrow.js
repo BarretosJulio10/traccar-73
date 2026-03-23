@@ -4,18 +4,33 @@ import { DEFAULT_TENANT_SLUG } from './constants';
 const getTenantSlug = () => localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
 const getTraccarEmail = () => localStorage.getItem('traccarEmail') || '';
 
+// Static demo devices — shared with DemoController (keep IDs in sync)
+const DEMO_DEVICES = [
+  { id: 99901, name: 'Fiorino MAB-01', uniqueId: 'DEMO001', category: 'van', status: 'online', disabled: false, attributes: {} },
+  { id: 99902, name: 'HB20 MAB-02', uniqueId: 'DEMO002', category: 'car', status: 'online', disabled: false, attributes: {} },
+  { id: 99903, name: 'Truck MAB-03', uniqueId: 'DEMO003', category: 'truck', status: 'online', disabled: false, attributes: {} },
+  { id: 99904, name: 'Moto MAB-04', uniqueId: 'DEMO004', category: 'motorcycle', status: 'online', disabled: false, attributes: {} },
+  { id: 99905, name: 'S10 MAB-05', uniqueId: 'DEMO005', category: 'car', status: 'online', disabled: false, attributes: {} },
+];
+
 // Mock storage for Demo Mode so created items persist during the session
 const demoStorage = {
   geofences: [
     {
       id: 1001,
-      name: 'Safe Zone SP',
-      area: 'POLYGON ((-46.66 -23.56, -46.66 -23.55, -46.65 -23.55, -46.65 -23.56, -46.66 -23.56))',
-      attributes: { type: 'safe' }
-    }
+      name: 'Sede MAB Tracker',
+      area: 'CIRCLE (-23.5505 -46.6333, 500)',
+      attributes: { type: 'safe', color: '#39ff14' },
+    },
+    {
+      id: 1002,
+      name: 'Logística Tatuapé',
+      area: 'CIRCLE (-23.52 -46.59, 800)',
+      attributes: { type: 'default', color: '#3b82f6' },
+    },
   ],
   groups: [],
-  calendars: []
+  calendars: [],
 };
 
 /**
@@ -133,11 +148,18 @@ const fetchOrThrow = async (input, init) => {
     });
   }
 
-  // Intercept GET requests for mocked entities
+  // Intercept ALL GET requests in demo mode — prevents real tenant data from leaking
   if (isDemo && (!init || !init.method || init.method === 'GET')) {
-    if (url.includes('/api/geofences')) return new Response(JSON.stringify(demoStorage.geofences), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    if (url.includes('/api/groups')) return new Response(JSON.stringify(demoStorage.groups), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    if (url.includes('/api/calendars')) return new Response(JSON.stringify(demoStorage.calendars), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    // Pass through only session/server — needed for auth bootstrap
+    const isBootstrap = url.includes('/api/session') || url.includes('/api/server');
+    if (!isBootstrap) {
+      if (url.includes('/api/geofences')) return new Response(JSON.stringify(demoStorage.geofences), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (url.includes('/api/groups')) return new Response(JSON.stringify(demoStorage.groups), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (url.includes('/api/calendars')) return new Response(JSON.stringify(demoStorage.calendars), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (url.includes('/api/devices')) return new Response(JSON.stringify(DEMO_DEVICES), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      // Catch-all: any other GET in demo mode returns empty array (never real tenant data)
+      return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
   }
 
   const headers = {

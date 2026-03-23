@@ -4,13 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
-  Box,
   Collapse,
-  Chip,
   IconButton,
-  Tooltip,
-  Snackbar,
-  Button,
   CircularProgress,
 } from '@mui/material';
 import FenceIcon from '@mui/icons-material/Fence';
@@ -297,18 +292,37 @@ const GeofencesList = ({ onGeofenceSelected }) => {
                   </div>
                 )}
 
-                {/* Footer Action */}
+                {/* Footer Action — inline confirmation avoids Portal/pointer-events issues */}
                 <div className="flex justify-end pt-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setRemovingGeofenceId(item.id);
-                    }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500/10 text-[#ff3939] text-[9px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-colors shadow-[2px_2px_4px_rgba(0,0,0,0.3)] border border-red-500/20"
-                  >
-                    <DeleteIcon sx={{ fontSize: 14 }} />
-                    Excluir
-                  </button>
+                  {removingGeofenceId === item.id ? (
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="text-[9px] font-bold text-slate-400 flex-1">Confirmar exclusão?</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setRemovingGeofenceId(null); }}
+                        className="px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-white/10 text-slate-400 active:scale-95 transition-all"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRemoveGeofence(); }}
+                        disabled={isDeleting}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/20 text-[#ff3939] text-[9px] font-black uppercase tracking-widest border border-red-500/30 active:scale-95 transition-all disabled:opacity-50"
+                      >
+                        {isDeleting
+                          ? <CircularProgress size={10} color="inherit" />
+                          : <DeleteIcon sx={{ fontSize: 12 }} />}
+                        {isDeleting ? 'Removendo...' : 'Confirmar'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setRemovingGeofenceId(item.id); }}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-500/10 text-[#ff3939] text-[9px] font-black uppercase tracking-widest border border-red-500/20 active:scale-95 transition-all"
+                    >
+                      <DeleteIcon sx={{ fontSize: 14 }} />
+                      Excluir
+                    </button>
+                  )}
                 </div>
               </div>
             </Collapse>
@@ -323,16 +337,6 @@ const GeofencesList = ({ onGeofenceSelected }) => {
         geofenceName={dialogGeofence?.name}
       />
 
-      <Snackbar
-        open={Boolean(removingGeofenceId)}
-        onClose={() => !isDeleting && setRemovingGeofenceId(null)}
-        message={isDeleting ? 'Removendo geocerca...' : t('sharedRemoveConfirm')}
-        action={
-          <Button size="small" color="error" onClick={handleRemoveGeofence} disabled={isDeleting}>
-            {isDeleting ? <CircularProgress size={16} color="inherit" /> : t('sharedRemove')}
-          </Button>
-        }
-      />
     </div>
   );
 };

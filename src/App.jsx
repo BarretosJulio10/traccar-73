@@ -51,7 +51,7 @@ const App = () => {
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const isSettingsRoute = pathname.startsWith('/app/settings');
-  const isDashboard = pathname === '/app' || pathname === '/app/';
+  const isDashboard = pathname === '/app' || pathname === '/app/' || pathname.startsWith('/app/geofence');
   const [demoMode, setDemoModeState] = useState(
     () => window.sessionStorage.getItem('demoMode') === 'true',
   );
@@ -108,7 +108,9 @@ const App = () => {
       if (response.ok) {
         dispatch(sessionActions.updateUser(await response.json()));
       } else {
-        window.sessionStorage.setItem('postLogin', pathname + search);
+        // Only persist paths inside the app — prevents open redirect after login
+        const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
+        window.sessionStorage.setItem('postLogin', safePath);
         navigate(newServer ? '/register' : '/login', { replace: true });
       }
     }
@@ -148,7 +150,10 @@ const App = () => {
             <MainMap filteredPositions={[]} selectedPosition={null} onEventsClick={() => { }} />
           </div>
         )}
-        <div className="flex-1 relative overflow-auto z-10 scrollbar-hide">
+        <div
+          className="flex-1 relative overflow-auto z-10 scrollbar-hide"
+          style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}
+        >
           <Outlet context={{ demoMode, setDemoMode }} />
         </div>
         {!desktop && !selectedDeviceId && (

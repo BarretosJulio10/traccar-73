@@ -416,7 +416,7 @@ const InnovatorHUD = ({ device: deviceProp, onClose, onCommand }) => {
             onClick={() => setConfirmOpen(isBlocked ? 'engineResume' : 'engineStop')}
             theme={theme}
           />
-          <ActionBtn icon={<GpsFixedIcon />} label="Cercas" onClick={() => navigate('/app/geofences')} theme={theme} />
+          <ActionBtn icon={<GpsFixedIcon />} label="Cercas" onClick={() => { onClose(); navigate('/app/geofences'); }} theme={theme} />
           <ActionBtn icon={<PlayArrowIcon />} label="Rota"
             onClick={() => { onClose(); navigate(`/app/reports/route?deviceId=${device.id}`); }}
             theme={theme} />

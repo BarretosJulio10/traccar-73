@@ -91,7 +91,7 @@ const PositionsReportPage = () => {
 
   return (
     <PwaPageLayout title={t('reportPositions')} actions={headerActions}>
-      <div className="flex flex-col h-full relative">
+      <div className="flex flex-col relative">
 
         {/* Map View Toggle */}
         <Collapse in={showMap} timeout={300}>

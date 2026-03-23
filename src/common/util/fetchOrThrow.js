@@ -92,7 +92,8 @@ const fetchOrThrow = async (input, init) => {
   // and simulate local storage behavior for Geofences
   if (isDemo && init && init.method && init.method !== 'GET') {
     if (init.method === 'POST') {
-      const bodyJSON = init.body ? JSON.parse(init.body) : {};
+      let bodyJSON = {};
+      try { bodyJSON = init.body ? JSON.parse(init.body) : {}; } catch { /* non-JSON body */ }
       const newId = Math.floor(Math.random() * 100000);
       const newItem = { id: newId, ...bodyJSON };
       if (url.includes('/api/geofences')) demoStorage.geofences.push(newItem);
@@ -106,7 +107,8 @@ const fetchOrThrow = async (input, init) => {
     }
 
     if (init.method === 'PUT') {
-      const bodyJSON = init.body ? JSON.parse(init.body) : {};
+      let bodyJSON = {};
+      try { bodyJSON = init.body ? JSON.parse(init.body) : {}; } catch { /* non-JSON body */ }
       if (url.includes('/api/geofences') && bodyJSON.id) {
         demoStorage.geofences = demoStorage.geofences.map(g => g.id === bodyJSON.id ? bodyJSON : g);
       }

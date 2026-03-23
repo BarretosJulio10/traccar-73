@@ -10,7 +10,6 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { useState } from 'react';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import { useAdministrator } from '../common/util/permissions';
 import WhatsAppAlertsDialog from '../settings/WhatsAppAlertsDialog';
 import { useHudTheme } from '../common/util/ThemeContext';
 

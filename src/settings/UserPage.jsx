@@ -25,6 +25,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import TuneIcon from '@mui/icons-material/Tune';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import MapIcon from '@mui/icons-material/Map';
+import LinkIcon from '@mui/icons-material/Link';
 import { useDispatch, useSelector } from 'react-redux';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
@@ -251,6 +253,26 @@ const UserPage = () => {
               />
             </div>
             <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-black text-slate-500 uppercase px-1">Idioma</span>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={(item.attributes && item.attributes.language) || ''}
+                  onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, language: e.target.value } })}
+                  sx={{ fontSize: '13px', borderRadius: '12px' }}
+                >
+                  <MenuItem value="">Padrão do navegador</MenuItem>
+                  <MenuItem value="pt">Português</MenuItem>
+                  <MenuItem value="pt_BR">Português (Brasil)</MenuItem>
+                  <MenuItem value="en">English</MenuItem>
+                  <MenuItem value="es">Español</MenuItem>
+                  <MenuItem value="fr">Français</MenuItem>
+                  <MenuItem value="de">Deutsch</MenuItem>
+                  <MenuItem value="ru">Русский</MenuItem>
+                  <MenuItem value="zh">中文</MenuItem>
+                </Select>
+              </FormControl>
+            </div>
+            <div className="flex flex-col gap-1.5">
               <span className="text-[9px] font-black text-slate-500 uppercase px-1">{t('mapDefault')}</span>
               <FormControl fullWidth size="small">
                 <Select
@@ -310,7 +332,7 @@ const UserPage = () => {
           </NeumorphicSection>
 
           <NeumorphicSection title={t('sharedLocation')} icon={LocationOnIcon}>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="flex flex-col gap-1.5">
                 <span className="text-[9px] font-black text-slate-500 uppercase px-1">Lat</span>
                 <TextField type="number" size="small" value={item.latitude || 0} onChange={(e) => setItem({ ...item, latitude: Number(e.target.value) })} sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
@@ -318,6 +340,10 @@ const UserPage = () => {
               <div className="flex flex-col gap-1.5">
                 <span className="text-[9px] font-black text-slate-500 uppercase px-1">Lon</span>
                 <TextField type="number" size="small" value={item.longitude || 0} onChange={(e) => setItem({ ...item, longitude: Number(e.target.value) })} sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-black text-slate-500 uppercase px-1">Zoom</span>
+                <TextField type="number" size="small" inputProps={{ min: 1, max: 20, step: 0.5 }} value={item.zoom || 12} onChange={(e) => setItem({ ...item, zoom: Number(e.target.value) })} sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
               </div>
             </div>
             <button
@@ -333,27 +359,139 @@ const UserPage = () => {
             </button>
           </NeumorphicSection>
 
-          <NeumorphicSection title={t('sharedPermissions')} icon={VpnKeyIcon}>
+          <NeumorphicSection title="Mapa & Interface" icon={MapIcon}>
             <div className="flex flex-col gap-1.5">
-              <span className="text-[9px] font-black text-slate-500 uppercase px-1">{t('userExpirationTime')}</span>
+              <span className="text-[9px] font-black text-slate-500 uppercase px-1">Comportamento do Mapa</span>
+              <FormGroup
+                className="p-4 rounded-3xl border grid grid-cols-2 gap-1 shadow-inner"
+                style={{ background: `${theme.isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)'}`, borderColor: theme.border }}
+              >
+                <FormControlLabel control={<Checkbox size="small" checked={!!(item.attributes && item.attributes.mapFollow)} onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, mapFollow: e.target.checked } })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>Seguir veículo</span>} />
+                <FormControlLabel control={<Checkbox size="small" checked={!!(item.attributes && item.attributes.mapCluster)} onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, mapCluster: e.target.checked } })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>Agrupar ícones</span>} />
+                <FormControlLabel control={<Checkbox size="small" checked={!!(item.attributes && item.attributes.mapDirection)} onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, mapDirection: e.target.checked } })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>Seta de direção</span>} />
+                <FormControlLabel control={<Checkbox size="small" checked={!!(item.attributes && item.attributes.mapGeofences)} onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, mapGeofences: e.target.checked } })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>Cercas no mapa</span>} />
+              </FormGroup>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-black text-slate-500 uppercase px-1">Linha 1 do card</span>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={(item.attributes && item.attributes.devicePrimary) || ''}
+                    onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, devicePrimary: e.target.value } })}
+                    sx={{ fontSize: '13px', borderRadius: '12px' }}
+                  >
+                    <MenuItem value="">Automático</MenuItem>
+                    <MenuItem value="name">Nome</MenuItem>
+                    <MenuItem value="uniqueId">ID único</MenuItem>
+                    <MenuItem value="phone">Telefone</MenuItem>
+                    <MenuItem value="model">Modelo</MenuItem>
+                    <MenuItem value="contact">Contato</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-black text-slate-500 uppercase px-1">Linha 2 do card</span>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={(item.attributes && item.attributes.deviceSecondary) || ''}
+                    onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, deviceSecondary: e.target.value } })}
+                    sx={{ fontSize: '13px', borderRadius: '12px' }}
+                  >
+                    <MenuItem value="">Automático</MenuItem>
+                    <MenuItem value="name">Nome</MenuItem>
+                    <MenuItem value="uniqueId">ID único</MenuItem>
+                    <MenuItem value="phone">Telefone</MenuItem>
+                    <MenuItem value="model">Modelo</MenuItem>
+                    <MenuItem value="contact">Contato</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-black text-slate-500 uppercase px-1">Som de eventos</span>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={(item.attributes && item.attributes.soundEvents) || ''}
+                    onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, soundEvents: e.target.value } })}
+                    sx={{ fontSize: '13px', borderRadius: '12px' }}
+                  >
+                    <MenuItem value="">Sem som</MenuItem>
+                    <MenuItem value="default">Padrão</MenuItem>
+                    <MenuItem value="warning">Alerta</MenuItem>
+                    <MenuItem value="sos">SOS</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-black text-slate-500 uppercase px-1">Som de alarmes</span>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={(item.attributes && item.attributes.soundAlarms) || ''}
+                    onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, soundAlarms: e.target.value } })}
+                    sx={{ fontSize: '13px', borderRadius: '12px' }}
+                  >
+                    <MenuItem value="">Sem som</MenuItem>
+                    <MenuItem value="default">Padrão</MenuItem>
+                    <MenuItem value="warning">Alerta</MenuItem>
+                    <MenuItem value="sos">SOS</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-black text-slate-500 uppercase px-1">Escala dos ícones</span>
               <TextField
-                type="date"
+                type="number"
                 size="small"
-                value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}
-                onChange={(e) => { if (e.target.value) { setItem({ ...item, expirationTime: new Date(e.target.value).toISOString() }); } }}
-                disabled={!manager}
+                inputProps={{ min: 0.5, max: 4, step: 0.25 }}
+                value={(item.attributes && item.attributes.iconScale) || 1}
+                onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, iconScale: Number(e.target.value) } })}
                 fullWidth
                 sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               />
             </div>
-            <FormGroup 
-              className="p-4 rounded-3xl border grid grid-cols-1 gap-1 shadow-inner"
-              style={{ background: `${theme.isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)'}`, borderColor: theme.border }}
-            >
-              <FormControlLabel control={<Checkbox size="small" checked={item.disabled} onChange={(e) => setItem({ ...item, disabled: e.target.checked })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>{t('sharedDisabled')}</span>} disabled={!manager} />
-              <FormControlLabel control={<Checkbox size="small" checked={item.administrator} onChange={(e) => setItem({ ...item, administrator: e.target.checked })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>{t('userAdmin')}</span>} disabled={!admin} />
-              <FormControlLabel control={<Checkbox size="small" checked={item.readonly} onChange={(e) => setItem({ ...item, readonly: e.target.checked })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>{t('serverReadonly')}</span>} disabled={!manager} />
-            </FormGroup>
+          </NeumorphicSection>
+
+          <NeumorphicSection title="Segurança" icon={VpnKeyIcon}>
+            {manager && (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[9px] font-black text-slate-500 uppercase px-1">{t('userExpirationTime')}</span>
+                  <TextField
+                    type="date"
+                    size="small"
+                    value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}
+                    onChange={(e) => { if (e.target.value) { setItem({ ...item, expirationTime: new Date(e.target.value).toISOString() }); } }}
+                    fullWidth
+                    sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
+                </div>
+                <FormGroup
+                  className="p-4 rounded-3xl border grid grid-cols-1 gap-1 shadow-inner"
+                  style={{ background: `${theme.isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)'}`, borderColor: theme.border }}
+                >
+                  <FormControlLabel control={<Checkbox size="small" checked={item.disabled} onChange={(e) => setItem({ ...item, disabled: e.target.checked })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>{t('sharedDisabled')}</span>} />
+                  {admin && <FormControlLabel control={<Checkbox size="small" checked={item.administrator} onChange={(e) => setItem({ ...item, administrator: e.target.checked })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>{t('userAdmin')}</span>} />}
+                  <FormControlLabel control={<Checkbox size="small" checked={item.readonly} onChange={(e) => setItem({ ...item, readonly: e.target.checked })} sx={{ color: theme.accent, '&.Mui-checked': { color: theme.accent } }} />} label={<span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textPrimary }}>{t('serverReadonly')}</span>} />
+                </FormGroup>
+                {admin && (
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[9px] font-black text-slate-500 uppercase px-1">Limite de dispositivos (-1 = ilimitado)</span>
+                    <TextField
+                      type="number"
+                      size="small"
+                      inputProps={{ min: -1 }}
+                      value={item.deviceLimit ?? -1}
+                      onChange={(e) => setItem({ ...item, deviceLimit: Number(e.target.value) })}
+                      fullWidth
+                      sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    />
+                  </div>
+                )}
+              </>
+            )}
             <button
               type="button"
               className="py-2.5 rounded-xl border shadow-md text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all"
@@ -362,6 +500,51 @@ const UserPage = () => {
             >
               {t('userRevokeToken')}
             </button>
+          </NeumorphicSection>
+
+          <NeumorphicSection title="Integrações" icon={LinkIcon}>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-black text-slate-500 uppercase px-1">App de navegação (URL)</span>
+              <TextField
+                placeholder="https://waze.com/ul?ll={latitude},{longitude}"
+                value={(item.attributes && item.attributes.navigationAppLink) || ''}
+                onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, navigationAppLink: e.target.value } })}
+                fullWidth
+                size="small"
+                sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-black text-slate-500 uppercase px-1">Nome do app de navegação</span>
+              <TextField
+                placeholder="Waze"
+                value={(item.attributes && item.attributes.navigationAppTitle) || ''}
+                onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, navigationAppTitle: e.target.value } })}
+                fullWidth
+                size="small"
+                sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-black text-slate-500 uppercase px-1">Telegram Chat ID</span>
+              <TextField
+                value={(item.attributes && item.attributes.telegramChatId) || ''}
+                onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, telegramChatId: e.target.value } })}
+                fullWidth
+                size="small"
+                sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-black text-slate-500 uppercase px-1">Pushover User Key</span>
+              <TextField
+                value={(item.attributes && item.attributes.pushoverUserKey) || ''}
+                onChange={(e) => setItem({ ...item, attributes: { ...item.attributes, pushoverUserKey: e.target.value } })}
+                fullWidth
+                size="small"
+                sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+            </div>
           </NeumorphicSection>
 
           <div className="mb-4">

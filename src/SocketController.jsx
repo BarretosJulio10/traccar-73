@@ -68,7 +68,8 @@ const SocketController = ({ demoMode }) => {
       });
 
       // Auto-block: if vehicle exits a geofence that has an anchor auto-block rule
-      const autoBlockRules = JSON.parse(localStorage.getItem('traccar_anchor_autoblock') || '{}');
+      let autoBlockRules = {};
+      try { autoBlockRules = JSON.parse(localStorage.getItem('traccar_anchor_autoblock') || '{}'); } catch { /* invalid JSON in storage */ }
       events
         .filter((e) => e.type === 'geofenceExit' && e.geofenceId)
         .forEach((e) => {
@@ -149,7 +150,7 @@ const SocketController = ({ demoMode }) => {
           nativePostMessage('authenticated');
           dispatch(sessionActions.updateSocket(true));
         } catch (error) {
-          console.error('Initial device fetch failed:', error);
+          dispatch(sessionActions.updateSocket(false));
         }
       };
 

@@ -14,9 +14,9 @@ export const DEMO_USER = {
   id: 99999,
   name: 'Cliente Demo',
   email: 'demo@mabtracker.com.br',
-  administrator: true,
+  administrator: false,
   readonly: false,
   deviceReadonly: false,
-  userLimit: 10,
+  userLimit: 0,
   attributes: {},
 };

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useHudTheme } from '../util/ThemeContext';
@@ -9,10 +8,12 @@ const PwaPageLayout = ({ title, children, actions, transparent = false }) => {
 
     return (
         <div
-            className="min-h-full md:min-h-screen pt-6 pb-6 md:pb-28 px-4 font-['Outfit'] flex flex-col overflow-x-hidden transition-colors duration-500"
-            style={{ 
+            className="min-h-full md:min-h-screen pt-6 pb-6 md:pb-28 px-4 font-['Outfit'] flex flex-col transition-colors duration-500"
+            style={{
                 background: transparent ? 'transparent' : theme.bg,
-                color: theme.textPrimary 
+                color: theme.textPrimary,
+                overflowX: 'hidden',
+                WebkitOverflowScrolling: 'touch',
             }}
         >
 
@@ -39,8 +40,8 @@ const PwaPageLayout = ({ title, children, actions, transparent = false }) => {
                 </div>
             </header>
 
-            {/* Content Container */}
-            <main className="flex-1 flex flex-col">
+            {/* Content Container — overlay pages fill height & scroll internally; regular pages grow naturally */}
+            <main className={transparent ? 'flex-1 flex flex-col min-h-0' : 'flex flex-col'}>
                 {children}
             </main>
         </div>

@@ -161,20 +161,21 @@ const DevicesPage = () => {
                 {t('reportExport')}
               </Button>
             </TableCell>
-            <TableCell colSpan={manager ? 9 : 8} align="right">
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={showAll}
-                    onChange={(e) => setShowAll(e.target.checked)}
-                    size="small"
-                  />
-                }
-                label={t('notificationAlways')}
-                labelPlacement="start"
-                disabled={!manager}
-              />
-            </TableCell>
+            {manager && (
+              <TableCell colSpan={9} align="right">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={showAll}
+                      onChange={(e) => setShowAll(e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label={t('notificationAlways')}
+                  labelPlacement="start"
+                />
+              </TableCell>
+            )}
           </TableRow>
         </TableFooter>
       </Table>

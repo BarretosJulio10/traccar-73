@@ -31,7 +31,7 @@ const MapGeofence = () => {
         paint: {
           'fill-color': ['get', 'color'],
           'fill-outline-color': ['get', 'color'],
-          'fill-opacity': 0.1,
+          'fill-opacity': 0.06,
         },
       });
       map.addLayer({
@@ -40,8 +40,8 @@ const MapGeofence = () => {
         type: 'line',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': ['get', 'width'],
-          'line-opacity': ['get', 'opacity'],
+          'line-width': 1.5,
+          'line-opacity': 0.7,
         },
       });
       map.addLayer({
@@ -51,11 +51,12 @@ const MapGeofence = () => {
         layout: {
           'text-field': '{name}',
           'text-font': findFonts(map),
-          'text-size': 12,
+          'text-size': 11,
         },
         paint: {
           'text-halo-color': 'white',
           'text-halo-width': 1,
+          'text-opacity': 0.75,
         },
       });
 

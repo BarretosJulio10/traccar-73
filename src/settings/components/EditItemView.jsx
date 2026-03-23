@@ -70,7 +70,7 @@ const EditItemView = ({
 
   return (
     <PwaPageLayout title={title || t('sharedEdit')} actions={headerActions}>
-      <div className="flex flex-col h-full pb-32">
+      <div className="flex flex-col pb-32">
         {item ? (
           children
         ) : (

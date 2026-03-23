@@ -5,16 +5,11 @@ export default [
   {
     id: 'gl-draw-polygon-fill-inactive',
     type: 'fill',
-    filter: [
-      'all',
-      ['==', 'active', 'false'],
-      ['==', '$type', 'Polygon'],
-      ['!=', 'mode', 'static'],
-    ],
+    filter: ['all', ['==', 'active', 'false'], ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
     paint: {
       'fill-color': '#2dd4bf',
       'fill-outline-color': '#2dd4bf',
-      'fill-opacity': 0.12,
+      'fill-opacity': 0.07,
     },
   },
   {
@@ -24,7 +19,7 @@ export default [
     paint: {
       'fill-color': '#fbb03b',
       'fill-outline-color': '#fbb03b',
-      'fill-opacity': 0.1,
+      'fill-opacity': 0.08,
     },
   },
   {
@@ -32,72 +27,50 @@ export default [
     type: 'circle',
     filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'midpoint']],
     paint: {
-      'circle-radius': 3,
+      'circle-radius': 2.5,
       'circle-color': '#fbb03b',
     },
   },
   {
     id: 'gl-draw-polygon-stroke-inactive',
     type: 'line',
-    filter: [
-      'all',
-      ['==', 'active', 'false'],
-      ['==', '$type', 'Polygon'],
-      ['!=', 'mode', 'static'],
-    ],
-    layout: {
-      'line-cap': 'round',
-      'line-join': 'round',
-    },
+    filter: ['all', ['==', 'active', 'false'], ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
       'line-color': '#2dd4bf',
-      'line-width': 2,
+      'line-width': 1.5,
     },
   },
   {
     id: 'gl-draw-polygon-stroke-active',
     type: 'line',
     filter: ['all', ['==', 'active', 'true'], ['==', '$type', 'Polygon']],
-    layout: {
-      'line-cap': 'round',
-      'line-join': 'round',
-    },
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
       'line-color': '#fbb03b',
       'line-dasharray': [0.2, 2],
-      'line-width': 2,
+      'line-width': 1.5,
     },
   },
   {
     id: 'gl-draw-line-inactive',
     type: 'line',
-    filter: [
-      'all',
-      ['==', 'active', 'false'],
-      ['==', '$type', 'LineString'],
-      ['!=', 'mode', 'static'],
-    ],
-    layout: {
-      'line-cap': 'round',
-      'line-join': 'round',
-    },
+    filter: ['all', ['==', 'active', 'false'], ['==', '$type', 'LineString'], ['!=', 'mode', 'static']],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
       'line-color': '#2dd4bf',
-      'line-width': 2,
+      'line-width': 1.5,
     },
   },
   {
     id: 'gl-draw-line-active',
     type: 'line',
     filter: ['all', ['==', '$type', 'LineString'], ['==', 'active', 'true']],
-    layout: {
-      'line-cap': 'round',
-      'line-join': 'round',
-    },
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
       'line-color': '#fbb03b',
       'line-dasharray': [0.2, 2],
-      'line-width': 2,
+      'line-width': 1.5,
     },
   },
   {
@@ -105,7 +78,7 @@ export default [
     type: 'circle',
     filter: ['all', ['==', 'meta', 'vertex'], ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
     paint: {
-      'circle-radius': 5,
+      'circle-radius': 4,
       'circle-color': '#fff',
     },
   },
@@ -114,22 +87,16 @@ export default [
     type: 'circle',
     filter: ['all', ['==', 'meta', 'vertex'], ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
     paint: {
-      'circle-radius': 3,
-      'circle-color': '#fbb03b',
+      'circle-radius': 2.5,
+      'circle-color': '#2dd4bf',
     },
   },
   {
     id: 'gl-draw-point-point-stroke-inactive',
     type: 'circle',
-    filter: [
-      'all',
-      ['==', 'active', 'false'],
-      ['==', '$type', 'Point'],
-      ['==', 'meta', 'feature'],
-      ['!=', 'mode', 'static'],
-    ],
+    filter: ['all', ['==', 'active', 'false'], ['==', '$type', 'Point'], ['==', 'meta', 'feature'], ['!=', 'mode', 'static']],
     paint: {
-      'circle-radius': 5,
+      'circle-radius': 4,
       'circle-opacity': 1,
       'circle-color': '#fff',
     },
@@ -137,15 +104,9 @@ export default [
   {
     id: 'gl-draw-point-inactive',
     type: 'circle',
-    filter: [
-      'all',
-      ['==', 'active', 'false'],
-      ['==', '$type', 'Point'],
-      ['==', 'meta', 'feature'],
-      ['!=', 'mode', 'static'],
-    ],
+    filter: ['all', ['==', 'active', 'false'], ['==', '$type', 'Point'], ['==', 'meta', 'feature'], ['!=', 'mode', 'static']],
     paint: {
-      'circle-radius': 3,
+      'circle-radius': 2.5,
       'circle-color': '#2dd4bf',
     },
   },
@@ -154,7 +115,7 @@ export default [
     type: 'circle',
     filter: ['all', ['==', '$type', 'Point'], ['==', 'active', 'true'], ['!=', 'meta', 'midpoint']],
     paint: {
-      'circle-radius': 7,
+      'circle-radius': 6,
       'circle-color': '#fff',
     },
   },
@@ -163,7 +124,7 @@ export default [
     type: 'circle',
     filter: ['all', ['==', '$type', 'Point'], ['!=', 'meta', 'midpoint'], ['==', 'active', 'true']],
     paint: {
-      'circle-radius': 5,
+      'circle-radius': 4,
       'circle-color': '#fbb03b',
     },
   },

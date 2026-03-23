@@ -6,13 +6,16 @@ const TenantContext = createContext(null);
 
 export const useTenant = () => useContext(TenantContext);
 
+// Only allow safe slug characters — prevents open-redirect and injection
+const TENANT_SLUG_RE = /^[a-z0-9_-]{2,60}$/;
+
 const detectTenantSlug = () => {
   const params = new URLSearchParams(window.location.search);
   const queryTenant = params.get('tenant');
-  if (queryTenant) return queryTenant;
+  if (queryTenant && TENANT_SLUG_RE.test(queryTenant)) return queryTenant;
 
   const stored = localStorage.getItem('tenantSlug');
-  if (stored) return stored;
+  if (stored && TENANT_SLUG_RE.test(stored)) return stored;
 
   return DEFAULT_TENANT_SLUG;
 };
@@ -25,11 +28,12 @@ export const TenantProvider = ({ children }) => {
   useEffect(() => {
     const fetchTenant = async () => {
       try {
-        const supabaseUrl =
-          import.meta.env.VITE_SUPABASE_URL || 'https://foifugnuaehjtjftpkrk.supabase.co';
-        const supabaseKey =
-          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvaWZ1Z251YWVoanRqZnRwa3JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MDc5MjIsImV4cCI6MjA4ODM4MzkyMn0.4nYVYZu8FCN4-aJ1NxytL-jFRN07VHDZzFYT0dmEDDo';
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error('Configuração Supabase ausente. Verifique as variáveis de ambiente.');
+        }
 
         const response = await fetch(
           `${supabaseUrl}/rest/v1/tenants?slug=eq.${encodeURIComponent(tenantSlug)}&select=*&limit=1`,
@@ -46,12 +50,10 @@ export const TenantProvider = ({ children }) => {
           if (data && data.length > 0) {
             setTenant(data[0]);
             localStorage.setItem('tenantSlug', data[0].slug);
-          } else {
-            console.error('Tenant not found:', tenantSlug);
           }
         }
-      } catch (err) {
-        console.error('Error fetching tenant:', err);
+      } catch {
+        // Silently fail — app will fall back to default tenant
       } finally {
         setLoading(false);
       }

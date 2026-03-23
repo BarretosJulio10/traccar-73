@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Alert, IconButton } from '@mui/material';
 import ReplayIcon from '@mui/icons-material/Replay';
-import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { useEffectAsync } from './reactHelper';
 import { sessionActions } from './store';
 import Loader from './common/components/Loader';
@@ -22,8 +22,10 @@ const ServerProvider = ({ children }) => {
 
   const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname);
 
+  const demoMode = window.sessionStorage.getItem('demoMode') === 'true';
+
   useEffectAsync(async () => {
-    if (!error && !isPublicRoute) {
+    if (!error && !isPublicRoute && !demoMode) {
       try {
         const tenantSlug = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
 
@@ -90,7 +92,7 @@ const ServerProvider = ({ children }) => {
       </Alert>
     );
   }
-  if (!initialized) {
+  if (!initialized && !demoMode) {
     return <Loader />;
   }
   return children;

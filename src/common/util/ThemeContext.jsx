@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 const ThemeContext = createContext(null);
 
@@ -46,7 +46,22 @@ export const ThemeProvider = ({ children }) => {
         () => localStorage.getItem('hudTheme') || 'dark',
     );
 
-    const theme = THEMES[themeKey] || THEMES.dark;
+    const baseTheme = THEMES[themeKey] || THEMES.dark;
+
+    // FAAS-5: Injeção Dinâmica White-Label (Multi-Tenant Engine)
+    const tenantConfig = useMemo(() => {
+        try {
+            const raw = localStorage.getItem('tenantConfig');
+            return raw ? JSON.parse(raw) : null;
+        } catch { return null; }
+    }, []);
+
+    const theme = useMemo(() => ({
+        ...baseTheme,
+        accent: tenantConfig?.accent || baseTheme.accent,
+        accentSecondary: tenantConfig?.accentSecondary || baseTheme.accentSecondary,
+        accentRgb: tenantConfig?.accentRgb || baseTheme.accentRgb,
+    }), [baseTheme, tenantConfig]);
 
     const toggleTheme = useCallback(() => {
         setThemeKey((prev) => {
@@ -56,7 +71,9 @@ export const ThemeProvider = ({ children }) => {
         });
     }, []);
 
-    // Apply CSS variables to :root so all components can use them
+    const contextValue = useMemo(() => ({ theme, themeKey, toggleTheme }), [theme, themeKey, toggleTheme]);
+
+    // Apply CSS variables and Global Theme Class to :root so all components can use them
     useEffect(() => {
         const root = document.documentElement;
         root.style.setProperty('--hud-bg', theme.bg);
@@ -70,10 +87,19 @@ export const ThemeProvider = ({ children }) => {
         root.style.setProperty('--hud-accent', theme.accent);
         root.style.setProperty('--hud-accent2', theme.accentSecondary);
         root.style.setProperty('--hud-accent-rgb', theme.accentRgb);
+        
+        // Sync body classes for pure CSS components (like MapLibre Controls)
+        if (theme.isDark) {
+            document.body.classList.add('theme-dark');
+            document.body.classList.remove('theme-light');
+        } else {
+            document.body.classList.add('theme-light');
+            document.body.classList.remove('theme-dark');
+        }
     }, [theme]);
 
     return (
-        <ThemeContext.Provider value={{ theme, themeKey, toggleTheme }}>
+        <ThemeContext.Provider value={contextValue}>
             {children}
         </ThemeContext.Provider>
     );

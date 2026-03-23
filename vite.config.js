@@ -28,17 +28,14 @@ export default defineConfig(() => ({
     svgr(),
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'maskable-icon-512x512.png'],
-      workbox: {
-        navigateFallbackDenylist: [/^\/api/, /^\/~oauth/],
+      injectManifest: {
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,woff,woff2,mp3}'],
-        // Clean up old caches on SW activation
-        cleanupOutdatedCaches: true,
-        // Skip waiting to activate new SW immediately
-        skipWaiting: true,
-        clientsClaim: true,
       },
       manifest: {
         id: '/',

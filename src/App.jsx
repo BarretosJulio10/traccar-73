@@ -71,9 +71,13 @@ const App = () => {
   const positions = useSelector((state) => state.session.positions);
   const selectedPosition = positions[selectedDeviceId];
   const [fleetSearch, setFleetSearch] = useState('');
+  const [panelDeviceId, setPanelDeviceId] = useState(null);
 
   const handleClosePanel = () => {
-    dispatch(devicesActions.selectId(null));
+    setPanelDeviceId(null);
+  };
+  const handleOpenPanel = (id) => {
+    setPanelDeviceId(id);
   };
 
   const acceptTerms = useCatch(async () => {
@@ -126,10 +130,11 @@ const App = () => {
       <MotionController demoMode={demoMode} />
       <DemoController active={demoMode} />
 
-      {desktop && <FleetSidebar search={fleetSearch} setSearch={setFleetSearch} />}
+      {user === null && <Loader />}
+
+      {desktop && <FleetSidebar search={fleetSearch} setSearch={setFleetSearch} onOpenPanel={handleOpenPanel} onClosePanel={handleClosePanel} panelDeviceId={panelDeviceId} />}
 
       <div className="flex-1 relative flex flex-col min-w-0">
-        {desktop && <MapSideMenu />}
         {desktop && isSettingsRoute && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
             <MainMap filteredPositions={[]} selectedPosition={null} onEventsClick={() => { }} />
@@ -138,15 +143,19 @@ const App = () => {
         <div className="flex-1 relative overflow-auto z-10 scrollbar-hide">
           <Outlet context={{ demoMode, setDemoMode }} />
         </div>
-        {!desktop && !selectedDeviceId && <BottomMenu />}
+        {!desktop && !selectedDeviceId && (
+          <div style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+            <BottomMenu />
+          </div>
+        )}
         {desktop && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100]">
+          <div className="fixed bottom-6 z-[100] -translate-x-1/2" style={{ left: 'calc(360px + (100vw - 360px) / 2)' }}>
             <BottomMenu />
           </div>
         )}
       </div>
 
-      {desktop && selectedDeviceId && (
+      {desktop && panelDeviceId && (
         <div
           className="w-[420px] h-full backdrop-blur-xl z-20 flex flex-col transition-colors duration-500 overflow-hidden"
           style={{
@@ -155,18 +164,16 @@ const App = () => {
             boxShadow: hudTheme.isDark ? '-10px 0 40px rgba(0,0,0,0.5)' : '-4px 0 20px rgba(0,0,0,0.08)',
           }}
         >
-          <VehicleDetailsPanel deviceId={selectedDeviceId} onClose={handleClosePanel} />
+          <VehicleDetailsPanel deviceId={panelDeviceId} onClose={handleClosePanel} />
         </div>
       )}
       {!desktop && selectedDeviceId && (
-        <div style={{ position: 'relative', zIndex: 1000 }}>
-          <StatusCard
-            deviceId={selectedDeviceId}
-            position={selectedPosition}
-            onClose={handleClosePanel}
-            desktopPadding={theme.dimensions.drawerWidthDesktop}
-          />
-        </div>
+        <StatusCard
+          deviceId={selectedDeviceId}
+          position={selectedPosition}
+          onClose={handleClosePanel}
+          desktopPadding={theme.dimensions.drawerWidthDesktop}
+        />
       )}
     </div>
   );

@@ -23,8 +23,9 @@ const useStyles = makeStyles()((theme) => {
   return {
     root: {
       position: 'absolute',
-      right: 16,
-      top: 100,
+      left: desktop ? 2 : 'auto',
+      right: desktop ? 'auto' : 16,
+      top: desktop ? 2 : 100,
       zIndex: 1000,
       display: 'flex',
       flexDirection: 'column',
@@ -62,7 +63,7 @@ const useStyles = makeStyles()((theme) => {
   };
 });
 
-const MapSideMenu = () => {
+const MapSideMenu = ({ inline = false }) => {
   const { classes } = useStyles();
   const navigate = useNavigate();
   const t = useTranslation();
@@ -84,9 +85,23 @@ const MapSideMenu = () => {
     },
   ];
 
+  const containerStyle = inline
+    ? {
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 8,
+        padding: '6px 10px',
+        borderRadius: 14,
+        backgroundColor: '#ffffffcc',
+        backdropFilter: 'blur(10px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+        border: '1px solid rgba(6,182,212,0.1)',
+      }
+    : {};
+
   return (
     <>
-      <div className={classes.root}>
+      <div className={inline ? '' : classes.root} style={containerStyle}>
         {items.map((item) => (
           <Tooltip key={item.path || item.label} title={item.label} placement="right" arrow>
             <Box className={classes.item} onClick={item.onClick || (() => navigate(item.path))}>

@@ -41,12 +41,10 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const EventsDrawer = ({ open, onClose }) => {
-  const { classes } = useStyles();
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+// ... O restande debaixo do useStyles
+const EventListContent = ({ onNavigate }) => {
   const t = useTranslation();
-
+  const dispatch = useDispatch();
   const devices = useSelector((state) => state.devices.items);
   const events = useSelector((state) => state.events.items);
 
@@ -54,9 +52,49 @@ const EventsDrawer = ({ open, onClose }) => {
     formatNotificationTitle(t, {
       type: event.type,
       attributes: {
-        alarms: event.attributes.alarm,
+        alarms: event.attributes?.alarm,
       },
     });
+
+  return (
+    <List dense sx={{ width: '100%' }}>
+      {events.map((event) => (
+        <ListItemButton
+          key={event.id}
+          onClick={() => onNavigate(`/app/event/${event.id}`)}
+          disabled={!event.id}
+          sx={{ borderRadius: '12px', mx: 1, mb: 0.5 }}
+        >
+          <ListItemText
+            primary={`${devices[event.deviceId]?.name} • ${formatType(event)}`}
+            secondary={formatTime(event.eventTime, 'seconds')}
+            slotProps={{
+              primary: { sx: { fontWeight: 600, fontSize: '0.8125rem' } },
+              secondary: { sx: { fontSize: '0.75rem' } },
+            }}
+          />
+          <Tooltip title={t('sharedRemove')}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                dispatch(eventsActions.delete(event));
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </ListItemButton>
+      ))}
+    </List>
+  );
+};
+
+const EventsDrawer = ({ open, onClose }) => {
+  const { classes } = useStyles();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const t = useTranslation();
 
   return (
     <Drawer
@@ -81,36 +119,10 @@ const EventsDrawer = ({ open, onClose }) => {
           </IconButton>
         </Tooltip>
       </Toolbar>
-      <List className={classes.drawer} dense>
-        {events.map((event) => (
-          <ListItemButton
-            key={event.id}
-            onClick={() => navigate(`/app/event/${event.id}`)}
-            disabled={!event.id}
-            sx={{ borderRadius: '12px', mx: 1, mb: 0.5 }}
-          >
-            <ListItemText
-              primary={`${devices[event.deviceId]?.name} • ${formatType(event)}`}
-              secondary={formatTime(event.eventTime, 'seconds')}
-              slotProps={{
-                primary: { sx: { fontWeight: 600, fontSize: '0.8125rem' } },
-                secondary: { sx: { fontSize: '0.75rem' } },
-              }}
-            />
-            <Tooltip title={t('sharedRemove')}>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  dispatch(eventsActions.delete(event));
-                }}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </ListItemButton>
-        ))}
-      </List>
+      <Box className={classes.drawer}>
+        {/* Renderiza os Listeners Pesados de Redux APENAS quando Open (Unmount on hide para poupar CPU Mobile/PWA) */}
+        {open && <EventListContent onNavigate={navigate} />}
+      </Box>
     </Drawer>
   );
 };

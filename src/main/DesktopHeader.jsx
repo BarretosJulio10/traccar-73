@@ -15,7 +15,7 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 import { sessionActions } from '../store';
 import { auditLog } from '../common/util/audit';
-import { apiUrl } from '../common/util/apiUrl';
+import fetchOrThrow from '../common/util/fetchOrThrow';
 import { useHudTheme } from '../common/util/ThemeContext';
 import { useTranslation } from '../common/components/LocalizationProvider';
 
@@ -59,7 +59,7 @@ const DesktopHeader = () => {
 
   const handleLogout = async () => {
     auditLog('logout', { user_id: user.id, email: user.email });
-    await fetch(apiUrl('/api/session'), { method: 'DELETE' });
+    await fetchOrThrow('/api/session', { method: 'DELETE' });
     navigate('/login');
     dispatch(sessionActions.updateUser(null));
   };
@@ -121,7 +121,11 @@ const DesktopHeader = () => {
 
       <NavHeaderItem
         label={user?.readonly ? 'Sair' : 'Minha Conta'}
-        icon={user?.readonly ? <ExitToAppIcon /> : <PersonIcon />}
+        icon={user?.readonly ? <ExitToAppIcon /> : (
+          <div className="w-[26px] h-[26px] rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 text-white flex items-center justify-center font-black text-[10px] uppercase shadow-sm border-[1.5px] border-white/40">
+            {user?.name ? user.name.substring(0, 2) : 'US'}
+          </div>
+        )}
         active={active === 'account'}
         onClick={() => {
           if (user?.readonly) handleLogout();

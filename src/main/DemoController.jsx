@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { devicesActions, sessionActions, eventsActions, geofencesActions } from '../store';
 import dayjs from 'dayjs';
+import { DEMO_USER } from '../common/util/constants';
 
 const DEMO_DEVICE_IDS = [99901, 99902, 99903, 99904, 99905];
 
@@ -113,6 +114,15 @@ const ALERT_TYPES = [
   { type: 'ignitionOn', messageKey: 'demoIgnitionOn' },
   { type: 'ignitionOff', messageKey: 'demoIgnitionOff' },
 ];
+
+const DEMO_SERVER = {
+  id: 1,
+  attributes: {
+    mapLiveRoutes: 'selected',
+    'web.liveRouteLength': 20,
+    mapCluster: true,
+  },
+};
 
 export const getMockReportData = (type, deviceIds, from, to) => {
   const data = [];
@@ -301,6 +311,9 @@ const DemoController = ({ active }) => {
   }, []);
 
   const injectDemoData = useCallback(() => {
+    // Inject server and user basics
+    dispatch(sessionActions.updateServer(DEMO_SERVER));
+
     // Inject devices
     dispatch(devicesActions.refresh(DEMO_VEHICLES));
 
@@ -339,29 +352,6 @@ const DemoController = ({ active }) => {
 
     const positions = DEMO_VEHICLES.map((v, i) => createPosition(v.id, i));
     dispatch(sessionActions.updatePositions(positions));
-
-    // Random alerts (5% chance per tick)
-    if (Math.random() < 0.05) {
-      const alertIdx = Math.floor(Math.random() * ALERT_TYPES.length);
-      const deviceIdx = Math.floor(Math.random() * DEMO_VEHICLES.length);
-      const alert = ALERT_TYPES[alertIdx];
-      const device = DEMO_VEHICLES[deviceIdx];
-
-      dispatch(
-        eventsActions.add([
-          {
-            id: Date.now(),
-            type: alert.type,
-            eventTime: new Date().toISOString(),
-            deviceId: device.id,
-            attributes: {
-              message: `[DEMO] ${device.name}: ${alert.messageKey}`,
-              ...(alert.alarm ? { alarm: alert.alarm } : {}),
-            },
-          },
-        ]),
-      );
-    }
   }, [dispatch, createPosition]);
 
   const cleanupDemo = useCallback(() => {

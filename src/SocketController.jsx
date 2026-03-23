@@ -15,7 +15,7 @@ import {
 } from './common/components/NativeInterface';
 import fetchOrThrow from './common/util/fetchOrThrow';
 import useNotifications from './common/notifications/useNotifications';
-import useGeofenceAlerts from './common/util/useGeofenceAlerts';
+// import useGeofenceAlerts from './common/util/useGeofenceAlerts';
 
 const POLLING_INTERVAL = 5000; // 5 seconds
 const EVENT_POLLING_WINDOW_MS = 10000; // Look back 10s for events
@@ -38,7 +38,7 @@ const SocketController = ({ demoMode }) => {
   const { sendEventNotification } = useNotifications();
 
   // Alertas sonoros + notificação para eventos de geocercas
-  useGeofenceAlerts();
+  // useGeofenceAlerts();
 
   const handleEvents = useCallback(
     (events) => {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { apiUrl } from '../common/util/apiUrl';
+import fetchOrThrow from '../common/util/fetchOrThrow';
 
 /**
  * Hook que combina dados em tempo real do WebSocket (Redux) com
@@ -23,13 +23,11 @@ const useDeviceFullData = (deviceId) => {
         try {
             const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
             if (!isDemo) {
-                const res = await fetch(apiUrl(`/api/devices?id=${deviceId}`), {
+                const res = await fetchOrThrow(`/api/devices?id=${deviceId}`, {
                     headers: { Accept: 'application/json' },
                 });
-                if (res.ok) {
-                    const data = await res.json();
-                    setDeviceDetails(Array.isArray(data) ? data[0] : data);
-                }
+                const data = await res.json();
+                setDeviceDetails(Array.isArray(data) ? data[0] : data);
             }
         } catch (e) {
             setError(e.message);

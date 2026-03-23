@@ -61,3 +61,134 @@ html {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E") !important;
   background-size: 20px 20px;
 }
+
+/* AUD-5 & AUD-6: Dinamic Native Controls Capsule (Light & Dark Ready) */
+body.theme-light {
+  --ctrl-bg: rgba(255, 255, 255, 0.85);
+  --ctrl-border: rgba(0, 0, 0, 0.1);
+  --ctrl-divider: rgba(0, 0, 0, 0.06);
+  --ctrl-hover: rgba(0, 0, 0, 0.05);
+  --ctrl-icon-filter: brightness(0) opacity(0.7);
+  --ctrl-icon-hover-filter: brightness(0) opacity(1);
+  --ctrl-text: #475569;
+}
+
+body.theme-dark {
+  --ctrl-bg: rgba(30, 41, 59, 0.95);
+  --ctrl-border: rgba(255, 255, 255, 0.1);
+  --ctrl-divider: rgba(255, 255, 255, 0.05);
+  --ctrl-hover: rgba(255, 255, 255, 0.1);
+  --ctrl-icon-filter: brightness(0) invert(0.92);
+  --ctrl-icon-hover-filter: brightness(0) invert(1);
+  --ctrl-text: #f8fafc;
+}
+
+/* Fallback base para injetar na pílula */
+.maplibregl-ctrl-top-right {
+  top: 5px !important;
+  right: 5px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background-color: var(--ctrl-bg, rgba(30, 41, 59, 0.95)) !important;
+  backdrop-filter: blur(14px) !important;
+  border-radius: 30px !important; /* Bordas hiper-arredondadas */
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+  border: 1px solid var(--ctrl-border, rgba(255, 255, 255, 0.1)) !important;
+  padding: 18px 0 !important; /* Padding maior afasta os botões das curvas extremas */
+  gap: 0 !important;
+  align-items: center !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl {
+  margin: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  float: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  position: relative !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group {
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group.maplibregl-ctrl {
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Padronização geométrica dos 44px */
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group > button,
+.maplibregl-ctrl-top-right button {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--ctrl-divider, rgba(255, 255, 255, 0.05)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--ctrl-text, #f8fafc) !important; /* Fixa herança de cor do SVG Trail/Target */
+}
+
+/* Desligar filtro global do WhatsApp para manter seu verde nativo seguro */
+.maplibregl-ctrl-top-right button:not(.maplibregl-ctrl-whatsapp) .maplibregl-ctrl-icon,
+.maplibregl-ctrl-top-right button:not(.maplibregl-ctrl-whatsapp).maplibregl-ctrl-icon {
+  filter: var(--ctrl-icon-filter, brightness(0) invert(0.92)) !important;
+}
+
+.maplibregl-ctrl-top-right button:not(.maplibregl-ctrl-whatsapp):hover .maplibregl-ctrl-icon,
+.maplibregl-ctrl-top-right button:not(.maplibregl-ctrl-whatsapp):hover.maplibregl-ctrl-icon {
+  filter: var(--ctrl-icon-hover-filter, brightness(0) invert(1)) !important;
+}
+
+/* Arredondar as extremidades dos botões topo/fundo da pílula para Hover imersivo */
+.maplibregl-ctrl-top-right > .maplibregl-ctrl:first-child button:first-child {
+  border-top-left-radius: 22px !important;
+  border-top-right-radius: 22px !important;
+}
+
+.maplibregl-ctrl-top-right > .maplibregl-ctrl:last-child button:last-child {
+  border-bottom-left-radius: 22px !important;
+  border-bottom-right-radius: 22px !important;
+}
+
+/* Ocultar borda divisória do último botão da lista */
+.maplibregl-ctrl-top-right .maplibregl-ctrl:last-child button:last-child {
+  border-bottom: none !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group > button:hover,
+.maplibregl-ctrl-top-right button:hover {
+  background-color: var(--ctrl-hover, rgba(255, 255, 255, 0.1)) !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Controle de Escala (100 km) — 5px da margem esquerda */
+.maplibregl-ctrl-bottom-left {
+  left: 5px !important;
+  bottom: 10px !important;
+}

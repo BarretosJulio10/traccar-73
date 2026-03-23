@@ -39,7 +39,6 @@ import { useCatch } from '../reactHelper';
 import { sessionActions } from '../store';
 import { useAdministrator, useRestriction } from '../common/util/permissions';
 import fetchOrThrow from '../common/util/fetchOrThrow';
-import { apiUrl } from '../common/util/apiUrl';
 import { useHudTheme } from '../common/util/ThemeContext';
 
 const deviceFields = [
@@ -104,7 +103,7 @@ const PreferencesPage = () => {
   });
 
   const handleReboot = useCatch(async () => {
-    const response = await fetch(apiUrl('/api/server/reboot'), { method: 'POST' });
+    const response = await fetchOrThrow('/api/server/reboot', { method: 'POST' });
     throw Error(response.statusText);
   });
 

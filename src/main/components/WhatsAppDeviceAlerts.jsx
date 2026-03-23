@@ -30,10 +30,10 @@ const ALERT_TYPES = [
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    position: 'absolute',
-    top: 10,
-    right: 60,
-    zIndex: 5,
+    position: 'fixed',
+    top: 16,
+    right: 16,
+    zIndex: 300,
     width: 320,
     maxHeight: '70vh',
     overflowY: 'auto',

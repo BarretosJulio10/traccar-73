@@ -6,20 +6,21 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DeviceList from './DeviceList';
+import MapSideMenu from './MapSideMenu';
 import { useHudTheme } from '../common/util/ThemeContext';
 import { useTenant } from '../common/components/TenantProvider';
 import LogoImage from '../login/LogoImage';
 
-const FleetSidebar = ({ search, setSearch }) => {
+const FleetSidebar = ({ search, setSearch, onOpenPanel, onClosePanel, panelDeviceId }) => {
     const { theme, toggleTheme } = useHudTheme();
     const { tenant } = useTenant() || {};
     const devices = useSelector((state) => state.devices.items);
     const onlineCount = Object.values(devices).filter(d => d.status === 'online').length;
     const totalCount = Object.keys(devices).length;
 
-    const fleetDevices = Object.values(devices).filter(d =>
+    const fleetDevices = React.useMemo(() => Object.values(devices).filter(d =>
         d.name.toLowerCase().includes(search.toLowerCase())
-    );
+    ), [devices, search]);
 
     return (
         <div
@@ -31,48 +32,54 @@ const FleetSidebar = ({ search, setSearch }) => {
             }}
         >
             {/* Cabeçalho HUD */}
-            <header className="px-5 pt-8 pb-4 shrink-0">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h1 className="text-xl font-black tracking-tight flex items-center gap-2" style={{ color: theme.textPrimary }}>
-                            <LogoImage size={28} className="m-0" />
-                            {tenant?.company_name ? (
-                                <span style={{ textTransform: 'uppercase' }}>{tenant.company_name}</span>
-                            ) : (
-                                <>FROTA <span style={{ color: theme.accent }}>TÁTICA</span></>
-                            )}
-                        </h1>
-                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5" style={{ color: theme.textMuted }}>
-                            Sistema de Monitoramento
-                        </p>
+            <header className="relative px-5 pt-0 pb-4 shrink-0">
+                {/* Controles: Badge + Tema empilhados verticalmente no canto superior direito */}
+                <div
+                    className="absolute flex flex-col items-center gap-1"
+                    style={{ top: 2, right: 2 }}
+                >
+                    {/* Badge online/total */}
+                    <div
+                        className="rounded-lg px-2 py-1 border"
+                        style={{ background: theme.bg, borderColor: theme.border }}
+                    >
+                        <span className="text-[11px] font-black" style={{ color: theme.accent }}>
+                            {onlineCount}/{totalCount}
+                        </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div
-                            className="rounded-lg px-2 py-1 border"
-                            style={{ background: theme.bg, borderColor: theme.border }}
+
+                    {/* Botão Modo Claro/Escuro */}
+                    <Tooltip title={theme.isDark ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'} arrow placement="left">
+                        <button
+                            onClick={toggleTheme}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 border"
+                            style={{
+                                background: theme.bgSecondary,
+                                borderColor: theme.borderCard,
+                                color: theme.accent,
+                            }}
                         >
-                            <span className="text-[11px] font-black" style={{ color: theme.accent }}>
-                                {onlineCount}/{totalCount}
-                            </span>
-                        </div>
-                        {/* Botão Modo Claro/Escuro */}
-                        <Tooltip title={theme.isDark ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'} arrow placement="bottom">
-                            <button
-                                onClick={toggleTheme}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 border"
-                                style={{
-                                    background: theme.bgSecondary,
-                                    borderColor: theme.borderCard,
-                                    color: theme.accent,
-                                }}
-                            >
-                                {theme.isDark
-                                    ? <LightModeIcon sx={{ fontSize: 16 }} />
-                                    : <DarkModeIcon sx={{ fontSize: 16 }} />
-                                }
-                            </button>
-                        </Tooltip>
-                    </div>
+                            {theme.isDark
+                                ? <LightModeIcon sx={{ fontSize: 16 }} />
+                                : <DarkModeIcon sx={{ fontSize: 16 }} />
+                            }
+                        </button>
+                    </Tooltip>
+                </div>
+
+                {/* Logo + Título centralizados */}
+                <div className="flex flex-col items-center mb-4">
+                    <LogoImage size={168} className="m-0" style={{ margin: 0 }} />
+                    <h1 className="text-xl font-black tracking-tight text-center mt-2" style={{ color: theme.textPrimary }}>
+                        {tenant?.company_name ? (
+                            <span style={{ textTransform: 'uppercase' }}>{tenant.company_name}</span>
+                        ) : (
+                            <>FROTA <span style={{ color: theme.accent }}>TÁTICA</span></>
+                        )}
+                    </h1>
+                    <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5 text-center" style={{ color: theme.textMuted }}>
+                        Sistema de Monitoramento
+                    </p>
                 </div>
 
                 {/* Campo de Busca */}
@@ -99,7 +106,12 @@ const FleetSidebar = ({ search, setSearch }) => {
 
             {/* Lista de Frota */}
             <div className="flex-1 min-h-0 overflow-hidden scrollbar-hide">
-                <DeviceList devices={fleetDevices} />
+                <DeviceList devices={fleetDevices} onOpenPanel={onOpenPanel} onClosePanel={onClosePanel} panelDeviceId={panelDeviceId} />
+            </div>
+
+            {/* Nav Menu — centralizado acima do rodapé */}
+            <div className="flex justify-center mb-[2px]">
+                <MapSideMenu inline />
             </div>
 
             {/* Rodapé */}

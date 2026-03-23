@@ -28,7 +28,7 @@ const useStyles = makeStyles()((theme) => {
     overlay: {
     position: 'fixed',
     inset: 0,
-    zIndex: 1200,
+    zIndex: 50,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -77,6 +77,11 @@ const useStyles = makeStyles()((theme) => {
     display: 'flex',
     flexDirection: 'column',
     background: theme.palette.background.default,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    boxShadow: '0 -10px 40px rgba(0,0,0,0.15)',
+    overscrollBehaviorY: 'none',
   },
   mobileDrawer: {
     width: theme.dimensions.drawerWidthTablet,
@@ -153,6 +158,7 @@ const PageLayout = ({ menu, breadcrumbs, children }) => {
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const [searchParams] = useSearchParams();
   const [openDrawer, setOpenDrawer] = useState(!desktop && searchParams.has('menu'));
+  const [touchY, setTouchY] = useState(0);
 
   if (desktop) {
     return (
@@ -191,6 +197,19 @@ const PageLayout = ({ menu, breadcrumbs, children }) => {
       >
         {menu}
       </Drawer>
+      {/* iOS Style Pull-to-Dismiss Handle */}
+      <div 
+        className="w-full flex justify-center py-2 cursor-grab touch-none"
+        style={{ backgroundColor: theme.palette.background.paper }}
+        onTouchStart={(e) => setTouchY(e.touches[0].clientY)}
+        onTouchEnd={(e) => {
+          if (e.changedTouches[0].clientY - touchY > 60) {
+            handleClose();
+          }
+        }}
+      >
+        <div className="w-10 h-1.5 rounded-full bg-slate-300" />
+      </div>
       <AppBar
         className={classes.mobileToolbar}
         position="static"

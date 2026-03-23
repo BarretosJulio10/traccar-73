@@ -32,7 +32,6 @@ import { useMediaQuery, useTheme as useMuiTheme } from '@mui/material';
 
 import { useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
-import { apiUrl } from '../common/util/apiUrl';
 import { devicesActions } from '../store';
 import TacticalGauges from './TacticalGauges';
 import { useHudTheme } from '../common/util/ThemeContext';
@@ -74,7 +73,7 @@ const Section = ({ title, icon, children, theme }) => (
     <div className="mb-3">
         <div className="flex items-center gap-2 mb-2 pb-1 border-b" style={{ borderColor: theme.borderCard }}>
             <div style={{ color: theme.accent }}>{React.cloneElement(icon, { sx: { fontSize: 13 } })}</div>
-            <span className="text-[9px] font-black tracking-[0.2em] uppercase" style={{ color: theme.textMuted }}>{title}</span>
+            <span className="text-[9px] font-bold tracking-[0.2em] uppercase" style={{ color: theme.textMuted }}>{title}</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
             {children}
@@ -85,7 +84,7 @@ const Section = ({ title, icon, children, theme }) => (
 const DataRow = ({ label, value, highlight = false, theme }) => (
     <div className="flex flex-col px-2 py-1.5 rounded-lg border" style={{ background: theme.isDark ? 'rgba(18,20,24,0.4)' : 'rgba(255,255,255,0.7)', borderColor: theme.borderCard }}>
         <span className="text-[8px] font-bold tracking-widest uppercase leading-none" style={{ color: theme.textMuted }}>{label}</span>
-        <span className="text-[11px] font-black mt-0.5 truncate" style={{ color: highlight ? theme.accent : theme.textPrimary }}>
+        <span className="text-[11px] font-bold mt-0.5 truncate" style={{ color: highlight ? theme.accent : theme.textPrimary }}>
             {value === null || value === undefined || value === '' ? '--' : String(value)}
         </span>
     </div>
@@ -97,7 +96,7 @@ const AlarmBadge = ({ alarm, theme }) => {
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 border border-red-500/30 animate-pulse"
             style={{ background: theme.isDark ? 'rgba(239,68,68,0.1)' : 'rgba(239,68,68,0.08)' }}>
             <WarningAmberIcon sx={{ fontSize: 16, color: '#ef4444' }} />
-            <span className="text-[10px] font-black uppercase tracking-widest text-red-500">Alarme: {alarm}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-red-500">Alarme: {alarm}</span>
         </div>
     );
 };
@@ -124,7 +123,7 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
         try {
             const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
             if (!isDemo) {
-                await fetchOrThrow(apiUrl('/api/commands/send'), {
+                await fetchOrThrow('/api/commands/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ deviceId: device.id, type }),
@@ -234,7 +233,16 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                 {/* Gauges apenas no PC */}
                 {desktop && (
                     <div className="mb-3">
-                        <TacticalGauges speed={data.speedKmh} battery={data.batteryLevel || 0} ignition={ignitionOn ? 'ON' : 'OFF'} />
+                        <TacticalGauges 
+                            speed={data.speedKmh} 
+                            battery={data.batteryLevel || 0} 
+                            ignition={ignitionOn ? 'ON' : 'OFF'} 
+                            address={data.address || null}
+                            fixTime={data.fixTime ? dayjs(data.fixTime).format('DD/MM HH:mm:ss') : null}
+                            serverTime={data.serverTime ? dayjs(data.serverTime).format('DD/MM HH:mm:ss') : null}
+                            deviceTime={data.deviceTime ? dayjs(data.deviceTime).format('DD/MM HH:mm:ss') : null}
+                            lastUpdate={data.lastUpdate ? dayjs(data.lastUpdate).fromNow() : null}
+                        />
                     </div>
                 )}
             </div>
@@ -265,6 +273,22 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                             <DataRow label="Bateria" value={data.batteryLevel !== null ? `${Math.round(data.batteryLevel)}%` : '--'} theme={theme} />
                             <DataRow label="Movimento" value={data.motion ? 'Sim' : 'Não'} highlight={data.motion} theme={theme} />
                             <DataRow label="Bloqueio" value={isBlocked ? 'Bloqueado' : 'Livre'} theme={theme} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Endereço (apenas mobile — no desktop fica dentro do TacticalGauges) */}
+                {!desktop && data.address && (
+                    <div className="flex items-start gap-3 p-3 rounded-2xl mb-3 border"
+                        style={{ background: theme.isDark ? '#24262b' : '#ffffff', borderColor: theme.borderCard }}>
+                        <MapIcon sx={{ fontSize: 18, color: '#3b82f6', flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                            <p className="text-[8px] font-bold uppercase tracking-widest leading-none mb-1" style={{ color: theme.textMuted }}>
+                                Localização Atual
+                            </p>
+                            <p className="text-[11px] font-bold leading-snug" style={{ color: theme.textPrimary }}>
+                                {data.address}
+                            </p>
                         </div>
                     </div>
                 )}
@@ -345,29 +369,17 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                     </Section>
                 )}
 
-                {/* SEÇÃO: Horários */}
-                <Section title="Horários" icon={<AccessTimeIcon />} theme={theme}>
-                    <DataRow label="GPS Fix" value={data.fixTime ? dayjs(data.fixTime).format('DD/MM HH:mm:ss') : '--'} theme={theme} />
-                    <DataRow label="Servidor" value={data.serverTime ? dayjs(data.serverTime).format('DD/MM HH:mm:ss') : '--'} theme={theme} />
-                    <DataRow label="Dispositivo" value={data.deviceTime ? dayjs(data.deviceTime).format('DD/MM HH:mm:ss') : '--'} theme={theme} />
-                    <DataRow label="Última att." value={data.lastUpdate ? dayjs(data.lastUpdate).fromNow() : '--'} theme={theme} />
-                </Section>
-
-                {/* Endereço */}
-                {data.address && (
-                    <div className="flex items-start gap-3 p-3 rounded-2xl mb-3 border"
-                        style={{ background: theme.isDark ? '#24262b' : '#ffffff', borderColor: theme.borderCard }}>
-                        <MapIcon sx={{ fontSize: 18, color: '#3b82f6', flexShrink: 0, marginTop: '2px' }} />
-                        <div>
-                            <p className="text-[8px] font-bold uppercase tracking-widest leading-none mb-1" style={{ color: theme.textMuted }}>
-                                Localização Atual
-                            </p>
-                            <p className="text-[11px] font-bold leading-snug" style={{ color: theme.textPrimary }}>
-                                {data.address}
-                            </p>
-                        </div>
-                    </div>
+                {/* SEÇÃO: Horários (visível apenas no Mobile, pois no Desktop já está no TacticalGauges) */}
+                {!desktop && (
+                    <Section title="Horários" icon={<AccessTimeIcon />} theme={theme}>
+                        <DataRow label="GPS Fix" value={data.fixTime ? dayjs(data.fixTime).format('DD/MM HH:mm:ss') : '--'} theme={theme} />
+                        <DataRow label="Servidor" value={data.serverTime ? dayjs(data.serverTime).format('DD/MM HH:mm:ss') : '--'} theme={theme} />
+                        <DataRow label="Dispositivo" value={data.deviceTime ? dayjs(data.deviceTime).format('DD/MM HH:mm:ss') : '--'} theme={theme} />
+                        <DataRow label="Última att." value={data.lastUpdate ? dayjs(data.lastUpdate).fromNow() : '--'} theme={theme} />
+                    </Section>
                 )}
+
+                {/* Endereço movido para o topo */}
             </div>
 
             {/* ── Botões de Ação Fixos no Rodapé ── */}

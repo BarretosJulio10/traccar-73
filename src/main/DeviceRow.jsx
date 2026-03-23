@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -14,30 +14,37 @@ import { traccarCommandsAdapter } from '../adapters/traccar/commandsAdapter';
 
 dayjs.extend(relativeTime);
 
-export const COMPACT_HEIGHT = 80;
-export const EXPANDED_HEIGHT = 240;
+import { COMPACT_HEIGHT, EXPANDED_HEIGHT } from '../common/util/constants';
 
-const DeviceRow = ({ devices, index, style, desktop }) => {
+const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
+  const { devices, desktop, onOpenPanel, onClosePanel, panelDeviceId } = rowProps;
   const dispatch = useDispatch();
   const { theme } = useHudTheme();
   const selectedId = useSelector((state) => state.devices.selectedId);
   const item = devices[index];
   const isSelected = item.id === selectedId;
+  const isPanelOpen = panelDeviceId === item.id;
   const position = useSelector((state) => state.session.positions[item.id]);
 
   const speedKmh = position ? Math.round((position.speed || 0) * 1.852) : 0;
   const lastUpdate = position?.fixTime || item.lastUpdate;
   const isOnline = item.status === 'online';
+  const [isPending, setIsPending] = useState(false);
 
   const onCommand = useCatchCallback(async (type) => {
-    const response = await traccarCommandsAdapter.sendCommand(item.id, type);
-    if (response.ok) {
-      // Command sent successfully
+    setIsPending(true);
+    try {
+      const response = await traccarCommandsAdapter.sendCommand(item.id, type);
+      if (response.ok) {
+        // Command sent successfully
+      }
+    } finally {
+      setIsPending(false);
     }
   }, [item.id]);
 
   const attrs = position?.attributes || {};
-  const battery = attrs.batteryLevel || attrs.battery || 0;
+  const battery = Math.round(attrs.batteryLevel || attrs.battery || 0);
   const odometer = position?.attributes?.totalDistance
     ? (position.attributes.totalDistance / 1000).toFixed(1)
     : position?.attributes?.odometer
@@ -48,25 +55,35 @@ const DeviceRow = ({ devices, index, style, desktop }) => {
   const handleClick = (e) => {
     e.stopPropagation();
     dispatch(devicesActions.selectId(isSelected ? null : item.id));
+    // Se o painel estiver aberto com outro veículo, troca automaticamente
+    if (panelDeviceId && panelDeviceId !== item.id) {
+      onOpenPanel && onOpenPanel(item.id);
+    }
   };
 
   const adjustedStyle = {
     ...style,
-    height: isSelected ? EXPANDED_HEIGHT - 6 : COMPACT_HEIGHT - 6,
-    top: style.top + 3,
+    height: isSelected ? (EXPANDED_HEIGHT || 240) - 10 : (COMPACT_HEIGHT || 80) - 10,
+    top: typeof style.top === 'number' ? style.top + 5 : style.top,
   };
 
   return (
     <div style={adjustedStyle} className="px-2">
       <div
         onClick={handleClick}
-        className="h-full transition-all duration-300 cursor-pointer flex flex-col group p-3 rounded-2xl border relative overflow-hidden"
+        className={`h-full transition-all duration-300 cursor-pointer flex flex-col group p-3 rounded-2xl border relative overflow-hidden ${isPending ? 'opacity-60 pointer-events-none grayscale-[30%]' : ''}`}
         style={{
           background: isSelected ? '#FFFFFF' : '#F8FAFC',
           borderColor: isSelected ? theme.accent : 'rgba(0,0,0,0.03)',
           boxShadow: isSelected ? `0 10px 25px rgba(6,182,212,0.12)` : 'none',
         }}
       >
+        {isPending && (
+          <div className="absolute inset-0 z-50 flex flex-col gap-2 items-center justify-center bg-white/40 backdrop-blur-[2px]">
+             <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+             <span className="text-[10px] font-black tracking-widest text-cyan-800 uppercase animate-pulse">Processando...</span>
+          </div>
+        )}
         {isSelected && (
           <div 
             className="absolute left-0 top-0 bottom-0 w-1.5" 
@@ -99,7 +116,7 @@ const DeviceRow = ({ devices, index, style, desktop }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <div className="bg-slate-100/50 px-2.5 py-1 rounded-xl border border-slate-200/50">
                 <span className="text-[14px] font-black" style={{ color: isOnline ? '#0f172a' : '#94a3b8' }}>
@@ -107,18 +124,27 @@ const DeviceRow = ({ devices, index, style, desktop }) => {
                 </span>
               </div>
             </div>
-            {isSelected && (
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Selecting already centers, but we can re-trigger if needed
-                  dispatch(devicesActions.selectId(item.id));
-                }}
-                className="w-8 h-8 rounded-lg flex items-center justify-center bg-cyan-50 text-cyan-500 hover:bg-cyan-100 transition-colors ml-1"
-              >
-                <ArrowForwardIosIcon sx={{ fontSize: 14 }} />
-              </div>
-            )}
+            {/* Seta — aponta para direita (abrir) ou esquerda (fechar) */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isPanelOpen) {
+                  onClosePanel && onClosePanel();
+                } else {
+                  onOpenPanel && onOpenPanel(item.id);
+                }
+              }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 cursor-pointer"
+              style={{
+                background: isPanelOpen ? 'rgba(6,182,212,0.15)' : isSelected ? 'rgba(6,182,212,0.08)' : '#f1f5f9',
+                borderColor: isPanelOpen ? 'rgba(6,182,212,0.6)' : isSelected ? 'rgba(6,182,212,0.3)' : '#e2e8f0',
+                color: isPanelOpen ? '#06b6d4' : isSelected ? '#06b6d4' : '#94a3b8',
+                transform: isPanelOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'all 0.25s ease',
+              }}
+            >
+              <ArrowForwardIosIcon sx={{ fontSize: 13 }} />
+            </div>
           </div>
         </div>
 

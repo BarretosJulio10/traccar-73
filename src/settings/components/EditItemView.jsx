@@ -81,34 +81,42 @@ const EditItemView = ({
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="fixed bottom-24 left-4 right-4 z-40 flex gap-3 pointer-events-none">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="pointer-events-auto flex-1 h-11 rounded-2xl border font-bold uppercase tracking-widest text-[10px] active:scale-95 transition-all"
+        {/* Action Buttons - Refined with Glassmorphism and elevated to clear BottomMenu */}
+        <div className="fixed bottom-24 left-0 right-0 z-[150] flex justify-center px-4 pointer-events-none">
+          <div 
+            className="pointer-events-auto flex gap-3 p-2 rounded-[24px] border shadow-2xl backdrop-blur-xl w-full max-w-[400px]"
             style={{ 
-              background: theme.bgSecondary, 
-              borderColor: theme.border, 
-              color: theme.textMuted,
-              boxShadow: theme.sidebarShadow 
+              background: `${theme.bgSecondary}CC`, 
+              borderColor: theme.border,
+              boxShadow: `0 20px 50px ${theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)'}` 
             }}
           >
-            {t('sharedCancel')}
-          </button>
-          <button
-            type="button"
-            disabled={!item || (validate && !validate())}
-            onClick={handleSave}
-            className={`pointer-events-auto flex-1 h-11 rounded-2xl font-black uppercase tracking-[1.5px] text-[10px] transition-all ${!item || (validate && !validate()) ? 'opacity-50' : 'active:scale-95'}`}
-            style={{
-              background: !item || (validate && !validate()) ? theme.bg : theme.accent,
-              color: !item || (validate && !validate()) ? theme.textMuted : (theme.isDark ? '#000' : '#fff'),
-              boxShadow: !item || (validate && !validate()) ? 'none' : `0 4px 15px ${theme.accent}4D`
-            }}
-          >
-            {t('sharedSave')}
-          </button>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex-1 h-12 rounded-[18px] border font-bold uppercase tracking-[2px] text-[10px] active:scale-95 transition-all flex items-center justify-center"
+              style={{ 
+                background: theme.bg, 
+                borderColor: theme.border, 
+                color: theme.textMuted
+              }}
+            >
+              {t('sharedCancel')}
+            </button>
+            <button
+              type="button"
+              disabled={!item || (validate && !validate())}
+              onClick={handleSave}
+              className={`flex-1 h-12 rounded-[18px] font-black uppercase tracking-[2.5px] text-[10px] transition-all flex items-center justify-center ${!item || (validate && !validate()) ? 'opacity-50' : 'active:scale-95 hover:brightness-110 shadow-lg'}`}
+              style={{
+                background: !item || (validate && !validate()) ? theme.bgSecondary : theme.accent,
+                color: !item || (validate && !validate()) ? theme.textMuted : (theme.isDark ? '#000' : '#fff'),
+                boxShadow: !item || (validate && !validate()) ? 'none' : `0 8px 25px ${theme.accent}66`
+              }}
+            >
+              {t('sharedSave')}
+            </button>
+          </div>
         </div>
       </div>
     </PwaPageLayout>

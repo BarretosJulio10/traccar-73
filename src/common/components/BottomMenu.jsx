@@ -9,8 +9,8 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 import { sessionActions } from '../../store';
 import { nativePostMessage } from './NativeInterface';
-import { apiUrl } from '../util/apiUrl';
 import { auditLog } from '../util/audit';
+import fetchOrThrow from '../util/fetchOrThrow';
 import { useHudTheme } from '../util/ThemeContext';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -49,7 +49,7 @@ const BottomMenu = () => {
       window.localStorage.removeItem('notificationToken');
     }
     auditLog('logout', { user_id: user.id, email: user.email });
-    await fetch(apiUrl('/api/session'), { method: 'DELETE' });
+    await fetchOrThrow('/api/session', { method: 'DELETE' });
     nativePostMessage('logout');
     navigate('/login');
     dispatch(sessionActions.updateUser(null));
@@ -93,7 +93,11 @@ const BottomMenu = () => {
         onClick={() => navigate('/app/reports')}
       />
       <NavItem
-        icon={user?.readonly ? <ExitToAppIcon sx={{ fontSize: 20 }} /> : <PersonIcon sx={{ fontSize: 20 }} />}
+        icon={user?.readonly ? <ExitToAppIcon sx={{ fontSize: 20 }} /> : (
+          <div className="w-[22px] h-[22px] rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 text-white flex items-center justify-center font-black text-[9px] uppercase shadow-sm border border-white/20">
+            {user?.name ? user.name.substring(0, 2) : 'US'}
+          </div>
+        )}
         active={active === 'account'}
         onClick={() => {
           if (user?.readonly) handleLogout();

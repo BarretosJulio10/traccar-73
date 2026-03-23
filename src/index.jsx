@@ -16,13 +16,24 @@ import { TenantProvider } from './common/components/TenantProvider';
 import { ThemeProvider as HudThemeProvider } from './common/util/ThemeContext';
 import { registerSW } from 'virtual:pwa-register';
 
-// Register Service Worker for PWA
+// Registra o Service Worker (precaching + push handlers)
 registerSW({
   onNeedRefresh() {
-    console.log('PWA: New content available, please refresh.');
+    // Nova versão disponível — o autoUpdate já cuida do reload
+    console.log('[PWA] Nova versão disponível.');
   },
   onOfflineReady() {
-    console.log('PWA: App ready to work offline.');
+    console.log('[PWA] App pronto para uso offline.');
+  },
+  onRegistered(swRegistration) {
+    // Disponibiliza o SW registration globalmente para o usePushSubscription
+    if (swRegistration) {
+      window.__swRegistration = swRegistration;
+      console.log('[PWA] Service Worker registrado com sucesso.');
+    }
+  },
+  onRegisterError(error) {
+    console.error('[PWA] Falha ao registrar Service Worker:', error);
   },
 });
 

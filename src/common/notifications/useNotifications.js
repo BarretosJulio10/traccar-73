@@ -1,10 +1,8 @@
 /**
- * Notifications React Hook Module
+ * useNotifications — Hook de notificações do HyperTraccar
  *
- * Connects the notification manager and event formatter to React components.
- * Manages permission state and provides a simple API for triggering notifications.
- *
- * @module useNotifications
+ * Combina Web Notifications API (foreground) + Web Push API (background/fechado).
+ * A permissão NÃO é solicitada automaticamente — requer ação explícita do usuário.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -15,37 +13,42 @@ import {
   getNotificationPermission,
   requestNotificationPermission,
   showNotification,
-  wasPermissionAsked,
 } from './notificationManager';
 import { formatEventNotification, shouldNotify } from './notificationEvents';
+import usePushSubscription from './usePushSubscription';
 
-/**
- * Hook that manages push notification permissions and event delivery.
- *
- * @returns {{
- *   supported: boolean,
- *   permission: string,
- *   requestPermission: () => Promise<string>,
- *   sendEventNotification: (event: Object) => void,
- * }}
- */
 const useNotifications = () => {
   const t = useTranslation();
   const devices = useSelector((state) => state.devices.items);
   const [permission, setPermission] = useState(getNotificationPermission);
 
-  // Auto-request permission on first load if not yet asked
-  useEffect(() => {
-    if (isNotificationSupported() && !wasPermissionAsked() && permission === 'default') {
-      requestNotificationPermission().then(setPermission);
-    }
-  }, [permission]);
+  const pushSubscription = usePushSubscription();
 
-  const handleRequestPermission = useCallback(async () => {
+  // Sincroniza o estado de permissão com mudanças externas (ex: usuário revoga no sistema)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const current = getNotificationPermission();
+      setPermission((prev) => (prev !== current ? current : prev));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Após conceder permissão, inscreve automaticamente no Web Push (se suportado)
+  useEffect(() => {
+    if (permission === 'granted' && pushSubscription.isSupported && !pushSubscription.isSubscribed) {
+      pushSubscription.subscribe();
+    }
+  }, [permission, pushSubscription.isSupported, pushSubscription.isSubscribed]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const requestPermission = useCallback(async () => {
     const result = await requestNotificationPermission();
     setPermission(result);
+    // Se concedida, inscreve no push automaticamente
+    if (result === 'granted' && pushSubscription.isSupported) {
+      await pushSubscription.subscribe();
+    }
     return result;
-  }, []);
+  }, [pushSubscription]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendEventNotification = useCallback(
     (event) => {
@@ -62,14 +65,15 @@ const useNotifications = () => {
         });
       }
     },
-    [permission, devices, t],
+    [permission, devices, t]
   );
 
   return {
     supported: isNotificationSupported(),
     permission,
-    requestPermission: handleRequestPermission,
+    requestPermission,
     sendEventNotification,
+    pushSubscription,
   };
 };
 

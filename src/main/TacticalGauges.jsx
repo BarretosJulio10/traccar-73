@@ -50,8 +50,15 @@ const Gauge = ({ value, max, label, unit, color, trackColor, valueColor, size = 
     );
 };
 
+const TimeRow = ({ label, value, theme }) => (
+    <div className="flex flex-col px-2 py-1.5 rounded border" style={{ background: theme.isDark ? 'rgba(18,20,24,0.4)' : 'rgba(255,255,255,0.7)', borderColor: theme.borderCard }}>
+        <span className="text-[7px] font-bold tracking-widest uppercase leading-none" style={{ color: theme.textMuted }}>{label}</span>
+        <span className="text-[9px] font-bold truncate mt-0.5" style={{ color: theme.textPrimary }}>{value}</span>
+    </div>
+);
+
 // Componente principal dos relógios táticos
-const TacticalGauges = ({ speed, battery, ignition }) => {
+const TacticalGauges = ({ speed, battery, ignition, fixTime, serverTime, deviceTime, lastUpdate, address }) => {
     const { theme } = useHudTheme();
     const trackColor = theme.isDark ? '#1a1c21' : '#e2e8f0';
     const batteryColor = battery < 20 ? '#ef4444' : theme.accentSecondary;
@@ -62,9 +69,20 @@ const TacticalGauges = ({ speed, battery, ignition }) => {
             className="flex flex-col gap-3 w-full rounded-2xl p-4 transition-colors duration-500"
             style={{
                 background: theme.isDark ? 'rgba(18,20,24,0.65)' : 'rgba(230,236,243,0.85)',
-                border: `1px solid ${theme.border}`,
+                border: `1px solid ${theme.borderCard}`,
             }}
         >
+            {/* Endereço no topo */}
+            {address && (
+                <div className="flex items-start gap-2 pb-2 border-b" style={{ borderColor: theme.borderCard }}>
+                    <span style={{ fontSize: 13, color: '#3b82f6', flexShrink: 0, marginTop: 1 }}>📍</span>
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-[7px] font-bold tracking-widest uppercase leading-none mb-0.5" style={{ color: theme.textMuted }}>Localização Atual</span>
+                        <span className="text-[10px] font-bold leading-snug" style={{ color: theme.textPrimary }}>{address}</span>
+                    </div>
+                </div>
+            )}
+
             {/* Linha dos relógios */}
             <div className="flex items-start justify-around gap-4 w-full">
                 <Gauge
@@ -92,24 +110,33 @@ const TacticalGauges = ({ speed, battery, ignition }) => {
                 />
             </div>
 
-            {/* Status de Ignição — ABAIXO dos relógios, sem sobreposição */}
+            {/* Status de Ignição e Horários */}
             <div
-                className="flex items-center justify-center gap-2 pt-1 border-t"
+                className="flex flex-col gap-2 pt-2 border-t"
                 style={{ borderColor: theme.borderCard }}
             >
-                <div
-                    className={`w-2 h-2 rounded-full ${ignitionOn ? 'animate-pulse' : ''}`}
-                    style={{
-                        background: ignitionOn ? theme.accent : theme.textMuted,
-                        boxShadow: ignitionOn ? `0 0 6px ${theme.accent}` : 'none',
-                    }}
-                />
-                <span
-                    className="text-[9px] font-black tracking-widest uppercase"
-                    style={{ color: ignitionOn ? theme.accent : theme.textMuted }}
-                >
-                    Motor: {ignitionOn ? 'Ligado' : 'Desligado'}
-                </span>
+                <div className="flex items-center justify-center gap-2 mb-1">
+                    <div
+                        className={`w-2 h-2 rounded-full ${ignitionOn ? 'animate-pulse' : ''}`}
+                        style={{
+                            background: ignitionOn ? theme.accent : theme.textMuted,
+                            boxShadow: ignitionOn ? `0 0 6px ${theme.accent}` : 'none',
+                        }}
+                    />
+                    <span
+                        className="text-[9px] font-bold tracking-widest uppercase"
+                        style={{ color: ignitionOn ? theme.accent : theme.textMuted }}
+                    >
+                        Motor: {ignitionOn ? 'Ligado' : 'Desligado'}
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5">
+                    <TimeRow label="GPS FIX" value={fixTime || '--'} theme={theme} />
+                    <TimeRow label="SERVIDOR" value={serverTime || '--'} theme={theme} />
+                    <TimeRow label="DISPOSITIVO" value={deviceTime || '--'} theme={theme} />
+                    <TimeRow label="ÚLTIMA ATT." value={lastUpdate || '--'} theme={theme} />
+                </div>
             </div>
         </div>
     );

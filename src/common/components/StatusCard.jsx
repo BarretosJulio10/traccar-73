@@ -248,7 +248,7 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   root: {
     pointerEvents: 'none',
     position: 'fixed',
-    zIndex: 5,
+    zIndex: 200,
     [theme.breakpoints.up('md')]: {
       left: `calc(${desktopPadding || '0px'} + 16px)`,
       right: 16,

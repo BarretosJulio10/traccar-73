@@ -93,9 +93,8 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
       )}
       {desktop && (
         <MapPadding
-          start={
-            parseInt(theme.dimensions.drawerWidthDesktop, 10) + parseInt(theme.spacing(1.5), 10)
-          }
+          top={8}
+          start={8}
         />
       )}
     </>

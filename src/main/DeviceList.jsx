@@ -5,7 +5,8 @@ import { makeStyles } from 'tss-react/mui';
 import { List } from 'react-window';
 import { devicesActions } from '../store';
 import { useEffectAsync } from '../reactHelper';
-import DeviceRow, { COMPACT_HEIGHT, EXPANDED_HEIGHT } from './DeviceRow';
+import { COMPACT_HEIGHT, EXPANDED_HEIGHT } from '../common/util/constants';
+import DeviceRow from './DeviceRow';
 import { traccarDevicesAdapter } from '../adapters/traccar/devicesAdapter';
 
 const useStyles = makeStyles()((theme) => ({
@@ -19,7 +20,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const DeviceList = ({ devices }) => {
+const DeviceList = ({ devices, onOpenPanel, onClosePanel, panelDeviceId }) => {
   const { classes } = useStyles();
   const dispatch = useDispatch();
   const theme = useTheme();
@@ -28,8 +29,9 @@ const DeviceList = ({ devices }) => {
   const listRef = useRef();
 
   useEffect(() => {
-    // List component in this version might re-calculate on render if itemSize changes
-  }, [selectedId]);
+    // VariableSizeList in 1.x needed resetAfterIndex, 
+    // but List in 2.x handles dynamic heights via the rowHeight prop reactivity.
+  }, [selectedId, devices]);
 
   const [, setTime] = useState(Date.now());
 
@@ -50,10 +52,14 @@ const DeviceList = ({ devices }) => {
     }
   }, []);
 
-  const getRowHeight = useCallback((index) => {
-    const device = devices[index];
-    return (device && device.id === selectedId) ? EXPANDED_HEIGHT : COMPACT_HEIGHT;
-  }, [devices, selectedId]);
+  const getRowHeight = useCallback((index, rowProps) => {
+    const { devices: listDevices, selectedId: listSelectedId } = rowProps;
+    const device = listDevices && listDevices[index];
+    if (device && device.id === listSelectedId) {
+      return EXPANDED_HEIGHT || 240;
+    }
+    return COMPACT_HEIGHT || 80;
+  }, []);
 
   if (devices.length === 0) {
     return null; // or a loading/empty state if preferred
@@ -63,14 +69,14 @@ const DeviceList = ({ devices }) => {
     <div className={classes.list}>
       {/* Assuming parent provides height, using a large default if needed */}
       <List
-        ref={listRef}
+        listRef={listRef}
         rowCount={devices.length}
         rowHeight={getRowHeight}
         width="100%"
-        height={window.innerHeight - 200} // Dynamic estimate for sidebar height
+        height={window.innerHeight - 200}
         overscanCount={5}
+        rowProps={{ devices, selectedId, desktop, onOpenPanel, onClosePanel, panelDeviceId }}
         rowComponent={DeviceRow}
-        rowProps={{ devices, desktop }}
       />
     </div>
   );

@@ -60,7 +60,7 @@ export const TenantProvider = ({ children }) => {
     fetchTenant();
   }, [tenantSlug]);
 
-  const value = { tenant, tenantSlug, setTenantSlug, loading };
+  const value = React.useMemo(() => ({ tenant, tenantSlug, setTenantSlug, loading }), [tenant, tenantSlug, loading]);
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;
 };

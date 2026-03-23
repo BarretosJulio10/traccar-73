@@ -280,7 +280,7 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
                  <div
                    key={idx}
                    className="flex flex-col items-center gap-2 group cursor-pointer"
-                   onClick={() => navigate(item.path)}
+                   onClick={() => { onClose(); navigate(item.path); }}
                  >
                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center group-hover:bg-cyan-50 transition-colors">
                      {React.cloneElement(item.icon, { sx: { fontSize: 22, color: '#64748b' } })}

@@ -802,7 +802,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                   {!shareDisabled && !user.temporary && (
                     <Tooltip title={t('deviceShare')}>
                       <IconButton
-                        onClick={() => navigate(`/app/settings/device/${deviceId}/share`)}
+                        onClick={() => { onClose(); navigate(`/app/settings/device/${deviceId}/share`); }}
                         disabled={disableActions}
                       >
                         <ShareIcon />
@@ -811,7 +811,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                   )}
                   <Tooltip title={t('reportReplay')}>
                     <IconButton
-                      onClick={() => navigate(`/app/replay?deviceId=${deviceId}`)}
+                      onClick={() => { onClose(); navigate(`/app/replay?deviceId=${deviceId}`); }}
                       disabled={disableActions || !position}
                     >
                       <GridViewIcon />
@@ -819,7 +819,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                   </Tooltip>
                   <Tooltip title={t('sharedEdit')}>
                     <IconButton
-                      onClick={() => navigate(`/app/settings/device/${deviceId}`)}
+                      onClick={() => { onClose(); navigate(`/app/settings/device/${deviceId}`); }}
                       disabled={disableActions || deviceReadonly}
                     >
                       <EditIcon />
@@ -901,7 +901,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
             </MenuItem>
           )}
           {!shareDisabled && !user.temporary && (
-            <MenuItem onClick={() => navigate(`/app/settings/device/${deviceId}/share`)}>
+            <MenuItem onClick={() => { onClose(); navigate(`/app/settings/device/${deviceId}/share`); }}>
               <Typography color="secondary">{t('deviceShare')}</Typography>
             </MenuItem>
           )}

@@ -171,7 +171,7 @@ const App = () => {
         <StatusCard
           deviceId={selectedDeviceId}
           position={selectedPosition}
-          onClose={handleClosePanel}
+          onClose={() => dispatch(devicesActions.selectId(null))}
           desktopPadding={theme.dimensions.drawerWidthDesktop}
         />
       )}

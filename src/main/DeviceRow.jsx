@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -8,7 +8,8 @@ import { mapIconKey, mapIcons } from '../map/core/preloadImages';
 import { useHudTheme } from '../common/util/ThemeContext';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AnchorIcon from '@mui/icons-material/Anchor';
-import SlideAction from '../common/components/SlideAction';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { useCatchCallback } from '../reactHelper';
 import { traccarCommandsAdapter } from '../adapters/traccar/commandsAdapter';
 
@@ -44,6 +45,29 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
   }, [item.id]);
 
   const attrs = position?.attributes || {};
+  const isBlocked = attrs.blocked ?? item.attributes?.blocked ?? false;
+  const [isBlockedLocal, setIsBlockedLocal] = useState(isBlocked);
+  const [isLockPending, setIsLockPending] = useState(false);
+
+  useEffect(() => {
+    if (!isLockPending) setIsBlockedLocal(isBlocked);
+  }, [isBlocked, isLockPending]);
+
+  const handleLockToggle = async (e) => {
+    e.stopPropagation();
+    const newType = isBlockedLocal ? 'engineResume' : 'engineStop';
+    setIsBlockedLocal(!isBlockedLocal);
+    setIsLockPending(true);
+    try {
+      await traccarCommandsAdapter.sendCommand(item.id, newType);
+      dispatch(devicesActions.update([{ ...item, attributes: { ...item.attributes, blocked: newType === 'engineStop' } }]));
+    } catch (_) {
+      setIsBlockedLocal(isBlockedLocal);
+    } finally {
+      setIsLockPending(false);
+    }
+  };
+
   const battery = Math.round(attrs.batteryLevel || attrs.battery || 0);
   const odometer = position?.attributes?.totalDistance
     ? (position.attributes.totalDistance / 1000).toFixed(1)
@@ -168,32 +192,34 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
           </div>
 
           {/* Action Controls */}
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-                <div 
-                  className="flex-1 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center gap-2 text-slate-400 hover:text-cyan-500 transition-colors"
-                  onClick={(e) => { e.stopPropagation(); onCommand('geofence'); }}
-                >
-                  <AnchorIcon sx={{ fontSize: 18 }} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Âncora</span>
-                </div>
-            </div>
-            
-            <div 
-              className="flex flex-col gap-2 scale-[0.85] origin-top translate-y-[-5%]"
-              onClick={(e) => e.stopPropagation()}
+          <div className="flex gap-2">
+            <div
+              className="flex-1 h-11 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center gap-2 text-slate-400 hover:text-cyan-500 transition-colors cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); onCommand('geofence'); }}
             >
-                <SlideAction
-                  type="unblock"
-                  onComplete={() => onCommand('engineResume')}
-                  theme={theme}
-                />
-                <SlideAction
-                  type="block"
-                  onComplete={() => onCommand('engineStop')}
-                  theme={theme}
-                />
+              <AnchorIcon sx={{ fontSize: 18 }} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Âncora</span>
             </div>
+
+            <button
+              onClick={handleLockToggle}
+              disabled={isLockPending}
+              className="flex-1 h-11 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase tracking-[1px] text-[10px] transition-all duration-300 border active:scale-95"
+              style={{
+                background: isBlockedLocal ? '#dcfce7' : '#fee2e2',
+                borderColor: isBlockedLocal ? '#86efac' : '#fca5a5',
+                color: isBlockedLocal ? '#16a34a' : '#dc2626',
+                opacity: isLockPending ? 0.6 : 1,
+              }}
+            >
+              {isLockPending
+                ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                : isBlockedLocal
+                  ? <LockOpenIcon sx={{ fontSize: 17 }} />
+                  : <LockIcon sx={{ fontSize: 17 }} />
+              }
+              <span>{isBlockedLocal ? 'Liberar' : 'Bloquear'}</span>
+            </button>
           </div>
         </div>
       </div>

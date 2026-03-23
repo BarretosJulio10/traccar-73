@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IconButton, Typography, Button, Divider, Box, Card } from '@mui/material';
 import { useHudTheme } from '../util/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +16,6 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt';
 import MapIcon from '@mui/icons-material/Map';
 import dayjs from 'dayjs';
-import SlideAction from './SlideAction';
 
 const CircularBattery = ({ level, theme }) => {
   const radius = 36;
@@ -116,6 +115,25 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
+  const [isBlockedLocal, setIsBlockedLocal] = useState(device?.attributes?.blocked ?? false);
+  const [isLockPending, setIsLockPending] = useState(false);
+
+  useEffect(() => {
+    if (!isLockPending) setIsBlockedLocal(device?.attributes?.blocked ?? false);
+  }, [device?.attributes?.blocked, isLockPending]);
+
+  const handleLockToggle = async () => {
+    const willBlock = !isBlockedLocal;
+    setIsBlockedLocal(willBlock);
+    setIsLockPending(true);
+    try {
+      await onCommand(willBlock ? 'block' : 'unblock');
+    } catch (_) {
+      setIsBlockedLocal(!willBlock);
+    } finally {
+      setIsLockPending(false);
+    }
+  };
 
   const onTouchStart = (e) => {
     setTouchStart(e.targetTouches[0].clientY);
@@ -217,18 +235,27 @@ const InnovatorHUD = ({ device, position, onClose, onCommand }) => {
           </div>
         </div>
 
-        {/* Quick Actions (SlideToUnlock for critical actions) */}
-        <div className="px-6 flex flex-col gap-3 mb-6">
-           <SlideAction
-             type="unblock"
-             onComplete={() => onCommand('engineResume')}
-             theme={theme}
-           />
-           <SlideAction
-             type="block"
-             onComplete={() => onCommand('engineStop')}
-             theme={theme}
-           />
+        {/* Block / Unblock toggle */}
+        <div className="px-6 mb-6">
+          <button
+            onClick={handleLockToggle}
+            disabled={isLockPending}
+            className="w-full h-14 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-[2px] text-[11px] transition-all duration-300 border active:scale-95 shadow-sm"
+            style={{
+              background: isBlockedLocal ? '#dcfce7' : '#fee2e2',
+              borderColor: isBlockedLocal ? '#86efac' : '#fca5a5',
+              color: isBlockedLocal ? '#16a34a' : '#dc2626',
+              opacity: isLockPending ? 0.6 : 1,
+            }}
+          >
+            {isLockPending
+              ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              : isBlockedLocal
+                ? <LockOpenIcon sx={{ fontSize: 22 }} />
+                : <LockIcon sx={{ fontSize: 22 }} />
+            }
+            <span>{isBlockedLocal ? 'Liberar Veículo' : 'Bloquear Veículo'}</span>
+          </button>
         </div>
 
         {/* Telemetry Grid */}

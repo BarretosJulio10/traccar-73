@@ -351,12 +351,14 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
       return;
     }
     setEngineConfirm(null);
-    const command = { deviceId, type };
     await fetchOrThrow('/api/commands/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(command),
+      body: JSON.stringify({ deviceId, type, attributes: {} }),
     });
+    if (device) {
+      dispatch(devicesActions.update([{ ...device, attributes: { ...device.attributes, blocked: type === 'engineStop' } }]));
+    }
   });
 
   // Build chips

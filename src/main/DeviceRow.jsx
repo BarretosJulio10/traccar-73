@@ -12,6 +12,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { useCatchCallback } from '../reactHelper';
 import { traccarCommandsAdapter } from '../adapters/traccar/commandsAdapter';
+import fetchOrThrow from '../common/util/fetchOrThrow';
 
 dayjs.extend(relativeTime);
 
@@ -31,6 +32,38 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
   const lastUpdate = position?.fixTime || item.lastUpdate;
   const isOnline = item.status === 'online';
   const [isPending, setIsPending] = useState(false);
+  const [anchorStatus, setAnchorStatus] = useState(null); // null | 'loading' | 'ok' | 'error'
+
+  const handleAnchor = async (e) => {
+    e.stopPropagation();
+    if (!position) return;
+    setAnchorStatus('loading');
+    try {
+      const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+      if (isDemo) {
+        await new Promise((r) => setTimeout(r, 800));
+      } else {
+        const name = `Âncora — ${item.name}`;
+        const area = `CIRCLE (${position.latitude} ${position.longitude}, 200)`;
+        const geoRes = await fetchOrThrow('/api/geofences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description: 'Geocerca de âncora automática (200m)', area, calendarId: 0, attributes: {} }),
+        });
+        const geofence = await geoRes.json();
+        await fetchOrThrow('/api/permissions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId: item.id, geofenceId: geofence.id }),
+        });
+      }
+      setAnchorStatus('ok');
+      setTimeout(() => setAnchorStatus(null), 2500);
+    } catch (_) {
+      setAnchorStatus('error');
+      setTimeout(() => setAnchorStatus(null), 2500);
+    }
+  };
 
   const onCommand = useCatchCallback(async (type) => {
     setIsPending(true);
@@ -193,13 +226,25 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
 
           {/* Action Controls */}
           <div className="flex gap-2">
-            <div
-              className="flex-1 h-11 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center gap-2 text-slate-400 hover:text-cyan-500 transition-colors cursor-pointer"
-              onClick={(e) => { e.stopPropagation(); onCommand('geofence'); }}
+            <button
+              onClick={handleAnchor}
+              disabled={anchorStatus === 'loading' || !position}
+              className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px] border transition-all duration-300 active:scale-95"
+              style={{
+                background: anchorStatus === 'ok' ? '#dcfce7' : anchorStatus === 'error' ? '#fee2e2' : '#f8fafc',
+                borderColor: anchorStatus === 'ok' ? '#86efac' : anchorStatus === 'error' ? '#fca5a5' : '#e2e8f0',
+                color: anchorStatus === 'ok' ? '#16a34a' : anchorStatus === 'error' ? '#dc2626' : '#94a3b8',
+                opacity: anchorStatus === 'loading' || !position ? 0.5 : 1,
+              }}
             >
-              <AnchorIcon sx={{ fontSize: 18 }} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Âncora</span>
-            </div>
+              {anchorStatus === 'loading'
+                ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                : <AnchorIcon sx={{ fontSize: 17 }} />
+              }
+              <span>
+                {anchorStatus === 'ok' ? 'Criada!' : anchorStatus === 'error' ? 'Erro' : 'Âncora'}
+              </span>
+            </button>
 
             <button
               onClick={handleLockToggle}

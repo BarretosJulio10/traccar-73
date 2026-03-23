@@ -167,7 +167,7 @@ const ChartReportPage = () => {
 
         {items.length > 0 && (
           <div 
-            className="p-5 rounded-3xl shadow-md border h-[400px] transition-colors"
+            className="p-5 rounded-3xl shadow-md border h-[40vh] min-h-[220px] max-h-[400px] transition-colors"
             style={{ background: appTheme.bgSecondary, borderColor: appTheme.border }}
           >
             <ResponsiveContainer width="100%" height="100%">

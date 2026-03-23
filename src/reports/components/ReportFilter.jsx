@@ -88,7 +88,7 @@ const ReportFilter = ({ children, onShow, onExport, loading, deviceType }) => {
 
   return (
     <div 
-      className="p-5 rounded-3xl shadow-[6px_6px_12px_rgba(0,0,0,0.1)] border mb-8 flex flex-col gap-5 overflow-hidden transition-colors duration-500"
+      className="p-5 rounded-3xl shadow-[6px_6px_12px_rgba(0,0,0,0.1)] border mb-8 flex flex-col gap-5 transition-colors duration-500"
       style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
     >
       <div className="flex items-center gap-3">

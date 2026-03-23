@@ -59,7 +59,7 @@ const HeatmapReportPage = () => {
         <ReportFilter onShow={onShow} deviceType="multiple" loading={loading} />
 
         <div 
-          className="h-[500px] rounded-3xl overflow-hidden shadow-md border relative transition-colors"
+          className="h-[45vh] min-h-[260px] max-h-[500px] rounded-3xl overflow-hidden shadow-md border relative transition-colors"
           style={{ borderColor: theme.border, background: theme.bgSecondary }}
         >
           {loading ? (

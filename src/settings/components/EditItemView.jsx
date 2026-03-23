@@ -82,7 +82,7 @@ const EditItemView = ({
         )}
 
         {/* Action Buttons - Refined with Glassmorphism and elevated to clear BottomMenu */}
-        <div className="fixed bottom-24 left-0 right-0 z-[150] flex justify-center px-4 pointer-events-none">
+        <div className="fixed left-0 right-0 z-[150] flex justify-center px-4 pointer-events-none" style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}>
           <div 
             className="pointer-events-auto flex gap-3 p-2 rounded-[24px] border shadow-2xl backdrop-blur-xl w-full max-w-[400px]"
             style={{ 

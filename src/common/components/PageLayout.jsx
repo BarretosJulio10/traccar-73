@@ -101,8 +101,8 @@ const useStyles = makeStyles()((theme) => {
     display: 'flex',
     flexDirection: 'column',
     overflowY: 'auto',
-    [theme.breakpoints.down('sm')]: {
-      paddingBottom: theme.spacing(2),
+    [theme.breakpoints.down('md')]: {
+      paddingBottom: `calc(${theme.dimensions.bottomBarHeight}px + ${theme.spacing(4)} + env(safe-area-inset-bottom, 0px))`,
     },
   },
   };

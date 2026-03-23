@@ -8,8 +8,8 @@ const PwaPageLayout = ({ title, children, actions, transparent = false }) => {
     const { theme } = useHudTheme();
 
     return (
-        <div 
-            className="min-h-[100dvh] pt-6 pb-[100px] px-4 font-['Outfit'] flex flex-col overflow-x-hidden transition-colors duration-500"
+        <div
+            className="min-h-full md:min-h-screen pt-6 pb-6 md:pb-28 px-4 font-['Outfit'] flex flex-col overflow-x-hidden transition-colors duration-500"
             style={{ 
                 background: transparent ? 'transparent' : theme.bg,
                 color: theme.textPrimary 

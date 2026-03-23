@@ -7,7 +7,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { devicesActions } from '../store';
 import { useHudTheme } from '../common/util/ThemeContext';
 import LogoImage from '../login/LogoImage';
-import DeviceList from './DeviceList';
+import DeviceRow from './DeviceRow';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ const DashboardPage = () => {
   const devices = useSelector((state) => state.devices.items);
 
   const [search, setSearch] = useState('');
+  const [anchorOpenId, setAnchorOpenId] = useState(null);
 
   // Desktop redirects to full map+sidebar layout
   useEffect(() => {
@@ -89,18 +90,31 @@ const DashboardPage = () => {
         </div>
       </header>
 
-      {/* Device List — same component as desktop, card click expands, arrow opens map */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <DeviceList
-          devices={filteredDevices}
-          onOpenPanel={handleOpenPanel}
-          onClosePanel={() => {}}
-          panelDeviceId={null}
-        />
+      {/* Device List — native scroll for touch support on PWA */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+        }}
+      >
+        {filteredDevices.map((_, index) => (
+          <DeviceRow
+            key={filteredDevices[index].id}
+            index={index}
+            style={{}}
+            devices={filteredDevices}
+            desktop={false}
+            onOpenPanel={handleOpenPanel}
+            onClosePanel={() => {}}
+            panelDeviceId={null}
+            anchorOpenId={anchorOpenId}
+            setAnchorOpenId={setAnchorOpenId}
+          />
+        ))}
       </div>
-
-      {/* Bottom safe area spacer */}
-      <div style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
     </div>
   );
 };

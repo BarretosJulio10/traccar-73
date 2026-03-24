@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
@@ -27,16 +27,33 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import CloseIcon from '@mui/icons-material/Close';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { Tooltip } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PauseIcon from '@mui/icons-material/Pause';
+import CheckIcon from '@mui/icons-material/Check';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import PolylineIcon from '@mui/icons-material/Polyline';
+import TouchAppIcon from '@mui/icons-material/TouchApp';
+import { Tooltip, CircularProgress } from '@mui/material';
 import { useMediaQuery, useTheme as useMuiTheme } from '@mui/material';
 
 import { useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
-import { devicesActions } from '../store';
+import { devicesActions, geofencesActions, errorsActions } from '../store';
+import { createGeofence, linkGeofenceToDevice, updateGeofence, deleteGeofence } from '../features/geofence/geofenceService';
+import useGeofence from '../features/geofence/useGeofence';
+import GeofenceMap from '../features/geofence/GeofenceMap';
+import MapRoutePath from '../map/MapRoutePath';
+import MapRoutePoints from '../map/MapRoutePoints';
+import MapCamera from '../map/MapCamera';
+import { getMockReportData } from './DemoController';
+import RouteReportOverlay from './RouteReportOverlay';
+import RoutePlayback from './RoutePlayback';
 import TacticalGauges from './TacticalGauges';
 import { useHudTheme } from '../common/util/ThemeContext';
 import useDeviceFullData from './useDeviceFullData';
 import { mapIconKey, mapIcons } from '../map/core/preloadImages';
+import { getGeofenceTheme } from '../common/util/geofenceTypes';
 
 // ─── Subcomponentes ──────────────────────────────────────────────────────────
 
@@ -113,9 +130,124 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
     const data = useDeviceFullData(deviceId);
     const { device, position, attributes } = data;
 
+    // ── Inline geofence creation (hook must be before early return) ────────
+    const geo = useGeofence(deviceId);
+    const [geoSaving, setGeoSaving] = useState(false);
+
+    // ── Inline route report ────────────────────────────────────────────────
+    const [routePeriod, setRoutePeriod] = useState('today');
+    const [routeItems, setRouteItems] = useState([]);
+    const [routeLoading, setRouteLoading] = useState(false);
+    const [routeSelectedItem, setRouteSelectedItem] = useState(null);
+    const [showRouteOnMap, setShowRouteOnMap] = useState(false);
+    const [showRouteReport, setShowRouteReport] = useState(false);
+    const [showPlayback, setShowPlayback] = useState(false);
+
+    const [activeTab, setActiveTab] = useState('dados');
+    const handleSetTab = (tab) => {
+      if (tab !== 'rota') { setRouteItems([]); setRouteSelectedItem(null); setShowRouteOnMap(false); setShowRouteReport(false); setShowPlayback(false); }
+      setActiveTab(tab);
+    };
     const [isBlocked, setIsBlocked] = useState(device?.attributes?.blocked || false);
     const [isCommandLoading, setIsCommandLoading] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, type: null });
+
+    const allGeofences = useSelector((state) => Object.values(state.geofences.items));
+    const [editingId, setEditingId] = useState(null);
+    const [editingName, setEditingName] = useState('');
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+    const [geofenceLoading, setGeofenceLoading] = useState(null); // id of geofence being mutated
+
+    const handleGeoEdit = (g) => { setEditingId(g.id); setEditingName(g.name); setConfirmDeleteId(null); };
+    const handleGeoEditCancel = () => { setEditingId(null); setEditingName(''); };
+
+    const handleGeoSave = useCatch(async (g) => {
+      if (!editingName.trim()) return;
+      setGeofenceLoading(g.id);
+      try {
+        const updated = await updateGeofence({ ...g, name: editingName.trim() });
+        dispatch(geofencesActions.update([{ attributes: {}, ...updated }]));
+        setEditingId(null);
+      } finally { setGeofenceLoading(null); }
+    });
+
+    const handleGeoTogglePause = useCatch(async (g) => {
+      setGeofenceLoading(g.id);
+      const paused = !g.attributes?.disabled;
+      try {
+        const updated = await updateGeofence({ ...g, attributes: { ...g.attributes, disabled: paused } });
+        dispatch(geofencesActions.update([{ attributes: {}, ...updated }]));
+      } finally { setGeofenceLoading(null); }
+    });
+
+    const handleGeoDelete = useCatch(async (id) => {
+      setGeofenceLoading(id);
+      try {
+        await deleteGeofence(id);
+        dispatch(geofencesActions.remove([id]));
+        setConfirmDeleteId(null);
+      } finally { setGeofenceLoading(null); }
+    });
+
+    const handleShowRoute = async () => {
+      if (!device) return;
+      setRouteLoading(true);
+      setRouteItems([]);
+      setRouteSelectedItem(null);
+      setShowRouteOnMap(false);
+      try {
+        let from; let to;
+        switch (routePeriod) {
+          case 'yesterday': from = dayjs().subtract(1, 'day').startOf('day'); to = dayjs().subtract(1, 'day').endOf('day'); break;
+          case 'thisWeek': from = dayjs().startOf('week'); to = dayjs().endOf('week'); break;
+          case 'thisMonth': from = dayjs().startOf('month'); to = dayjs().endOf('month'); break;
+          default: from = dayjs().startOf('day'); to = dayjs().endOf('day');
+        }
+        const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+        if (isDemo) {
+          await new Promise((r) => setTimeout(r, 700));
+          setRouteItems(getMockReportData('positions', [device.id], from.toISOString(), to.toISOString()));
+        } else {
+          const query = new URLSearchParams({ from: from.toISOString(), to: to.toISOString(), deviceId: device.id });
+          const response = await fetchOrThrow(`/api/positions?${query}`);
+          setRouteItems(await response.json());
+        }
+      } catch (err) {
+        dispatch(errorsActions.push(err.message));
+      } finally {
+        setRouteLoading(false);
+      }
+    };
+
+    const handleInlineGeoSave = async () => {
+      if (!geo.canSave || !geo.area) return;
+      setGeoSaving(true);
+      try {
+        const geofence = await createGeofence({
+          name: geo.name.trim(),
+          area: geo.area,
+          description: geo.description.trim() || undefined,
+        });
+        const safe = { attributes: {}, ...geofence };
+        await Promise.all(geo.selectedDeviceIds.map((id) => linkGeofenceToDevice(geofence.id, id).catch(() => {})));
+        dispatch(geofencesActions.update([safe]));
+        // reset for next creation
+        geo.resetDrawing();
+        geo.setName('');
+        geo.setDescription('');
+      } catch (err) {
+        dispatch(errorsActions.push(err.message));
+      } finally {
+        setGeoSaving(false);
+      }
+    };
+
+    const TABS = [
+        { key: 'dados', label: 'Dados', Icon: DirectionsCarIcon },
+        { key: 'cercas', label: 'Cercas', Icon: GpsFixedIcon },
+        { key: 'rota', label: 'Rota', Icon: RouteIcon },
+        { key: 'eventos', label: 'Eventos', Icon: WarningAmberIcon },
+    ];
 
     const sendCommand = useCatch(async (type) => {
         setIsCommandLoading(true);
@@ -149,7 +281,7 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
 
     return (
         <div
-            className="flex flex-col w-full h-full transition-colors duration-500"
+            className="flex flex-col w-full h-full transition-colors duration-500 relative overflow-hidden"
             style={{ background: theme.isDark ? theme.bg : theme.bgSecondary }}
         >
             {/* Modal de Confirmação */}
@@ -181,7 +313,7 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
             )}
 
             {/* ── Cabeçalho Fixo ── */}
-            <div className="flex-shrink-0 px-4 pt-4 pb-2">
+            <div className="flex-shrink-0 px-4 pt-[10px] pb-2">
                 {/* Alarme ativo */}
                 <AlarmBadge alarm={data.alarm} theme={theme} />
 
@@ -233,10 +365,10 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                 {/* Gauges apenas no PC */}
                 {desktop && (
                     <div className="mb-3">
-                        <TacticalGauges 
-                            speed={data.speedKmh} 
-                            battery={data.batteryLevel || 0} 
-                            ignition={ignitionOn ? 'ON' : 'OFF'} 
+                        <TacticalGauges
+                            speed={data.speedKmh}
+                            battery={data.batteryLevel || 0}
+                            ignition={ignitionOn ? 'ON' : 'OFF'}
                             address={data.address || null}
                             fixTime={data.fixTime ? dayjs(data.fixTime).format('DD/MM HH:mm:ss') : null}
                             serverTime={data.serverTime ? dayjs(data.serverTime).format('DD/MM HH:mm:ss') : null}
@@ -245,10 +377,63 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                         />
                     </div>
                 )}
+
+                {/* ── Tab Bar ── */}
+                <div className="flex items-center gap-2 mt-1">
+                    {/* Pills */}
+                    <div
+                        className="flex flex-1 p-1 rounded-2xl gap-0.5"
+                        style={{ background: theme.bgCard, border: `1px solid ${theme.borderCard}` }}
+                    >
+                        {TABS.map(({ key, label, Icon }) => (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={() => handleSetTab(key)}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all active:scale-95"
+                                style={{
+                                    background: activeTab === key
+                                        ? theme.isDark ? 'rgba(255,255,255,0.10)' : '#1e2952'
+                                        : 'transparent',
+                                    color: activeTab === key
+                                        ? theme.isDark ? theme.textPrimary : '#ffffff'
+                                        : theme.textMuted,
+                                    boxShadow: activeTab === key ? '0 2px 8px rgba(0,0,0,0.18)' : 'none',
+                                }}
+                            >
+                                <Icon sx={{ fontSize: 11 }} />
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    {/* Lock pill */}
+                    <Tooltip title={isBlocked ? 'Liberar veículo' : 'Bloquear veículo'} placement="left" arrow>
+                        <button
+                            type="button"
+                            onClick={() => setConfirmDialog({ open: true, type: isBlocked ? 'engineResume' : 'engineStop' })}
+                            disabled={isCommandLoading}
+                            className="w-10 h-10 rounded-2xl flex items-center justify-center border transition-all active:scale-95 disabled:opacity-40 flex-shrink-0"
+                            style={{
+                                background: isBlocked ? 'rgba(239,68,68,0.12)' : theme.bgCard,
+                                borderColor: isBlocked ? 'rgba(239,68,68,0.4)' : theme.borderCard,
+                                color: isBlocked ? '#ef4444' : theme.textMuted,
+                            }}
+                        >
+                            {isCommandLoading
+                                ? <RefreshIcon sx={{ fontSize: 15, opacity: 0.5 }} className="animate-spin" />
+                                : isBlocked
+                                    ? <LockIcon sx={{ fontSize: 15 }} />
+                                    : <LockOpenIcon sx={{ fontSize: 15 }} />}
+                        </button>
+                    </Tooltip>
+                </div>
             </div>
 
             {/* ── Scroll Area ── */}
             <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-4">
+
+              {/* ══ TAB: DADOS ══ */}
+              {activeTab === 'dados' && (<>
 
                 {/* Mobile: Anel de Velocidade */}
                 {!desktop && (
@@ -379,32 +564,333 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                     </Section>
                 )}
 
-                {/* Endereço movido para o topo */}
+              </>)}
+
+              {/* ══ TAB: CERCAS ══ */}
+              {activeTab === 'cercas' && (
+                <div className="flex flex-col gap-3 pt-1">
+
+                  {/* Map drawing layer */}
+                  <GeofenceMap
+                    mode={geo.mode} circleStep={geo.circleStep} circleCenter={geo.circleCenter}
+                    circleRadius={geo.circleRadius} circleRadiusPreview={geo.circleRadiusPreview}
+                    polyStep={geo.polyStep} polyPoints={geo.polyPoints} previewPoint={geo.previewPoint}
+                    onMapClick={geo.handleMapClick} onMouseMove={geo.handleMouseMove}
+                    onClosePolygon={geo.closePolygon}
+                  />
+
+                  {/* ── NOVA CERCA ────────────────────────────────────── */}
+                  <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: theme.textMuted }}>Nova Cerca</p>
+
+                  {/* Type icon buttons — click = select + start drawing */}
+                  <div className="flex gap-2">
+                    {[
+                      { key: 'circle', label: 'Circular', Icon: RadioButtonUncheckedIcon },
+                      { key: 'polygon', label: 'Polígono', Icon: PolylineIcon },
+                    ].map(({ key, label, Icon }) => {
+                      const active = geo.mode === key && (geo.circleStep !== 'idle' || geo.polyStep !== 'idle' || geo.isDrawingDone);
+                      return (
+                        <button key={key} type="button" onClick={() => geo.startModeDrawing(key)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl border transition-all active:scale-95"
+                          style={{ background: active ? `${theme.accent}15` : theme.bgCard, borderColor: active ? theme.accent : theme.borderCard }}>
+                          <Icon sx={{ fontSize: 18, color: active ? theme.accent : theme.textMuted }} />
+                          <span className="text-xs font-bold" style={{ color: active ? theme.accent : theme.textSecondary }}>{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Instruction + Refazer (only while drawing or done) */}
+                  {(geo.circleStep !== 'idle' || geo.polyStep !== 'idle') && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 flex items-start gap-2 px-3 py-2.5 rounded-2xl border"
+                        style={{ background: geo.isDrawingDone ? `${theme.accent}08` : `${theme.accent}06`, borderColor: geo.isDrawingDone ? `${theme.accent}40` : `${theme.accent}20` }}>
+                        <TouchAppIcon sx={{ fontSize: 13, color: theme.accent, flexShrink: 0, mt: '1px' }} />
+                        <p className="text-[11px] leading-relaxed" style={{ color: theme.textSecondary }}>
+                          {geo.mode === 'circle'
+                            ? ({ center: 'Clique no mapa para definir o centro', radius: 'Clique novamente para definir o raio', done: 'Ajuste o raio se desejar' }[geo.circleStep] ?? '')
+                            : (geo.polyStep === 'drawing'
+                              ? `${geo.polyPoints.length} pt${geo.polyPoints.length !== 1 ? 's' : ''} — ${geo.polyPoints.length >= 3 ? 'duplo clique para fechar' : 'continue clicando'}`
+                              : 'Polígono definido')}
+                        </p>
+                      </div>
+                      <button type="button" onClick={geo.resetDrawing}
+                        className="w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 active:scale-90 transition-all"
+                        style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.25)', color: '#ef4444' }}>
+                        <RefreshIcon sx={{ fontSize: 14 }} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Radius slider (circle, center placed) */}
+                  {geo.mode === 'circle' && geo.circleCenter && (
+                    <div className="flex items-center gap-3">
+                      <input type="range" min={50} max={50000} step={50} value={geo.circleRadius}
+                        onChange={(e) => geo.handleSetRadius(e.target.value)}
+                        className="flex-1 h-2 rounded-full appearance-none cursor-pointer" style={{ accentColor: theme.accent }} />
+                      <span className="text-xs font-black tabular-nums w-16 text-right flex-shrink-0" style={{ color: theme.accent }}>
+                        {geo.circleRadius >= 1000 ? `${(geo.circleRadius / 1000).toFixed(1)} km` : `${geo.circleRadius} m`}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Name + Description + Save (after drawing done) */}
+                  {geo.isDrawingDone && (
+                    <>
+                      <input autoFocus value={geo.name} onChange={(e) => geo.setName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && geo.canSave && handleInlineGeoSave()}
+                        placeholder="Nome da cerca *"
+                        className="w-full px-4 py-3 rounded-2xl border text-sm font-semibold outline-none transition-all"
+                        style={{ background: theme.bgCard, borderColor: geo.name.trim() ? theme.accent : theme.borderCard, color: theme.textPrimary }} />
+                      <input value={geo.description} onChange={(e) => geo.setDescription(e.target.value)}
+                        placeholder="Descrição (opcional)"
+                        className="w-full px-4 py-2.5 rounded-2xl border text-sm outline-none"
+                        style={{ background: theme.bgCard, borderColor: theme.borderCard, color: theme.textPrimary }} />
+                      <button type="button" onClick={handleInlineGeoSave} disabled={!geo.canSave || geoSaving}
+                        className="w-full h-11 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+                        style={{ background: geo.canSave && !geoSaving ? theme.accent : theme.bgSecondary, color: geo.canSave && !geoSaving ? '#fff' : theme.textMuted, boxShadow: geo.canSave && !geoSaving ? `0 6px 20px ${theme.accent}55` : 'none' }}>
+                        {geoSaving ? <CircularProgress size={14} color="inherit" /> : <CheckIcon sx={{ fontSize: 15 }} />}
+                        {geoSaving ? 'Salvando…' : 'Salvar Cerca'}
+                      </button>
+                    </>
+                  )}
+
+                  {/* ── CERCAS CRIADAS ─────────────────────────────────── */}
+                  <div className="flex items-center gap-3 mt-1">
+                    <div className="flex-1 h-px" style={{ background: theme.border }} />
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: theme.textMuted }}>Cercas Criadas</span>
+                    <div className="flex-1 h-px" style={{ background: theme.border }} />
+                  </div>
+
+                  {allGeofences.length === 0 && (
+                    <p className="text-xs py-2 text-center" style={{ color: theme.textMuted }}>Nenhuma cerca criada ainda</p>
+                  )}
+                  {allGeofences.map((g) => {
+                    const isCircle = typeof g.area === 'string' && g.area.startsWith('CIRCLE');
+                    const isPaused = !!g.attributes?.disabled;
+                    const { icon: IconComponent, color } = getGeofenceTheme(g.attributes?.type || 'custom');
+                    const isLoading = geofenceLoading === g.id;
+                    const isEditing = editingId === g.id;
+                    const isConfirmingDelete = confirmDeleteId === g.id;
+                    return (
+                      <div key={g.id} className="rounded-2xl border overflow-hidden transition-all"
+                        style={{ background: theme.bgCard, borderColor: isConfirmingDelete ? 'rgba(239,68,68,0.4)' : theme.borderCard, opacity: isPaused ? 0.6 : 1 }}>
+                        <div className="flex items-center gap-2.5 px-3 py-2.5">
+                          <span className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}18` }}>
+                            <IconComponent sx={{ fontSize: 14, color: isPaused ? theme.textMuted : color }} />
+                          </span>
+                          {isEditing ? (
+                            <input autoFocus value={editingName} onChange={(e) => setEditingName(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleGeoSave(g); if (e.key === 'Escape') handleGeoEditCancel(); }}
+                              className="flex-1 min-w-0 px-2 py-1 rounded-lg border text-xs font-semibold outline-none"
+                              style={{ background: theme.bg, borderColor: theme.accent, color: theme.textPrimary }} />
+                          ) : (
+                            <span className="flex-1 min-w-0 text-xs font-semibold truncate" style={{ color: isPaused ? theme.textMuted : theme.textPrimary }}>{g.name}</span>
+                          )}
+                          {!isEditing && (
+                            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-lg flex-shrink-0"
+                              style={{ background: `${theme.accent}15`, color: theme.accent }}>{isCircle ? 'Circ.' : 'Poli.'}</span>
+                          )}
+                          {isLoading ? (
+                            <RefreshIcon sx={{ fontSize: 14, color: theme.textMuted }} className="animate-spin flex-shrink-0" />
+                          ) : isEditing ? (
+                            <div className="flex gap-1 flex-shrink-0">
+                              <button type="button" onClick={() => handleGeoSave(g)} className="w-7 h-7 rounded-lg flex items-center justify-center active:scale-90" style={{ background: `${theme.accent}20`, color: theme.accent }}><CheckIcon sx={{ fontSize: 13 }} /></button>
+                              <button type="button" onClick={handleGeoEditCancel} className="w-7 h-7 rounded-lg flex items-center justify-center active:scale-90" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}><CloseIcon sx={{ fontSize: 13 }} /></button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-1 flex-shrink-0">
+                              <button type="button" onClick={() => handleGeoEdit(g)} className="w-7 h-7 rounded-lg flex items-center justify-center active:scale-90" style={{ background: theme.bgSecondary, color: theme.textMuted }}><EditIcon sx={{ fontSize: 12 }} /></button>
+                              <button type="button" onClick={() => handleGeoTogglePause(g)} className="w-7 h-7 rounded-lg flex items-center justify-center active:scale-90" style={{ background: isPaused ? `${theme.accent}20` : theme.bgSecondary, color: isPaused ? theme.accent : theme.textMuted }}>{isPaused ? <PlayArrowIcon sx={{ fontSize: 12 }} /> : <PauseIcon sx={{ fontSize: 12 }} />}</button>
+                              <button type="button" onClick={() => setConfirmDeleteId(isConfirmingDelete ? null : g.id)} className="w-7 h-7 rounded-lg flex items-center justify-center active:scale-90" style={{ background: isConfirmingDelete ? 'rgba(239,68,68,0.15)' : theme.bgSecondary, color: '#ef4444' }}><DeleteIcon sx={{ fontSize: 12 }} /></button>
+                            </div>
+                          )}
+                        </div>
+                        {isConfirmingDelete && (
+                          <div className="flex items-center justify-between px-3 py-2 border-t" style={{ borderColor: 'rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.06)' }}>
+                            <span className="text-[10px] font-bold" style={{ color: '#ef4444' }}>Apagar esta cerca?</span>
+                            <div className="flex gap-2">
+                              <button type="button" onClick={() => setConfirmDeleteId(null)} className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider" style={{ background: theme.bgSecondary, color: theme.textMuted }}>Não</button>
+                              <button type="button" onClick={() => handleGeoDelete(g.id)} className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>Apagar</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ══ TAB: ROTA ══ */}
+              {activeTab === 'rota' && (
+                <>
+                  {/* Route map layers — only when not in playback mode (playback owns its own layers) */}
+                  {routeItems.length > 0 && showRouteOnMap && !showPlayback && (
+                    <>
+                      <MapRoutePath positions={routeItems} />
+                      <MapRoutePoints positions={routeItems} onClick={(id) => setRouteSelectedItem(routeItems.find((it) => it.id === id))} />
+                      <MapCamera positions={routeItems} />
+                    </>
+                  )}
+                  {routeSelectedItem && !showRouteOnMap && !showPlayback && (
+                    <MapCamera positions={[routeSelectedItem]} />
+                  )}
+
+                  <div className="flex flex-col gap-3 pt-1">
+                    {/* Period + Mostrar */}
+                    <div className="flex gap-2 items-center">
+                      <select
+                        value={routePeriod}
+                        onChange={(e) => setRoutePeriod(e.target.value)}
+                        className="flex-1 px-3 py-2.5 rounded-2xl border text-xs font-bold outline-none appearance-none"
+                        style={{ background: theme.bgCard, borderColor: theme.borderCard, color: theme.textPrimary }}
+                      >
+                        <option value="today">Hoje</option>
+                        <option value="yesterday">Ontem</option>
+                        <option value="thisWeek">Esta Semana</option>
+                        <option value="thisMonth">Este Mês</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={handleShowRoute}
+                        disabled={routeLoading}
+                        className="h-10 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 flex-shrink-0 active:scale-95 transition-all disabled:opacity-50"
+                        style={{ background: theme.accent, color: '#fff', boxShadow: `0 4px 14px ${theme.accent}44` }}
+                      >
+                        {routeLoading
+                          ? <CircularProgress size={12} color="inherit" />
+                          : <RouteIcon sx={{ fontSize: 14 }} />}
+                        Mostrar
+                      </button>
+                    </div>
+
+                    {/* Empty state */}
+                    {!routeLoading && routeItems.length === 0 && (
+                      <p className="text-xs py-4 text-center" style={{ color: theme.textMuted }}>
+                        Selecione o período e toque em Mostrar
+                      </p>
+                    )}
+
+                    {/* Results list */}
+                    {!routeLoading && routeItems.length > 0 && (
+                      <>
+                        {/* Header: count + map toggle + relatório */}
+                        <div className="flex items-center gap-2">
+                          <p className="text-[9px] font-black uppercase tracking-widest flex-1" style={{ color: theme.textMuted }}>
+                            {routeItems.length} Registros
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowRouteOnMap((v) => !v)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider active:scale-95 transition-all flex-shrink-0"
+                            style={{
+                              background: showRouteOnMap ? `${theme.accent}18` : theme.bgCard,
+                              borderColor: showRouteOnMap ? theme.accent : theme.borderCard,
+                              color: showRouteOnMap ? theme.accent : theme.textMuted,
+                            }}
+                          >
+                            <RouteIcon sx={{ fontSize: 11 }} />
+                            {showRouteOnMap ? 'Ocultar' : 'Mapa'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setShowRouteReport(true); setShowPlayback(false); }}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider active:scale-95 transition-all flex-shrink-0"
+                            style={{
+                              background: `${theme.accent}18`,
+                              borderColor: theme.accent,
+                              color: theme.accent,
+                            }}
+                          >
+                            <RouteIcon sx={{ fontSize: 11 }} />
+                            Relatório
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setShowPlayback(true); setShowRouteReport(false); setShowRouteOnMap(false); }}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider active:scale-95 transition-all flex-shrink-0"
+                            style={{
+                              background: showPlayback ? 'rgba(34,197,94,0.18)' : theme.bgCard,
+                              borderColor: showPlayback ? '#22c55e' : theme.borderCard,
+                              color: showPlayback ? '#22c55e' : theme.textMuted,
+                            }}
+                          >
+                            <PlayArrowIcon sx={{ fontSize: 11 }} />
+                            Play
+                          </button>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          {routeItems.map((item) => {
+                            const isSelected = routeSelectedItem?.id === item.id;
+                            const speed = Math.round(item.speed * 1.852);
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => setRouteSelectedItem(item)}
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-2xl border text-left transition-all active:scale-[0.98]"
+                                style={{
+                                  background: isSelected ? `${theme.accent}12` : theme.bgCard,
+                                  borderColor: isSelected ? `${theme.accent}40` : theme.borderCard,
+                                }}
+                              >
+                                <div className="flex flex-col items-center flex-shrink-0 w-12">
+                                  <span className="text-[11px] font-black tabular-nums leading-tight" style={{ color: theme.accent }}>
+                                    {dayjs(item.fixTime).format('HH:mm')}
+                                  </span>
+                                  <span className="text-[9px] font-bold tabular-nums" style={{ color: speed > 0 ? theme.textSecondary : theme.textMuted }}>
+                                    {speed} km/h
+                                  </span>
+                                </div>
+                                <span className="flex-1 min-w-0 text-[10px] leading-snug" style={{ color: isSelected ? theme.textPrimary : theme.textSecondary }}>
+                                  {item.address || `${item.latitude?.toFixed(4)}, ${item.longitude?.toFixed(4)}`}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* ══ TAB: EVENTOS ══ */}
+              {activeTab === 'eventos' && (
+                <div className="flex flex-col gap-3 pt-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-center py-4" style={{ color: theme.textMuted }}>
+                    Histórico de Eventos
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); navigate(`/app/reports/events?deviceId=${device.id}`); }}
+                    className="w-full h-11 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all"
+                    style={{ background: theme.accent, color: '#fff', boxShadow: `0 4px 16px ${theme.accent}44` }}
+                  >
+                    <WarningAmberIcon sx={{ fontSize: 15 }} />
+                    Ver Relatório de Eventos
+                  </button>
+                </div>
+              )}
+
             </div>
 
-            {/* ── Botões de Ação Fixos no Rodapé ── */}
-            <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t" style={{ borderColor: theme.borderCard }}>
-                <div className="flex justify-between items-start w-full">
-                    <ActionBtn icon={<MapIcon />} label="Mapa" onClick={onClose} theme={theme} />
-                    <ActionBtn
-                        icon={isCommandLoading ? <LockOpenIcon className="opacity-50" /> : isBlocked ? <LockOpenIcon /> : <LockIcon />}
-                        label={isBlocked ? 'Liberar' : 'Bloquear'}
-                        neon={isBlocked}
-                        danger={!isBlocked}
-                        active={isBlocked}
-                        disabled={isCommandLoading}
-                        onClick={() => setConfirmDialog({ open: true, type: isBlocked ? 'engineResume' : 'engineStop' })}
-                        theme={theme}
-                    />
-                    <ActionBtn icon={<GpsFixedIcon />} label="Cercas" onClick={() => navigate('/app/geofences')} theme={theme} />
-                    <ActionBtn icon={<PlayArrowIcon />} label="Rota"
-                        onClick={() => { onClose(); navigate(`/app/reports/route?deviceId=${device.id}`); }}
-                        theme={theme} />
-                    <ActionBtn icon={<SettingsInputAntennaIcon />} label="Eventos"
-                        onClick={() => { onClose(); navigate(`/app/reports/events?deviceId=${device.id}`); }}
-                        theme={theme} />
-                </div>
-            </div>
+            {/* ── Full-screen route report overlay ── */}
+            {showRouteReport && routeItems.length > 0 && (
+              <RouteReportOverlay
+                device={device}
+                routeItems={routeItems}
+                onClose={() => setShowRouteReport(false)}
+              />
+            )}
+            {/* ── Route playback ── */}
+            {showPlayback && routeItems.length > 0 && (
+              <RoutePlayback
+                device={device}
+                routeItems={routeItems}
+                onClose={() => setShowPlayback(false)}
+              />
+            )}
         </div>
     );
 };

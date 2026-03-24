@@ -1,7 +1,7 @@
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import maplibregl from 'maplibre-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
-import { useEffect, useMemo, useCallback, useState } from 'react';
+import { useEffect, useMemo, useCallback, useState, useRef } from 'react';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
@@ -19,12 +19,14 @@ MapboxDraw.constants.classes.CONTROL_BASE = 'maplibregl-ctrl';
 MapboxDraw.constants.classes.CONTROL_PREFIX = 'maplibregl-ctrl-';
 MapboxDraw.constants.classes.CONTROL_GROUP = 'maplibregl-ctrl-group';
 
-const MapGeofenceEdit = ({ selectedGeofenceId }) => {
+const MapGeofenceEdit = ({ selectedGeofenceId, onDrawingChange }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const t = useTranslation();
 
   const [pendingArea, setPendingArea] = useState(null);
+  const onDrawingChangeRef = useRef(onDrawingChange);
+  useEffect(() => { onDrawingChangeRef.current = onDrawingChange; }, [onDrawingChange]);
 
   const draw = useMemo(
     () =>
@@ -69,7 +71,10 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
   }, []);
 
   const circleControl = useMemo(
-    () => new CircleControl({ onCircleCreated: handleCircleCreated }),
+    () => new CircleControl({
+      onCircleCreated: handleCircleCreated,
+      onActiveChange: (active) => onDrawingChangeRef.current?.(active),
+    }),
     [handleCircleCreated],
   );
 
@@ -158,19 +163,32 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
 
     map.addControl(draw, 'top-right');
 
-    // After draw is added, find its container and inject circle button
-    const drawContainer = document.querySelector(
-      '.maplibregl-ctrl-group .mapbox-gl-draw_ctrl-draw-btn',
-    )?.parentElement;
-    if (drawContainer) {
-      circleControl.attach(map, drawContainer);
-    }
+    // Use rAF so the draw control buttons are in the DOM before we query them
+    let rafId = requestAnimationFrame(() => {
+      const drawContainer = document.querySelector(
+        '.maplibregl-ctrl-group .mapbox-gl-draw_ctrl-draw-btn',
+      )?.parentElement;
+      if (drawContainer) {
+        circleControl.attach(map, drawContainer);
+      }
+    });
 
     return () => {
+      cancelAnimationFrame(rafId);
       circleControl.detach();
       map.removeControl(draw);
+      onDrawingChangeRef.current?.(false);
     };
   }, [refreshGeofences, circleControl]);
+
+  // Notify parent when MapboxDraw enters/exits a drawing mode
+  useEffect(() => {
+    const onModeChange = ({ mode }) => {
+      onDrawingChangeRef.current?.(mode !== 'simple_select');
+    };
+    map.on('draw.modechange', onModeChange);
+    return () => map.off('draw.modechange', onModeChange);
+  }, []);
 
   useEffect(() => {
     const listener = (event) => {
@@ -181,6 +199,7 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
         return;
       }
       draw.delete(feature.id);
+      onDrawingChangeRef.current?.(false);
       setPendingArea(area);
     };
 

@@ -20,6 +20,7 @@ const GeofencesPage = () => {
   const { theme } = useHudTheme();
 
   const [selectedGeofenceId, setSelectedGeofenceId] = useState();
+  const [isDrawing, setIsDrawing] = useState(false);
 
   const handleFile = (event) => {
     const files = Array.from(event.target.files);
@@ -74,15 +75,28 @@ const GeofencesPage = () => {
       {/* Background Map */}
       <div className="absolute inset-0 z-0">
         <MapView>
-          <MapGeofenceEdit selectedGeofenceId={selectedGeofenceId} />
+          <MapGeofenceEdit selectedGeofenceId={selectedGeofenceId} onDrawingChange={setIsDrawing} />
         </MapView>
         <div className="absolute inset-0 pointer-events-none" style={{ background: theme.isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)' }} />
       </div>
 
+      {/* Drawing mode indicator */}
+      {isDrawing && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+          <div
+            className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border backdrop-blur-md"
+            style={{ background: 'rgba(0,0,0,0.75)', borderColor: 'rgba(57,255,20,0.4)', color: '#39ff14' }}
+          >
+            Clique no mapa para desenhar • ESC para cancelar
+          </div>
+        </div>
+      )}
+
       {/* Floating panel — pointer-events-none on wrapper so map is pannable,
-          pointer-events-auto re-enabled on actual UI content */}
+          pointer-events-auto re-enabled on actual UI content.
+          During drawing the panel is fully non-interactive so map receives clicks. */}
       <div className="absolute inset-0 z-10 pointer-events-none" style={{ right: 60 }}>
-        <div className="h-full flex flex-col pointer-events-auto">
+        <div className={`h-full flex flex-col ${isDrawing ? 'pointer-events-none' : 'pointer-events-auto'}`}>
           <PwaPageLayout
             title={t('sharedGeofences')}
             actions={headerActions}

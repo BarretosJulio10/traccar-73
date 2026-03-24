@@ -12,8 +12,9 @@
 import circle from '@turf/circle';
 
 class CircleControl {
-  constructor({ onCircleCreated }) {
+  constructor({ onCircleCreated, onActiveChange }) {
     this._onCircleCreated = onCircleCreated;
+    this._onActiveChange = onActiveChange || null;
     this._active = false;
     this._center = null;
     this._container = null;
@@ -36,12 +37,28 @@ class CircleControl {
     this._button.title = 'Draw circle';
     this._button.setAttribute('aria-label', 'Draw circle');
     this._button.className = 'mapbox-gl-draw_ctrl-draw-btn';
-    this._button.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="9"/>
-        <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-      </svg>
-    `;
+
+    // Build SVG via DOM API — avoids innerHTML XSS vector
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '20');
+    svg.setAttribute('height', '20');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    ring.setAttribute('cx', '12');
+    ring.setAttribute('cy', '12');
+    ring.setAttribute('r', '9');
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', '12');
+    dot.setAttribute('cy', '12');
+    dot.setAttribute('r', '1.5');
+    dot.setAttribute('fill', 'currentColor');
+    svg.appendChild(ring);
+    svg.appendChild(dot);
+    this._button.appendChild(svg);
+
     this._button.style.cssText =
       'display:flex;align-items:center;justify-content:center;cursor:pointer;';
 
@@ -78,6 +95,7 @@ class CircleControl {
     this._button.classList.add('active');
     this._button.style.backgroundColor = 'rgba(45, 212, 191, 0.2)';
     this._map.getCanvas().style.cursor = 'crosshair';
+    this._onActiveChange?.(true);
 
     this._onMapClick = this._handleMapClick.bind(this);
     this._onMouseMove = this._handleMouseMove.bind(this);
@@ -101,6 +119,7 @@ class CircleControl {
       this._removePreview();
     }
     document.removeEventListener('keydown', this._onKeyDown);
+    this._onActiveChange?.(false);
   }
 
   _handleKeyDown(e) {

@@ -45,8 +45,8 @@ root.render(
     <Provider store={store}>
       <LocalizationProvider>
         <StyledEngineProvider injectFirst>
-          <AppThemeProvider>
-            <HudThemeProvider>
+          <HudThemeProvider>
+            <AppThemeProvider>
               <CssBaseline />
               <TenantProvider>
                 <BrowserRouter>
@@ -57,8 +57,8 @@ root.render(
                   <NativeInterface />
                 </BrowserRouter>
               </TenantProvider>
-            </HudThemeProvider>
-          </AppThemeProvider>
+            </AppThemeProvider>
+          </HudThemeProvider>
         </StyledEngineProvider>
       </LocalizationProvider>
     </Provider>

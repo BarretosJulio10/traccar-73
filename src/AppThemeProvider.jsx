@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { ThemeProvider, useMediaQuery } from '@mui/material';
+import { ThemeProvider } from '@mui/material';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import theme from './common/theme';
 import { useLocalization } from './common/components/LocalizationProvider';
-import usePersistedState from './common/util/usePersistedState';
+import { useHudTheme } from './common/util/ThemeContext';
 import { useTenant } from './common/components/TenantProvider';
 
 const cache = {
@@ -19,10 +19,7 @@ const cache = {
   }),
 };
 
-const ThemeModeContext = createContext({
-  darkMode: true,
-  toggleDarkMode: () => {},
-});
+const ThemeModeContext = createContext({ darkMode: true });
 
 export const useThemeMode = () => useContext(ThemeModeContext);
 
@@ -32,23 +29,13 @@ const AppThemeProvider = ({ children }) => {
   const tenantCtx = useTenant();
   const tenant = tenantCtx?.tenant;
 
-  const preferDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const [userDarkMode, setUserDarkMode] = usePersistedState('darkMode', null);
-
-  const darkMode =
-    userDarkMode !== null
-      ? userDarkMode
-      : server?.attributes?.darkMode !== undefined
-        ? server.attributes.darkMode
-        : preferDarkMode;
-
-  const toggleDarkMode = useCallback(() => {
-    setUserDarkMode(!darkMode);
-  }, [darkMode, setUserDarkMode]);
+  // Sync MUI palette with HUD theme toggle so Dialogs/inputs respect light/dark
+  const { theme: hudTheme } = useHudTheme();
+  const darkMode = hudTheme.isDark;
 
   const themeInstance = theme(server, darkMode, direction, tenant);
 
-  const contextValue = useMemo(() => ({ darkMode, toggleDarkMode }), [darkMode, toggleDarkMode]);
+  const contextValue = useMemo(() => ({ darkMode }), [darkMode]);
 
   return (
     <CacheProvider value={cache[direction]}>

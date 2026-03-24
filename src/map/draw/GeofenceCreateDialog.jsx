@@ -225,23 +225,23 @@ const GeofenceCreateDialog = ({ open, onSave, onCancel }) => {
           Categoria / Tipo
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {GEOFENCE_TYPES.map((t) => (
+          {GEOFENCE_TYPES.map((gType) => (
             <Chip
-              key={t.value}
-              icon={t.icon}
-              label={t.label}
-              onClick={() => setType(t.value)}
-              variant={type === t.value ? 'filled' : 'outlined'}
+              key={gType.value}
+              icon={gType.icon}
+              label={gType.label}
+              onClick={() => setType(gType.value)}
+              variant={type === gType.value ? 'filled' : 'outlined'}
               sx={{
                 fontWeight: 600,
-                borderColor: t.color + '50',
-                color: type === t.value ? '#fff' : t.color,
-                backgroundColor: type === t.value ? t.color : 'transparent',
+                borderColor: gType.color + '50',
+                color: type === gType.value ? '#fff' : gType.color,
+                backgroundColor: type === gType.value ? gType.color : 'transparent',
                 '&:hover': {
-                  backgroundColor: type === t.value ? t.color : t.color + '15',
+                  backgroundColor: type === gType.value ? gType.color : gType.color + '15',
                 },
                 '& .MuiChip-icon': {
-                  color: type === t.value ? '#fff' : t.color,
+                  color: type === gType.value ? '#fff' : gType.color,
                 }
               }}
             />

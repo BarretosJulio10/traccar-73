@@ -1,23 +1,23 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
-import { devicesActions, sessionActions, eventsActions, geofencesActions } from '../store';
+import { devicesActions, sessionActions, geofencesActions, resetAll } from '../store';
 import dayjs from 'dayjs';
-import { DEMO_USER } from '../common/util/constants';
+
 
 const DEMO_DEVICE_IDS = [99901, 99902, 99903, 99904, 99905];
 
 const DEMO_GEOFENCES = [
   {
     id: 1001,
-    name: 'Sede MAB Tracker',
-    description: 'Escritório Central',
+    name: 'Sede Demo',
+    description: 'Escritório Central (Demo)',
     area: 'CIRCLE (-23.5505 -46.6333, 500)',
     attributes: { color: '#39ff14' },
   },
   {
     id: 1002,
-    name: 'Logística Tatuapé',
-    description: 'Centro de Distribuição',
+    name: 'Depósito Demo',
+    description: 'Centro de Distribuição (Demo)',
     area: 'CIRCLE (-23.52 -46.59, 800)',
     attributes: { color: '#3b82f6' },
   },
@@ -26,13 +26,13 @@ const DEMO_GEOFENCES = [
 const DEMO_VEHICLES = [
   {
     id: 99901,
-    name: 'Fiorino MAB-01',
+    name: 'Demo Van 01',
     uniqueId: 'DEMO001',
     category: 'van',
     status: 'online',
     phone: '',
-    model: 'Fiat Fiorino',
-    contact: 'João',
+    model: 'Furgão',
+    contact: 'Demo',
     groupId: 0,
     disabled: false,
     positionId: 90001,
@@ -40,13 +40,13 @@ const DEMO_VEHICLES = [
   },
   {
     id: 99902,
-    name: 'HB20 MAB-02',
+    name: 'Demo Carro 02',
     uniqueId: 'DEMO002',
     category: 'car',
     status: 'online',
     phone: '',
-    model: 'Hyundai HB20',
-    contact: 'Maria',
+    model: 'Sedan',
+    contact: 'Demo',
     groupId: 0,
     disabled: false,
     positionId: 90002,
@@ -54,13 +54,13 @@ const DEMO_VEHICLES = [
   },
   {
     id: 99903,
-    name: 'Truck MAB-03',
+    name: 'Demo Caminhão 03',
     uniqueId: 'DEMO003',
     category: 'truck',
     status: 'online',
     phone: '',
-    model: 'VW Delivery',
-    contact: 'Carlos',
+    model: 'Truck',
+    contact: 'Demo',
     groupId: 0,
     disabled: false,
     positionId: 90003,
@@ -68,13 +68,13 @@ const DEMO_VEHICLES = [
   },
   {
     id: 99904,
-    name: 'Moto MAB-04',
+    name: 'Demo Moto 04',
     uniqueId: 'DEMO004',
     category: 'motorcycle',
     status: 'online',
     phone: '',
-    model: 'Honda CG 160',
-    contact: 'Pedro',
+    model: 'Moto',
+    contact: 'Demo',
     groupId: 0,
     disabled: false,
     positionId: 90004,
@@ -82,13 +82,13 @@ const DEMO_VEHICLES = [
   },
   {
     id: 99905,
-    name: 'S10 MAB-05',
+    name: 'Demo Pickup 05',
     uniqueId: 'DEMO005',
     category: 'car',
     status: 'online',
     phone: '',
-    model: 'Chevrolet S10',
-    contact: 'Ana',
+    model: 'Pickup',
+    contact: 'Demo',
     groupId: 0,
     disabled: false,
     positionId: 90005,
@@ -354,11 +354,9 @@ const DemoController = ({ active }) => {
   }, [dispatch, createPosition]);
 
   const cleanupDemo = useCallback(() => {
-    DEMO_DEVICE_IDS.forEach((id) => {
-      dispatch(devicesActions.remove(id));
-    });
-    dispatch(geofencesActions.refresh([]));
-    dispatch(eventsActions.deleteAll());
+    // resetAll wipes devices, positions, history, geofences, events, groups, etc.
+    // so there is no leftover demo data visible to the next real login.
+    dispatch(resetAll());
   }, [dispatch]);
 
   useEffect(() => {

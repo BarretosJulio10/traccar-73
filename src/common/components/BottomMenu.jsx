@@ -7,7 +7,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
-import { sessionActions } from '../../store';
+import { resetAll } from '../../store';
 import { nativePostMessage } from './NativeInterface';
 import { auditLog } from '../util/audit';
 import fetchOrThrow from '../util/fetchOrThrow';
@@ -44,15 +44,18 @@ const BottomMenu = () => {
   };
 
   const handleLogout = async () => {
-    const notificationToken = window.localStorage.getItem('notificationToken');
-    if (notificationToken && !user.readonly) {
-      window.localStorage.removeItem('notificationToken');
-    }
     auditLog('logout', { user_id: user.id, email: user.email });
-    await fetchOrThrow('/api/session', { method: 'DELETE' });
+    try { await fetchOrThrow('/api/session', { method: 'DELETE' }); } catch { /* proceed */ }
     nativePostMessage('logout');
+    // Wipe all tenant data from Redux store
+    dispatch(resetAll());
+    // Clear user-specific localStorage keys so next user starts fresh
+    ['notificationToken', 'traccar_anchor_autoblock', 'traccar_anchors', 'traccarEmail'].forEach(
+      (key) => window.localStorage.removeItem(key),
+    );
+    // Clear session flags
+    ['sessionExpired', 'postLogin'].forEach((key) => window.sessionStorage.removeItem(key));
     navigate('/login');
-    dispatch(sessionActions.updateUser(null));
   };
 
   const active = currentSelection();

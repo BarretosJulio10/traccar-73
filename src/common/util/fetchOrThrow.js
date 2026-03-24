@@ -4,13 +4,13 @@ import { DEFAULT_TENANT_SLUG } from './constants';
 const getTenantSlug = () => localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
 const getTraccarEmail = () => localStorage.getItem('traccarEmail') || '';
 
-// Static demo devices — shared with DemoController (keep IDs in sync)
+// Static demo devices — shared with DemoController (keep IDs and names in sync)
 const DEMO_DEVICES = [
-  { id: 99901, name: 'Fiorino MAB-01', uniqueId: 'DEMO001', category: 'van', status: 'online', disabled: false, attributes: {} },
-  { id: 99902, name: 'HB20 MAB-02', uniqueId: 'DEMO002', category: 'car', status: 'online', disabled: false, attributes: {} },
-  { id: 99903, name: 'Truck MAB-03', uniqueId: 'DEMO003', category: 'truck', status: 'online', disabled: false, attributes: {} },
-  { id: 99904, name: 'Moto MAB-04', uniqueId: 'DEMO004', category: 'motorcycle', status: 'online', disabled: false, attributes: {} },
-  { id: 99905, name: 'S10 MAB-05', uniqueId: 'DEMO005', category: 'car', status: 'online', disabled: false, attributes: {} },
+  { id: 99901, name: 'Demo Van 01', uniqueId: 'DEMO001', category: 'van', status: 'online', disabled: false, attributes: {} },
+  { id: 99902, name: 'Demo Carro 02', uniqueId: 'DEMO002', category: 'car', status: 'online', disabled: false, attributes: {} },
+  { id: 99903, name: 'Demo Caminhão 03', uniqueId: 'DEMO003', category: 'truck', status: 'online', disabled: false, attributes: {} },
+  { id: 99904, name: 'Demo Moto 04', uniqueId: 'DEMO004', category: 'motorcycle', status: 'online', disabled: false, attributes: {} },
+  { id: 99905, name: 'Demo Pickup 05', uniqueId: 'DEMO005', category: 'car', status: 'online', disabled: false, attributes: {} },
 ];
 
 // Mock storage for Demo Mode so created items persist during the session
@@ -18,13 +18,13 @@ const demoStorage = {
   geofences: [
     {
       id: 1001,
-      name: 'Sede MAB Tracker',
+      name: 'Sede Demo',
       area: 'CIRCLE (-23.5505 -46.6333, 500)',
       attributes: { type: 'safe', color: '#39ff14' },
     },
     {
       id: 1002,
-      name: 'Logística Tatuapé',
+      name: 'Depósito Demo',
       area: 'CIRCLE (-23.52 -46.59, 800)',
       attributes: { type: 'default', color: '#3b82f6' },
     },

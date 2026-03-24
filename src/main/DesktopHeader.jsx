@@ -13,7 +13,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
-import { sessionActions } from '../store';
+import { sessionActions, resetAll } from '../store';
 import { auditLog } from '../common/util/audit';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { useHudTheme } from '../common/util/ThemeContext';
@@ -59,9 +59,16 @@ const DesktopHeader = () => {
 
   const handleLogout = async () => {
     auditLog('logout', { user_id: user.id, email: user.email });
-    await fetchOrThrow('/api/session', { method: 'DELETE' });
+    try { await fetchOrThrow('/api/session', { method: 'DELETE' }); } catch { /* proceed */ }
+    // Wipe all tenant data from Redux store
+    dispatch(resetAll());
+    // Clear user-specific localStorage keys so next user starts fresh
+    ['notificationToken', 'traccar_anchor_autoblock', 'traccar_anchors', 'traccarEmail'].forEach(
+      (key) => window.localStorage.removeItem(key),
+    );
+    // Clear session flags
+    ['sessionExpired', 'postLogin'].forEach((key) => window.sessionStorage.removeItem(key));
     navigate('/login');
-    dispatch(sessionActions.updateUser(null));
   };
 
   return (

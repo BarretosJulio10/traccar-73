@@ -12,7 +12,7 @@ import { maintenancesReducer as maintenances } from './maintenances';
 import { calendarsReducer as calendars } from './calendars';
 import throttleMiddleware from './throttleMiddleware';
 
-const reducer = combineReducers({
+const appReducer = combineReducers({
   errors,
   session,
   devices,
@@ -24,6 +24,22 @@ const reducer = combineReducers({
   maintenances,
   calendars,
 });
+
+// Root reducer: intercepts RESET_ALL to flush all user/tenant data.
+// Preserves session.server (server config is not user-specific).
+const rootReducer = (state, action) => {
+  if (action.type === 'store/resetAll') {
+    const fresh = appReducer(undefined, action);
+    return {
+      ...fresh,
+      session: { ...fresh.session, server: state?.session?.server ?? { attributes: {} } },
+    };
+  }
+  return appReducer(state, action);
+};
+
+/** Dispatch this on logout or tenant switch to wipe all user/tenant data from Redux. */
+export const resetAll = () => ({ type: 'store/resetAll' });
 
 export { errorsActions } from './errors';
 export { sessionActions } from './session';
@@ -37,6 +53,6 @@ export { maintenancesActions } from './maintenances';
 export { calendarsActions } from './calendars';
 
 export default configureStore({
-  reducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(throttleMiddleware),
 });

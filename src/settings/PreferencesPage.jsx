@@ -17,6 +17,7 @@ import {
   Autocomplete,
   TextField,
   createFilterOptions,
+  Collapse,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CachedIcon from '@mui/icons-material/Cached';

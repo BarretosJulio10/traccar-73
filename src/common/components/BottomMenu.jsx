@@ -62,11 +62,12 @@ const BottomMenu = () => {
   const { themeKey, toggleTheme, theme } = useHudTheme();
 
   return (
-    <div 
+    <div
       className="mx-auto flex h-[64px] items-center justify-around gap-2 px-3 backdrop-blur-3xl rounded-full border shadow-2xl no-scrollbar"
-      style={{ 
+      style={{
         background: theme.isDark ? 'rgba(8, 9, 10, 0.85)' : 'rgba(255, 255, 255, 0.85)',
         borderColor: theme.border,
+        boxShadow: 'var(--hud-nm-card, var(--tw-shadow))',
       }}
     >
       <NavItem
@@ -83,7 +84,7 @@ const BottomMenu = () => {
       <div className="w-[1px] h-6 mx-1 opacity-20" style={{ background: theme.textSecondary }} />
 
       <NavItem
-        icon={themeKey === 'dark' ? <LightModeIcon sx={{ fontSize: 20 }} /> : <DarkModeIcon sx={{ fontSize: 20 }} />}
+        icon={themeKey === 'light' ? <DarkModeIcon sx={{ fontSize: 20 }} /> : <LightModeIcon sx={{ fontSize: 20 }} />}
         active={false}
         onClick={toggleTheme}
       />

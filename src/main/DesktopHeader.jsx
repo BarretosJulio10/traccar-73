@@ -100,7 +100,7 @@ const DesktopHeader = () => {
         label="Relatórios"
         icon={<DescriptionIcon />}
         active={active === 'reports'}
-        onClick={() => navigate('/app/reports/combined')}
+        onClick={() => navigate('/app/reports')}
       />
 
       <div className="w-[1px] h-6 mx-1 border-l border-slate-200" />

@@ -7,13 +7,11 @@ import MapIcon from '@mui/icons-material/Map';
 import EventIcon from '@mui/icons-material/Event';
 import RouteIcon from '@mui/icons-material/Route';
 import TimerIcon from '@mui/icons-material/Timer';
-import AssessmentIcon from '@mui/icons-material/Assessment';
 import FenceIcon from '@mui/icons-material/Fence';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import PersonIcon from '@mui/icons-material/Person';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
-import SportsScoreIcon from '@mui/icons-material/SportsScore';
 import SpeedIcon from '@mui/icons-material/Speed';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
@@ -22,13 +20,6 @@ import PwaPageLayout from '../common/components/PwaPageLayout';
 import { useHudTheme } from '../common/util/ThemeContext';
 
 const reports = [
-    {
-        id: 'combined',
-        title: 'Geral',
-        subtitle: 'Unificado',
-        icon: <AssessmentIcon sx={{ color: '#39ff14' }} />,
-        path: '/app/reports/combined',
-    },
     {
         id: 'route',
         title: 'Trajeto',
@@ -65,13 +56,6 @@ const reports = [
         path: '/app/reports/heatmap',
     },
     {
-        id: 'driverscore',
-        title: 'Scoring',
-        subtitle: 'Ranking Eco',
-        icon: <SportsScoreIcon sx={{ color: '#8b5cf6' }} />,
-        path: '/app/reports/score',
-    },
-    {
         id: 'summary',
         title: 'Resumo',
         subtitle: 'Totais',
@@ -97,7 +81,7 @@ const ReportsHubPage = () => {
 
     return (
         <PwaPageLayout title={t('reportMain')}>
-            <div className="flex flex-col gap-8 pb-32">
+            <div className="flex flex-col gap-4 pb-[5px]">
                 
                 {/* Advanced Stats Summary Header */}
                 <div 
@@ -132,38 +116,36 @@ const ReportsHubPage = () => {
                 </div>
 
                 <div className="px-1">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Módulos de Análise</p>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Módulos de Análise</p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                         {reports.map((report) => (
-                            <div key={report.id} className="h-full">
+                            <div
+                                key={report.id}
+                                onClick={() => navigate(report.path)}
+                                className="group rounded-2xl py-3 px-2 shadow-md border flex flex-col items-center justify-center gap-1.5 active:scale-[0.96] transition-all cursor-pointer text-center relative overflow-hidden"
+                                style={{
+                                    background: theme.bgSecondary,
+                                    borderColor: theme.borderCard
+                                }}
+                            >
                                 <div
-                                    onClick={() => navigate(report.path)}
-                                    className="group rounded-[28px] p-5 h-full shadow-md border flex flex-col items-center justify-center gap-3 active:scale-[0.96] transition-all cursor-pointer text-center relative overflow-hidden"
-                                    style={{
-                                        background: theme.bgSecondary,
-                                        borderColor: theme.borderCard
-                                    }}
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner transition-all border group-hover:scale-110"
+                                    style={{ background: theme.bg, borderColor: theme.border }}
                                 >
-                                    <div 
-                                        className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner transition-all border group-hover:scale-110"
-                                        style={{ background: theme.bg, borderColor: theme.border, color: report.icon?.props?.sx?.color || theme.accent }}
-                                    >
-                                        {report.icon}
-                                    </div>
-                                    
-                                    <div className="flex flex-col">
-                                        <span className="text-[13px] font-black uppercase tracking-tight" style={{ color: theme.textPrimary }}>
-                                            {report.title}
-                                        </span>
-                                        <span className="text-[8px] font-bold uppercase tracking-widest opacity-60 mt-0.5" style={{ color: theme.textMuted }}>
-                                            {report.subtitle}
-                                        </span>
-                                    </div>
-
-                                    {/* Subtle Glow on Hover */}
-                                    <div className="absolute inset-0 bg-transparent group-hover:bg-white/5 transition-colors pointer-events-none" />
+                                    {report.icon}
                                 </div>
+
+                                <div className="flex flex-col">
+                                    <span className="text-[11px] font-black uppercase tracking-tight" style={{ color: theme.textPrimary }}>
+                                        {report.title}
+                                    </span>
+                                    <span className="text-[7px] font-bold uppercase tracking-widest opacity-60" style={{ color: theme.textMuted }}>
+                                        {report.subtitle}
+                                    </span>
+                                </div>
+
+                                <div className="absolute inset-0 bg-transparent group-hover:bg-white/5 transition-colors pointer-events-none" />
                             </div>
                         ))}
                     </div>

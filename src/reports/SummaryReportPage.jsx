@@ -1,19 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
-} from '@mui/material';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import StraightenIcon from '@mui/icons-material/Straighten';
-import SpeedIcon from '@mui/icons-material/Speed';
-import TimerIcon from '@mui/icons-material/Timer';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { useSearchParams } from 'react-router-dom';
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 import {
   formatDistance,
@@ -29,9 +17,12 @@ import { useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import dayjs from 'dayjs';
 import { getMockReportData } from '../main/DemoController';
+import ReportTable from './components/ReportTable';
+import { exportToPdf, exportToHtml, exportToXml } from './common/exportUtils';
+
+const COLUMNS = ['Veículo', 'Data', 'Distância', 'Horas Motor', 'Vel. Média', 'Vel. Máx'];
 
 const SummaryReportPage = () => {
-  const navigate = useNavigate();
   const t = useTranslation();
   const { theme } = useHudTheme();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -43,10 +34,14 @@ const SummaryReportPage = () => {
   const daily = searchParams.get('daily') === 'true';
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [filterInfo, setFilterInfo] = useState('');
 
   const onShow = useCatch(async ({ deviceIds, groupIds, from, to }) => {
     const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
     setLoading(true);
+    const deviceNames = deviceIds.map((id) => devices[id]?.name).filter(Boolean).join(', ');
+    setFilterInfo(`${deviceNames || 'Todos'} | ${dayjs(from).format('DD/MM/YYYY HH:mm')} – ${dayjs(to).format('DD/MM/YYYY HH:mm')}`);
     try {
       if (isDemo) {
         await new Promise((resolve) => setTimeout(resolve, 800));
@@ -65,10 +60,59 @@ const SummaryReportPage = () => {
     }
   });
 
+  const exportRows = useMemo(
+    () =>
+      items.map((item) => [
+        devices[item.deviceId]?.name || String(item.deviceId),
+        daily && item.startTime ? dayjs(item.startTime).format('DD/MM/YYYY') : 'Período',
+        formatDistance(item.distance, distanceUnit, t),
+        formatNumericHours(item.engineHours || 0, t),
+        formatSpeed(item.averageSpeed, speedUnit, t),
+        formatSpeed(item.maxSpeed, speedUnit, t),
+      ]),
+    [items, devices, distanceUnit, speedUnit, daily, t],
+  );
+
+  const displayRows = useMemo(
+    () =>
+      items.map((item) => [
+        <span style={{ color: theme.textPrimary, fontWeight: 700 }}>{devices[item.deviceId]?.name || item.deviceId}</span>,
+        daily && item.startTime ? dayjs(item.startTime).format('DD/MM/YYYY') : 'Período',
+        <span style={{ color: theme.accent, fontWeight: 700 }}>{formatDistance(item.distance, distanceUnit, t)}</span>,
+        formatNumericHours(item.engineHours || 0, t),
+        formatSpeed(item.averageSpeed, speedUnit, t),
+        formatSpeed(item.maxSpeed, speedUnit, t),
+      ]),
+    [items, devices, distanceUnit, speedUnit, daily, theme, t],
+  );
+
+  const getTenantLogo = () => {
+    try { return JSON.parse(localStorage.getItem('tenantConfig') || '{}').logoUrl || null; } catch { return null; }
+  };
+
+  const handleExportPdf = useCatch(async () => {
+    setExporting(true);
+    try {
+      await exportToPdf({ title: 'Resumo Geral', subtitle: filterInfo, columns: COLUMNS, rows: exportRows, logoUrl: getTenantLogo() });
+    } finally {
+      setExporting(false);
+    }
+  });
+
+  const handleExportHtml = useCatch(async () => {
+    setExporting(true);
+    try {
+      await exportToHtml({ title: 'Resumo Geral', subtitle: filterInfo, columns: COLUMNS, rows: exportRows, logoUrl: getTenantLogo() });
+    } finally {
+      setExporting(false);
+    }
+  });
+
+  const handleExportXml = () => exportToXml({ title: 'Resumo Geral', subtitle: filterInfo, columns: COLUMNS, rows: exportRows });
+
   return (
     <PwaPageLayout title="Resumo Geral">
       <div className="flex flex-col gap-4">
-
         <ReportFilter onShow={onShow} deviceType="multiple" loading={loading}>
           <FormControl fullWidth size="small">
             <InputLabel style={{ color: theme.textMuted }}>{t('sharedType')}</InputLabel>
@@ -76,9 +120,12 @@ const SummaryReportPage = () => {
               label={t('sharedType')}
               value={daily}
               onChange={(e) => updateReportParams(searchParams, setSearchParams, 'daily', [String(e.target.value)])}
-              className="rounded-xl shadow-inner transition-colors"
-              style={{ background: theme.bgSecondary, color: theme.textPrimary }}
-              sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.border } }}
+              sx={{
+                borderRadius: '14px',
+                background: theme.bg,
+                '& .MuiSelect-select': { py: 1.5, fontSize: '12px', color: theme.textPrimary },
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.border },
+              }}
             >
               <MenuItem value={false}>{t('reportSummary')}</MenuItem>
               <MenuItem value>{t('reportDaily')}</MenuItem>
@@ -86,84 +133,17 @@ const SummaryReportPage = () => {
           </FormControl>
         </ReportFilter>
 
-        {/* Summary List */}
-        <div className="flex flex-col gap-4 pb-20">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <CircularProgress size={32} sx={{ color: '#39ff14' }} />
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Calculando Resumo...</span>
-            </div>
-          ) : items.length === 0 ? (
-            <div 
-              className="p-10 rounded-3xl border flex flex-col items-center justify-center gap-3 shadow-sm transition-colors"
-              style={{ background: theme.bgSecondary, borderColor: theme.border }}
-            >
-              <AssessmentIcon sx={{ fontSize: 40, color: theme.textMuted, opacity: 0.5 }} />
-              <p className="text-xs font-bold uppercase tracking-widest text-center" style={{ color: theme.textMuted }}>Nenhum dado disponível.</p>
-            </div>
-          ) : (
-            items.map((item, index) => {
-              const deviceName = devices[item.deviceId]?.name || 'Veículo';
-              return (
-                <div
-                  key={`${item.deviceId}_${index}`}
-                  className="rounded-3xl p-5 shadow-md border transition-colors duration-300"
-                  style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner"
-                        style={{ background: theme.bg, color: theme.accent }}
-                      >
-                        <DirectionsCarIcon sx={{ fontSize: 20 }} />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-black uppercase tracking-tighter" style={{ color: theme.textPrimary }}>{deviceName}</h3>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <AccessTimeIcon sx={{ fontSize: 10, color: theme.accent, opacity: 0.8 }} />
-                          <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textMuted }}>
-                            {daily ? dayjs(item.startTime).format('DD [de] MMMM') : 'Período Selecionado'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded-2xl shadow-inner border transition-colors" style={{ background: theme.bg, borderColor: theme.border }}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <StraightenIcon sx={{ fontSize: 12, color: theme.accent }} />
-                        <p className="text-[8px] font-bold uppercase" style={{ color: theme.textMuted }}>Distância</p>
-                      </div>
-                      <p className="text-[14px] font-black" style={{ color: theme.textPrimary }}>{formatDistance(item.distance, distanceUnit, t)}</p>
-                    </div>
-                    <div className="p-3 rounded-2xl shadow-inner border transition-colors" style={{ background: theme.bg, borderColor: theme.border }}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <TimerIcon sx={{ fontSize: 12, color: theme.accent }} />
-                        <p className="text-[8px] font-bold uppercase" style={{ color: theme.textMuted }}>Horas Motor</p>
-                      </div>
-                      <p className="text-[14px] font-black" style={{ color: theme.textPrimary }}>{formatNumericHours(item.engineHours || 0, t)}</p>
-                    </div>
-                    <div className="p-3 rounded-2xl shadow-inner border transition-colors" style={{ background: theme.bg, borderColor: theme.border }}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <SpeedIcon sx={{ fontSize: 12, color: theme.accent }} />
-                        <p className="text-[8px] font-bold uppercase" style={{ color: theme.textMuted }}>Velo. Média</p>
-                      </div>
-                      <p className="text-[14px] font-black" style={{ color: theme.textPrimary }}>{formatSpeed(item.averageSpeed, speedUnit, t)}</p>
-                    </div>
-                    <div className="p-3 rounded-2xl shadow-inner border transition-colors" style={{ background: theme.bg, borderColor: theme.border }}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <SpeedIcon sx={{ fontSize: 12, color: theme.accent }} />
-                        <p className="text-[8px] font-bold uppercase" style={{ color: theme.textMuted }}>Velo. Máxima</p>
-                      </div>
-                      <p className="text-[14px] font-black" style={{ color: theme.textPrimary }}>{formatSpeed(item.maxSpeed, speedUnit, t)}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+        <div className="pb-20">
+          <ReportTable
+            columns={COLUMNS}
+            rows={displayRows}
+            loading={loading}
+            emptyText="Nenhum dado encontrado. Selecione um período e clique em Mostrar."
+            onExportPdf={handleExportPdf}
+            onExportHtml={handleExportHtml}
+            onExportXml={handleExportXml}
+            exporting={exporting}
+          />
         </div>
       </div>
     </PwaPageLayout>

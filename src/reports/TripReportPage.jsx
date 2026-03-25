@@ -1,15 +1,9 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Collapse, CircularProgress, IconButton } from '@mui/material';
+import { Collapse } from '@mui/material';
 import MapIcon from '@mui/icons-material/Map';
-import RouteIcon from '@mui/icons-material/Route';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import StraightenIcon from '@mui/icons-material/Straighten';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import SpeedIcon from '@mui/icons-material/Speed';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 
 import {
   formatDistance,
@@ -31,9 +25,12 @@ import MapScale from '../map/MapScale';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import dayjs from 'dayjs';
 import { getMockReportData } from '../main/DemoController';
+import ReportTable from './components/ReportTable';
+import { exportToPdf, exportToHtml, exportToXml } from './common/exportUtils';
+
+const COLUMNS = ['Veículo', 'Data', 'Início', 'Fim', 'Distância', 'Duração', 'Vel. Média', 'Vel. Máx', 'End. Partida', 'End. Chegada'];
 
 const TripReportPage = () => {
-  const navigate = useNavigate();
   const t = useTranslation();
   const { theme } = useHudTheme();
 
@@ -43,23 +40,20 @@ const TripReportPage = () => {
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [route, setRoute] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  const [filterInfo, setFilterInfo] = useState('');
+  const [mapExpanded, setMapExpanded] = useState(false);
 
-  const createMarkers = () => [
-    {
-      latitude: selectedItem.startLat,
-      longitude: selectedItem.startLon,
-      image: 'start-success',
-    },
-    {
-      latitude: selectedItem.endLat,
-      longitude: selectedItem.endLon,
-      image: 'finish-error',
-    },
-  ];
+  const createMarkers = () =>
+    selectedItem
+      ? [
+          { latitude: selectedItem.startLat, longitude: selectedItem.startLon, image: 'start-success' },
+          { latitude: selectedItem.endLat, longitude: selectedItem.endLon, image: 'finish-error' },
+        ]
+      : [];
 
   useEffectAsync(async () => {
     const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
@@ -88,6 +82,9 @@ const TripReportPage = () => {
   const onShow = useCatch(async ({ deviceIds, groupIds, from, to }) => {
     const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
     setLoading(true);
+    setSelectedItem(null);
+    const deviceNames = deviceIds.map((id) => devices[id]?.name).filter(Boolean).join(', ');
+    setFilterInfo(`${deviceNames || 'Todos'} | ${dayjs(from).format('DD/MM/YYYY HH:mm')} – ${dayjs(to).format('DD/MM/YYYY HH:mm')}`);
     try {
       if (isDemo) {
         await new Promise((resolve) => setTimeout(resolve, 800));
@@ -106,26 +103,74 @@ const TripReportPage = () => {
     }
   });
 
-  const navigateToReplay = (item) => {
-    navigate({
-      pathname: '/replay',
-      search: new URLSearchParams({
-        from: item.startTime,
-        to: item.endTime,
-        deviceId: item.deviceId,
-      }).toString(),
-    });
+  const exportRows = useMemo(
+    () =>
+      items.map((item) => [
+        devices[item.deviceId]?.name || String(item.deviceId),
+        dayjs(item.startTime).format('DD/MM/YYYY'),
+        dayjs(item.startTime).format('HH:mm:ss'),
+        dayjs(item.endTime).format('HH:mm:ss'),
+        formatDistance(item.distance, distanceUnit, t),
+        formatNumericHours(item.duration, t),
+        formatSpeed(item.averageSpeed, speedUnit, t),
+        formatSpeed(item.maxSpeed, speedUnit, t),
+        item.startAddress || '',
+        item.endAddress || '',
+      ]),
+    [items, devices, distanceUnit, speedUnit, t],
+  );
+
+  const displayRows = useMemo(
+    () =>
+      items.map((item) => [
+        <span style={{ color: theme.textPrimary, fontWeight: 700 }}>{devices[item.deviceId]?.name || item.deviceId}</span>,
+        dayjs(item.startTime).format('DD/MM/YYYY'),
+        dayjs(item.startTime).format('HH:mm:ss'),
+        dayjs(item.endTime).format('HH:mm:ss'),
+        <span style={{ color: theme.accent, fontWeight: 700 }}>{formatDistance(item.distance, distanceUnit, t)}</span>,
+        formatNumericHours(item.duration, t),
+        formatSpeed(item.averageSpeed, speedUnit, t),
+        formatSpeed(item.maxSpeed, speedUnit, t),
+        <button
+          onClick={() => { setSelectedItem(item); setShowMap(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          style={{ color: theme.accent, fontSize: 10, textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none' }}
+        >
+          {item.startAddress || 'Ver no mapa'}
+        </button>,
+        item.endAddress || '—',
+      ]),
+    [items, devices, distanceUnit, speedUnit, theme, t],
+  );
+
+  const getTenantLogo = () => {
+    try { return JSON.parse(localStorage.getItem('tenantConfig') || '{}').logoUrl || null; } catch { return null; }
   };
+
+  const handleExportPdf = useCatch(async () => {
+    setExporting(true);
+    try {
+      await exportToPdf({ title: 'Relatório de Viagens', subtitle: filterInfo, columns: COLUMNS, rows: exportRows, logoUrl: getTenantLogo() });
+    } finally {
+      setExporting(false);
+    }
+  });
+
+  const handleExportHtml = useCatch(async () => {
+    setExporting(true);
+    try {
+      await exportToHtml({ title: 'Relatório de Viagens', subtitle: filterInfo, columns: COLUMNS, rows: exportRows, logoUrl: getTenantLogo() });
+    } finally {
+      setExporting(false);
+    }
+  });
+
+  const handleExportXml = () => exportToXml({ title: 'Relatório de Viagens', subtitle: filterInfo, columns: COLUMNS, rows: exportRows });
 
   const headerActions = (
     <button
-      onClick={() => setShowMap(!showMap)}
-      className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-[4px_4px_10px_rgba(0,0,0,0.1)] transition-all duration-300 active:shadow-inner"
-      style={{
-        background: theme.bgSecondary,
-        color: showMap ? theme.accent : theme.textMuted,
-        border: `1px solid ${theme.border}`
-      }}
+      onClick={() => setShowMap((v) => !v)}
+      className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 active:scale-95"
+      style={{ background: theme.bgSecondary, color: showMap ? theme.accent : theme.textMuted, border: `1px solid ${theme.border}` }}
     >
       <MapIcon sx={{ fontSize: 20 }} />
     </button>
@@ -134,10 +179,13 @@ const TripReportPage = () => {
   return (
     <PwaPageLayout title="Relatório de Viagens" actions={headerActions}>
       <div className="flex flex-col gap-4">
+        <ReportFilter onShow={onShow} deviceType="multiple" loading={loading} />
 
-        {/* Map View */}
         <Collapse in={showMap}>
-          <div className="h-[38vh] min-h-[210px] max-h-[320px] mb-6 rounded-3xl overflow-hidden shadow-[inset_4px_4px_10px_rgba(0,0,0,0.5)] border border-white/5 relative">
+          <div
+            className="mb-2 rounded-3xl overflow-hidden shadow border border-white/5 relative transition-all duration-300"
+            style={{ height: mapExpanded ? '70vh' : '35vh', minHeight: mapExpanded ? 400 : 200, maxHeight: mapExpanded ? 600 : 300 }}
+          >
             <MapView>
               <MapGeofence />
               {route && (
@@ -149,160 +197,28 @@ const TripReportPage = () => {
               )}
             </MapView>
             <div className="absolute right-3 bottom-3"><MapScale /></div>
+            <button
+              onClick={() => setMapExpanded((v) => !v)}
+              className="absolute left-3 top-3 w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-md shadow transition-all active:scale-95"
+              style={{ background: `${theme.bg}CC`, color: theme.textMuted, border: `1px solid ${theme.border}` }}
+              title={mapExpanded ? 'Diminuir mapa' : 'Expandir mapa'}
+            >
+              {mapExpanded ? <CloseFullscreenIcon sx={{ fontSize: 14 }} /> : <OpenInFullIcon sx={{ fontSize: 14 }} />}
+            </button>
           </div>
         </Collapse>
 
-        <ReportFilter onShow={onShow} deviceType="multiple" loading={loading} />
-
-        {/* Trips List */}
-        <div className="flex flex-col gap-4 pb-20">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <CircularProgress size={32} sx={{ color: '#39ff14' }} />
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Calculando Viagens...</span>
-            </div>
-          ) : items.length === 0 ? (
-            <div 
-              className="p-10 rounded-3xl border flex flex-col items-center justify-center gap-3 shadow-sm"
-              style={{ background: theme.bgSecondary, borderColor: theme.border }}
-            >
-              <RouteIcon sx={{ fontSize: 40, color: theme.textMuted, opacity: 0.5 }} />
-              <p className="text-xs font-bold uppercase tracking-widest text-center" style={{ color: theme.textMuted }}>Nenhuma viagem encontrada.</p>
-            </div>
-          ) : (
-            items.map((item) => {
-              const isExpanded = expandedId === item.startPositionId;
-              const isSelected = selectedItem?.startPositionId === item.startPositionId;
-              const deviceName = devices[item.deviceId]?.name || 'Veículo';
-
-              return (
-                <div
-                  key={item.startPositionId}
-                  className="rounded-2xl overflow-hidden shadow-md border transition-all duration-300"
-                  style={{
-                    background: theme.bgSecondary,
-                    borderColor: isSelected ? theme.accent : theme.border,
-                    boxShadow: isSelected ? `0 0 0 1px ${theme.accent}` : theme.sidebarShadow
-                  }}
-                >
-                  <div
-                    className="p-4 flex items-center justify-between cursor-pointer"
-                    onClick={() => {
-                      setExpandedId(isExpanded ? null : item.startPositionId);
-                      setSelectedItem(item);
-                    }}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner"
-                        style={{ background: theme.bg, color: theme.accent }}
-                      >
-                        <RouteIcon sx={{ fontSize: 20 }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-black uppercase tracking-tighter" style={{ color: theme.textPrimary }}>
-                            {formatDistance(item.distance, distanceUnit, t)}
-                          </span>
-                          <span 
-                            className="text-[8px] font-black px-1.5 py-0.5 rounded border uppercase"
-                            style={{ background: theme.bg, color: theme.textMuted, borderColor: theme.border }}
-                          >
-                            {formatNumericHours(item.duration, t)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <DirectionsCarIcon sx={{ fontSize: 10, color: theme.accent, opacity: 0.7 }} />
-                          <span className="text-[9px] font-bold uppercase tracking-widest truncate" style={{ color: theme.textMuted }}>{deviceName}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-black text-slate-200">{dayjs(item.startTime).format('HH:mm')}</span>
-                        <span className="text-[7px] font-bold text-slate-600 uppercase">Inicio</span>
-                      </div>
-                      <IconButton size="small" className="text-slate-600">
-                        {isExpanded ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
-                      </IconButton>
-                    </div>
-                  </div>
-
-                  <Collapse in={isExpanded}>
-                    <div className="px-5 pb-5 pt-1 flex flex-col gap-4 border-t" style={{ borderColor: theme.border, background: theme.bg }}>
-                      <div className="flex flex-col gap-3 mt-3">
-                        <div className="flex items-start gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full mt-1 shadow-sm" style={{ backgroundColor: theme.accent }} />
-                          <div>
-                            <p className="text-[7px] font-black uppercase" style={{ color: theme.textMuted }}>Origem • {dayjs(item.startTime).format('HH:mm:ss')}</p>
-                            <p className="text-[10px] font-medium leading-tight" style={{ color: theme.textPrimary }}>{item.startAddress || 'Endereço não disponível'}</p>
-                          </div>
-                        </div>
-                        <div className="w-px h-4 ml-0.5" style={{ background: theme.border }} />
-                        <div className="flex items-start gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full mt-1 shadow-sm bg-red-500" />
-                          <div>
-                            <p className="text-[7px] font-black uppercase" style={{ color: theme.textMuted }}>Destino • {dayjs(item.endTime).format('HH:mm:ss')}</p>
-                            <p className="text-[10px] font-medium leading-tight" style={{ color: theme.textPrimary }}>{item.endAddress || 'Endereço não disponível'}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 mt-1">
-                        <div className="p-3 rounded-xl shadow-inner flex items-center gap-3 border" style={{ background: theme.bgSecondary, borderColor: theme.border }}>
-                          <SpeedIcon sx={{ fontSize: 14, color: theme.accent }} />
-                          <div>
-                            <p className="text-[7px] font-bold uppercase" style={{ color: theme.textMuted }}>Vel. Média</p>
-                            <p className="text-[10px] font-black" style={{ color: theme.textPrimary }}>{formatSpeed(item.averageSpeed, speedUnit, t)}</p>
-                          </div>
-                        </div>
-                        <div className="p-3 rounded-xl shadow-inner flex items-center gap-3 border" style={{ background: theme.bgSecondary, borderColor: theme.border }}>
-                          <StraightenIcon sx={{ fontSize: 14, color: theme.accent }} />
-                          <div>
-                            <p className="text-[7px] font-bold uppercase" style={{ color: theme.textMuted }}>Vel. Máxima</p>
-                            <p className="text-[10px] font-black" style={{ color: theme.textPrimary }}>{formatSpeed(item.maxSpeed, speedUnit, t)}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3 pt-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedItem(item);
-                            setShowMap(true);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          className="flex-1 py-2.5 rounded-xl shadow-md border text-[9px] font-black uppercase tracking-widest active:shadow-none"
-                          style={{
-                            background: theme.bgSecondary,
-                            borderColor: theme.borderCard,
-                            color: theme.accent
-                          }}
-                        >
-                          Ver Trajeto
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigateToReplay(item);
-                          }}
-                          className="flex-1 py-2.5 rounded-xl shadow-md border text-[9px] font-black uppercase tracking-widest"
-                          style={{
-                            background: theme.bgSecondary,
-                            borderColor: theme.borderCard,
-                            color: theme.textMuted
-                          }}
-                        >
-                          Simular Rota
-                        </button>
-                      </div>
-                    </div>
-                  </Collapse>
-                </div>
-              );
-            })
-          )}
+        <div className="pb-20">
+          <ReportTable
+            columns={COLUMNS}
+            rows={displayRows}
+            loading={loading}
+            emptyText="Nenhuma viagem encontrada. Selecione um período e clique em Mostrar."
+            onExportPdf={handleExportPdf}
+            onExportHtml={handleExportHtml}
+            onExportXml={handleExportXml}
+            exporting={exporting}
+          />
         </div>
       </div>
     </PwaPageLayout>

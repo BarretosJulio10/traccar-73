@@ -25,6 +25,7 @@ import { devicesActions } from './store';
 import usePwaInstallTracker from './common/util/usePwaInstallTracker';
 import { useTenant } from './common/components/TenantProvider';
 import { DEFAULT_TENANT_SLUG, DEMO_USER } from './common/util/constants';
+import { demoService } from './core/services';
 
 const useStyles = makeStyles()(() => ({
   page: {
@@ -51,18 +52,14 @@ const App = () => {
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const isSettingsRoute = pathname.startsWith('/app/settings');
+  const isGeofenceNew = pathname.startsWith('/app/geofence/new');
   const isDashboard = pathname === '/app' || pathname === '/app/' || pathname.startsWith('/app/geofence');
-  const [demoMode, setDemoModeState] = useState(
-    () => window.sessionStorage.getItem('demoMode') === 'true',
-  );
+  const [demoMode, setDemoModeState] = useState(() => demoService.isActive());
 
   const setDemoMode = useCallback((value) => {
     setDemoModeState(value);
-    if (value) {
-      window.sessionStorage.setItem('demoMode', 'true');
-    } else {
-      window.sessionStorage.removeItem('demoMode');
-    }
+    if (value) demoService.enable();
+    else demoService.disable();
   }, []);
 
   const newServer = useSelector((state) => state.session.server.newServer);
@@ -131,8 +128,8 @@ const App = () => {
   }
   return (
     <div
-      className={`h-screen w-screen overflow-hidden flex ${desktop ? 'flex-row' : 'flex-col'} transition-colors duration-500`}
-      style={{ background: hudTheme.bg }}
+      className={`w-screen overflow-hidden flex ${desktop ? 'flex-row' : 'flex-col'} transition-colors duration-500`}
+      style={{ height: '100dvh', background: hudTheme.bg }}
     >
       <SocketController demoMode={demoMode} />
       <CachingController demoMode={demoMode} />
@@ -151,13 +148,27 @@ const App = () => {
           </div>
         )}
         <div
-          className="flex-1 relative overflow-auto z-10 scrollbar-hide"
-          style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}
+          className="flex-1 relative overflow-auto scrollbar-hide"
+          style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', zIndex: isGeofenceNew ? 50 : 10 }}
         >
           <Outlet context={{ demoMode, setDemoMode }} />
         </div>
-        {!desktop && !selectedDeviceId && (
-          <div style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        {!desktop && selectedDeviceId && !isDashboard && (
+          <StatusCard
+            deviceId={selectedDeviceId}
+            position={selectedPosition}
+            onClose={() => dispatch(devicesActions.selectId(null))}
+            desktopPadding={theme.dimensions.drawerWidthDesktop}
+          />
+        )}
+        {!desktop && (
+          <div
+            className="px-4 pt-2"
+            style={{
+              paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
+              background: hudTheme.bg,
+            }}
+          >
             <BottomMenu />
           </div>
         )}
@@ -168,7 +179,7 @@ const App = () => {
         )}
       </div>
 
-      {desktop && panelDeviceId && (
+      {desktop && panelDeviceId && !isGeofenceNew && (
         <div
           className="w-[420px] h-full backdrop-blur-xl z-20 flex flex-col transition-colors duration-500 overflow-hidden"
           style={{
@@ -179,14 +190,6 @@ const App = () => {
         >
           <VehicleDetailsPanel deviceId={panelDeviceId} onClose={handleClosePanel} />
         </div>
-      )}
-      {!desktop && selectedDeviceId && !isDashboard && (
-        <StatusCard
-          deviceId={selectedDeviceId}
-          position={selectedPosition}
-          onClose={() => dispatch(devicesActions.selectId(null))}
-          desktopPadding={theme.dimensions.drawerWidthDesktop}
-        />
       )}
     </div>
   );

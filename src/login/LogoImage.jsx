@@ -34,6 +34,7 @@ const LogoImage = ({ color, size, className, style }) => {
 
   const imageStyle = {
     height: size || 'auto',
+    margin: size ? 0 : undefined,
     ...style
   };
 

@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Skeleton, TextField } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { useCatch, useEffectAsync } from '../../reactHelper';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import PwaPageLayout from '../../common/components/PwaPageLayout';
 import fetchOrThrow from '../../common/util/fetchOrThrow';
 import { useHudTheme } from '../../common/util/ThemeContext';
+import { useTenant } from '../../common/components/TenantProvider';
 
 const EditItemView = ({
   children,
@@ -22,6 +22,8 @@ const EditItemView = ({
   const t = useTranslation();
   const { id } = useParams();
   const { theme } = useHudTheme();
+  const tenantCtx = useTenant();
+  const logoUrl = tenantCtx?.tenant?.logo_url;
 
   useEffectAsync(async () => {
     if (!item) {
@@ -70,7 +72,7 @@ const EditItemView = ({
 
   return (
     <PwaPageLayout title={title || t('sharedEdit')} actions={headerActions}>
-      <div className="flex flex-col pb-32">
+      <div className="flex flex-col pb-8">
         {item ? (
           children
         ) : (
@@ -81,43 +83,11 @@ const EditItemView = ({
           </div>
         )}
 
-        {/* Action Buttons - Refined with Glassmorphism and elevated to clear BottomMenu */}
-        <div className="fixed left-0 right-0 z-[150] flex justify-center px-4 pointer-events-none" style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}>
-          <div 
-            className="pointer-events-auto flex gap-3 p-2 rounded-[24px] border shadow-2xl backdrop-blur-xl w-full max-w-[400px]"
-            style={{ 
-              background: `${theme.bgSecondary}CC`, 
-              borderColor: theme.border,
-              boxShadow: `0 20px 50px ${theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)'}` 
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="flex-1 h-12 rounded-[18px] border font-bold uppercase tracking-[2px] text-[10px] active:scale-95 transition-all flex items-center justify-center"
-              style={{ 
-                background: theme.bg, 
-                borderColor: theme.border, 
-                color: theme.textMuted
-              }}
-            >
-              {t('sharedCancel')}
-            </button>
-            <button
-              type="button"
-              disabled={!item || (validate && !validate())}
-              onClick={handleSave}
-              className={`flex-1 h-12 rounded-[18px] font-black uppercase tracking-[2.5px] text-[10px] transition-all flex items-center justify-center ${!item || (validate && !validate()) ? 'opacity-50' : 'active:scale-95 hover:brightness-110 shadow-lg'}`}
-              style={{
-                background: !item || (validate && !validate()) ? theme.bgSecondary : theme.accent,
-                color: !item || (validate && !validate()) ? theme.textMuted : (theme.isDark ? '#000' : '#fff'),
-                boxShadow: !item || (validate && !validate()) ? 'none' : `0 8px 25px ${theme.accent}66`
-              }}
-            >
-              {t('sharedSave')}
-            </button>
+        {logoUrl && (
+          <div className="flex justify-center pt-10 pb-4">
+            <img src={logoUrl} alt="logo" style={{ maxHeight: 48, maxWidth: '60%', opacity: 0.5, objectFit: 'contain' }} />
           </div>
-        </div>
+        )}
       </div>
     </PwaPageLayout>
   );

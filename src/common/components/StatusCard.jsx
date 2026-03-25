@@ -801,16 +801,6 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                       <InfoIcon />
                     </IconButton>
                   </Tooltip>
-                  {!shareDisabled && !user.temporary && (
-                    <Tooltip title={t('deviceShare')}>
-                      <IconButton
-                        onClick={() => { onClose(); navigate(`/app/settings/device/${deviceId}/share`); }}
-                        disabled={disableActions}
-                      >
-                        <ShareIcon />
-                      </IconButton>
-                    </Tooltip>
-                  )}
                   <Tooltip title={t('reportReplay')}>
                     <IconButton
                       onClick={() => { onClose(); navigate(`/app/replay?deviceId=${deviceId}`); }}
@@ -900,11 +890,6 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 .replace('{longitude}', position.longitude)}
             >
               {navigationAppTitle}
-            </MenuItem>
-          )}
-          {!shareDisabled && !user.temporary && (
-            <MenuItem onClick={() => { onClose(); navigate(`/app/settings/device/${deviceId}/share`); }}>
-              <Typography color="secondary">{t('deviceShare')}</Typography>
             </MenuItem>
           )}
         </Menu>

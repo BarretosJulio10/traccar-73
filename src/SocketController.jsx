@@ -67,18 +67,35 @@ const SocketController = ({ demoMode }) => {
         sendEventNotification(event);
       });
 
-      // Auto-block: if vehicle exits a geofence that has an anchor auto-block rule
+      // Auto-block/unblock: read per-device rules (legacy) and per-geofence rules (new)
       let autoBlockRules = {};
-      try { autoBlockRules = JSON.parse(localStorage.getItem('traccar_anchor_autoblock') || '{}'); } catch { /* invalid JSON in storage */ }
+      try { autoBlockRules = JSON.parse(localStorage.getItem('traccar_anchor_autoblock') || '{}'); } catch { /* invalid JSON */ }
+      let geoRules = {};
+      try { geoRules = JSON.parse(localStorage.getItem('traccar_anchor_autoblock_geofence') || '{}'); } catch { /* invalid JSON */ }
+
       events
         .filter((e) => e.type === 'geofenceExit' && e.geofenceId)
         .forEach((e) => {
           const key = `${e.deviceId}_${e.geofenceId}`;
-          if (autoBlockRules[key]) {
+          const rule = geoRules[e.geofenceId] || {};
+          if (autoBlockRules[key] || rule.blockOnExit) {
             fetchOrThrow('/api/commands/send', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ deviceId: e.deviceId, type: 'engineStop', attributes: {} }),
+            }).catch(() => {});
+          }
+        });
+
+      events
+        .filter((e) => e.type === 'geofenceEnter' && e.geofenceId)
+        .forEach((e) => {
+          const rule = geoRules[e.geofenceId] || {};
+          if (rule.unblockOnEnter) {
+            fetchOrThrow('/api/commands/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ deviceId: e.deviceId, type: 'engineResume', attributes: {} }),
             }).catch(() => {});
           }
         });

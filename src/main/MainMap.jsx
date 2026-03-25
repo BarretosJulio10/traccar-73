@@ -21,7 +21,6 @@ import MapWhatsApp from '../map/MapWhatsApp';
 import MapHoverPopup from '../map/MapHoverPopup';
 import useFeatures from '../common/util/useFeatures';
 import { useTenant } from '../common/components/TenantProvider';
-import WhatsAppDeviceAlerts from './components/WhatsAppDeviceAlerts';
 import MapLiveTrailToggle from '../map/main/MapLiveTrailToggle';
 import MapAnchorZones from '../map/main/MapAnchorZones';
 
@@ -32,15 +31,13 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const eventsAvailable = useSelector((state) => !!state.events.items.length);
-  const selectedDeviceId = useSelector((state) => state.devices.selectedId);
 
   const features = useFeatures();
 
   const tenantCtx = useTenant();
   const whatsappNumber = tenantCtx?.tenant?.whatsapp_number;
-  const tenantId = tenantCtx?.tenant?.id;
+  const whatsappMessage = tenantCtx?.tenant?.whatsapp_message;
 
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [positionSourceIds, setPositionSourceIds] = useState(null);
 
   const onMarkerClick = useCallback(
@@ -51,8 +48,11 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
   );
 
   const handleWhatsAppClick = useCallback(() => {
-    setWhatsappOpen((prev) => !prev);
-  }, []);
+    if (!whatsappNumber) return;
+    const digits = whatsappNumber.replace(/\D/g, '');
+    const msg = whatsappMessage || 'Olá! Preciso de suporte.';
+    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+  }, [whatsappNumber, whatsappMessage]);
 
   const handleSourceReady = useCallback((sourceIds) => {
     setPositionSourceIds(sourceIds);
@@ -85,14 +85,7 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
       {!features.disableEvents && (
         <MapNotification enabled={eventsAvailable} onClick={onEventsClick} />
       )}
-      {whatsappNumber && <MapWhatsApp onClick={handleWhatsAppClick} />}
-      {whatsappOpen && (
-        <WhatsAppDeviceAlerts
-          deviceId={selectedDeviceId}
-          tenantId={tenantId}
-          onClose={() => setWhatsappOpen(false)}
-        />
-      )}
+      <MapWhatsApp onClick={handleWhatsAppClick} />
       {desktop && (
         <MapPadding
           top={8}

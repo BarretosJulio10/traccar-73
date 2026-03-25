@@ -1,18 +1,12 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Collapse, CircularProgress, IconButton } from '@mui/material';
+import { Collapse } from '@mui/material';
 import MapIcon from '@mui/icons-material/Map';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import TimerIcon from '@mui/icons-material/Timer';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 
 import {
   formatDistance,
-  formatTime,
   formatNumericHours,
 } from '../common/util/formatter';
 import ReportFilter from './components/ReportFilter';
@@ -29,9 +23,12 @@ import MapScale from '../map/MapScale';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import dayjs from 'dayjs';
 import { getMockReportData } from '../main/DemoController';
+import ReportTable from './components/ReportTable';
+import { exportToPdf, exportToHtml, exportToXml } from './common/exportUtils';
+
+const COLUMNS = ['Veículo', 'Chegada', 'Saída', 'Duração', 'Endereço', 'Odômetro'];
 
 const StopReportPage = () => {
-  const navigate = useNavigate();
   const t = useTranslation();
   const { theme } = useHudTheme();
 
@@ -40,13 +37,18 @@ const StopReportPage = () => {
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  const [filterInfo, setFilterInfo] = useState('');
+  const [mapExpanded, setMapExpanded] = useState(false);
 
   const onShow = useCatch(async ({ deviceIds, groupIds, from, to }) => {
     const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
     setLoading(true);
+    setSelectedItem(null);
+    const deviceNames = deviceIds.map((id) => devices[id]?.name).filter(Boolean).join(', ');
+    setFilterInfo(`${deviceNames || 'Todos'} | ${dayjs(from).format('DD/MM/YYYY HH:mm')} – ${dayjs(to).format('DD/MM/YYYY HH:mm')}`);
     try {
       if (isDemo) {
         await new Promise((resolve) => setTimeout(resolve, 800));
@@ -65,15 +67,68 @@ const StopReportPage = () => {
     }
   });
 
+  const exportRows = useMemo(
+    () =>
+      items.map((item) => [
+        devices[item.deviceId]?.name || String(item.deviceId),
+        dayjs(item.startTime).format('DD/MM/YYYY HH:mm:ss'),
+        dayjs(item.endTime).format('DD/MM/YYYY HH:mm:ss'),
+        formatNumericHours(item.duration, t),
+        item.address || '',
+        formatDistance(item.startOdometer, distanceUnit, t),
+      ]),
+    [items, devices, distanceUnit, t],
+  );
+
+  const displayRows = useMemo(
+    () =>
+      items.map((item) => [
+        <span style={{ color: theme.textPrimary, fontWeight: 700 }}>{devices[item.deviceId]?.name || item.deviceId}</span>,
+        dayjs(item.startTime).format('DD/MM/YYYY HH:mm:ss'),
+        dayjs(item.endTime).format('DD/MM/YYYY HH:mm:ss'),
+        <span style={{ color: '#f97316', fontWeight: 700 }}>{formatNumericHours(item.duration, t)}</span>,
+        item.address ? (
+          <button
+            onClick={() => { setSelectedItem(item); setShowMap(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            style={{ color: theme.accent, fontSize: 10, textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none' }}
+          >
+            {item.address}
+          </button>
+        ) : '—',
+        formatDistance(item.startOdometer, distanceUnit, t),
+      ]),
+    [items, devices, distanceUnit, theme, t],
+  );
+
+  const getTenantLogo = () => {
+    try { return JSON.parse(localStorage.getItem('tenantConfig') || '{}').logoUrl || null; } catch { return null; }
+  };
+
+  const handleExportPdf = useCatch(async () => {
+    setExporting(true);
+    try {
+      await exportToPdf({ title: 'Relatório de Paradas', subtitle: filterInfo, columns: COLUMNS, rows: exportRows, logoUrl: getTenantLogo() });
+    } finally {
+      setExporting(false);
+    }
+  });
+
+  const handleExportHtml = useCatch(async () => {
+    setExporting(true);
+    try {
+      await exportToHtml({ title: 'Relatório de Paradas', subtitle: filterInfo, columns: COLUMNS, rows: exportRows, logoUrl: getTenantLogo() });
+    } finally {
+      setExporting(false);
+    }
+  });
+
+  const handleExportXml = () => exportToXml({ title: 'Relatório de Paradas', subtitle: filterInfo, columns: COLUMNS, rows: exportRows });
+
   const headerActions = (
     <button
-      onClick={() => setShowMap(!showMap)}
-      className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-[4px_4px_10px_rgba(0,0,0,0.1)] transition-all duration-300 active:shadow-inner"
-      style={{
-        background: theme.bgSecondary,
-        color: showMap ? theme.accent : theme.textMuted,
-        border: `1px solid ${theme.border}`
-      }}
+      onClick={() => setShowMap((v) => !v)}
+      className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 active:scale-95"
+      style={{ background: theme.bgSecondary, color: showMap ? theme.accent : theme.textMuted, border: `1px solid ${theme.border}` }}
     >
       <MapIcon sx={{ fontSize: 20 }} />
     </button>
@@ -82,162 +137,51 @@ const StopReportPage = () => {
   return (
     <PwaPageLayout title="Relatório de Paradas" actions={headerActions}>
       <div className="flex flex-col gap-4">
+        <ReportFilter onShow={onShow} deviceType="multiple" loading={loading} />
 
-        {/* Map View */}
         <Collapse in={showMap}>
-          <div className="h-[35vh] min-h-[200px] max-h-[300px] mb-6 rounded-3xl overflow-hidden shadow-[inset_4px_4px_10px_rgba(0,0,0,0.5)] border border-white/5 relative">
+          <div
+            className="mb-2 rounded-3xl overflow-hidden shadow border border-white/5 relative transition-all duration-300"
+            style={{ height: mapExpanded ? '70vh' : '35vh', minHeight: mapExpanded ? 400 : 200, maxHeight: mapExpanded ? 600 : 300 }}
+          >
             <MapView>
               <MapGeofence />
               {selectedItem && (
                 <MapPositions
-                  positions={[
-                    {
-                      deviceId: selectedItem.deviceId,
-                      fixTime: selectedItem.startTime,
-                      latitude: selectedItem.latitude,
-                      longitude: selectedItem.longitude,
-                    },
-                  ]}
+                  positions={[{
+                    deviceId: selectedItem.deviceId,
+                    fixTime: selectedItem.startTime,
+                    latitude: selectedItem.latitude,
+                    longitude: selectedItem.longitude,
+                  }]}
                   titleField="fixTime"
                 />
               )}
             </MapView>
             <div className="absolute right-3 bottom-3"><MapScale /></div>
             {selectedItem && <MapCamera latitude={selectedItem.latitude} longitude={selectedItem.longitude} />}
+            <button
+              onClick={() => setMapExpanded((v) => !v)}
+              className="absolute left-3 top-3 w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-md shadow transition-all active:scale-95"
+              style={{ background: `${theme.bg}CC`, color: theme.textMuted, border: `1px solid ${theme.border}` }}
+              title={mapExpanded ? 'Diminuir mapa' : 'Expandir mapa'}
+            >
+              {mapExpanded ? <CloseFullscreenIcon sx={{ fontSize: 14 }} /> : <OpenInFullIcon sx={{ fontSize: 14 }} />}
+            </button>
           </div>
         </Collapse>
 
-        <ReportFilter onShow={onShow} deviceType="multiple" loading={loading} />
-
-        {/* Stops List */}
-        <div className="flex flex-col gap-4 pb-20">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <CircularProgress size={32} sx={{ color: '#39ff14' }} />
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Identificando Paradas...</span>
-            </div>
-          ) : items.length === 0 ? (
-            <div 
-              className="p-10 rounded-3xl border flex flex-col items-center justify-center gap-3 shadow-sm transition-colors"
-              style={{ background: theme.bgSecondary, borderColor: theme.border }}
-            >
-              <TimerIcon sx={{ fontSize: 40, color: theme.textMuted, opacity: 0.5 }} />
-              <p className="text-xs font-bold uppercase tracking-widest text-center" style={{ color: theme.textMuted }}>Nenhuma parada registrada.</p>
-            </div>
-          ) : (
-            items.map((item) => {
-              const isExpanded = expandedId === item.positionId;
-              const isSelected = selectedItem?.positionId === item.positionId;
-              const deviceName = devices[item.deviceId]?.name || 'Veículo';
-
-              return (
-                <div
-                  key={item.positionId}
-                  className="rounded-2xl overflow-hidden shadow-md border transition-colors duration-300"
-                  style={{
-                    background: theme.bgSecondary,
-                    borderColor: isSelected ? theme.accent : theme.border,
-                    boxShadow: isSelected ? `0 0 0 1px ${theme.accent}` : theme.sidebarShadow
-                  }}
-                >
-                  <div
-                    className="p-4 flex items-center justify-between cursor-pointer"
-                    onClick={() => {
-                      setExpandedId(isExpanded ? null : item.positionId);
-                      setSelectedItem(item);
-                    }}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner"
-                        style={{ background: theme.bg, color: '#ff3939' }}
-                      >
-                        <TimerIcon sx={{ fontSize: 20 }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-black uppercase tracking-tighter" style={{ color: theme.textPrimary }}>
-                            Parado: {formatNumericHours(item.duration, t)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <DirectionsCarIcon sx={{ fontSize: 10, color: theme.accent, opacity: 0.7 }} />
-                          <span className="text-[9px] font-bold uppercase tracking-widest truncate" style={{ color: theme.textMuted }}>{deviceName}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-black text-slate-200">{dayjs(item.startTime).format('HH:mm')}</span>
-                        <span className="text-[7px] font-bold text-slate-600 uppercase">Chegada</span>
-                      </div>
-                      <IconButton size="small" className="text-slate-600">
-                        {isExpanded ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
-                      </IconButton>
-                    </div>
-                  </div>
-
-                  <Collapse in={isExpanded}>
-                    <div className="px-5 pb-5 pt-1 flex flex-col gap-4 border-t" style={{ borderColor: theme.border, background: theme.bg }}>
-                      <div className="flex flex-col gap-4 mt-3">
-                        <div className="flex items-start gap-3">
-                          <div 
-                            className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner mt-1"
-                            style={{ background: theme.bgSecondary, color: theme.textMuted }}
-                          >
-                            <LocationOnIcon sx={{ fontSize: 16 }} />
-                          </div>
-                          <div>
-                            <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: theme.textMuted }}>Local da Parada</p>
-                            <p className="text-[10px] font-medium leading-tight mt-0.5" style={{ color: theme.textPrimary }}>
-                              {item.address || 'Endereço indisponível'}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="p-3 rounded-xl shadow-inner border flex flex-col gap-1" style={{ background: theme.bgSecondary, borderColor: theme.border }}>
-                            <div className="flex items-center gap-2">
-                              <AccessTimeIcon sx={{ fontSize: 12, color: theme.accent }} />
-                              <p className="text-[8px] font-bold uppercase" style={{ color: theme.textMuted }}>Saída</p>
-                            </div>
-                            <p className="text-[11px] font-black" style={{ color: theme.textPrimary }}>{dayjs(item.endTime).format('HH:mm:ss')}</p>
-                          </div>
-                          <div className="p-3 rounded-xl shadow-inner border flex flex-col gap-1" style={{ background: theme.bgSecondary, borderColor: theme.border }}>
-                            <div className="flex items-center gap-2">
-                              <AccessTimeIcon sx={{ fontSize: 12, color: theme.accent }} />
-                              <p className="text-[8px] font-bold uppercase" style={{ color: theme.textMuted }}>Odômetro</p>
-                            </div>
-                            <p className="text-[11px] font-black" style={{ color: theme.textPrimary }}>{formatDistance(item.startOdometer, distanceUnit, t)}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedItem(item);
-                            setShowMap(true);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          className="px-6 py-2.5 rounded-xl shadow-md border text-[9px] font-black uppercase tracking-widest transition-colors"
-                          style={{
-                            background: theme.bgSecondary,
-                            borderColor: theme.borderCard,
-                            color: theme.accent
-                          }}
-                        >
-                          Ver no Mapa
-                        </button>
-                        <span className="text-[9px] font-medium uppercase" style={{ color: theme.textMuted }}>Posição #{item.positionId}</span>
-                      </div>
-                    </div>
-                  </Collapse>
-                </div>
-              );
-            })
-          )}
+        <div className="pb-20">
+          <ReportTable
+            columns={COLUMNS}
+            rows={displayRows}
+            loading={loading}
+            emptyText="Nenhuma parada encontrada. Selecione um período e clique em Mostrar."
+            onExportPdf={handleExportPdf}
+            onExportHtml={handleExportHtml}
+            onExportXml={handleExportXml}
+            exporting={exporting}
+          />
         </div>
       </div>
     </PwaPageLayout>

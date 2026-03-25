@@ -184,15 +184,15 @@ const RouteReportOverlay = ({ device, routeItems, onClose }) => {
           borderRadius: radius,
           border: `1px solid ${theme.border}`,
         }}
-        className="flex items-center gap-3 px-4 py-3"
+        className="flex items-center gap-2 px-3 py-2.5"
       >
         <button
           type="button"
           onClick={onClose}
-          className="w-9 h-9 rounded-xl flex items-center justify-center border active:scale-95 transition-all flex-shrink-0"
+          className="w-7 h-7 rounded-lg flex items-center justify-center border active:scale-95 transition-all flex-shrink-0"
           style={{ background: theme.bgCard, borderColor: theme.borderCard, color: theme.textPrimary }}
         >
-          <CloseIcon sx={{ fontSize: 16 }} />
+          <CloseIcon sx={{ fontSize: 13 }} />
         </button>
         <div className="flex-1 min-w-0">
           <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: theme.textMuted }}>
@@ -202,8 +202,8 @@ const RouteReportOverlay = ({ device, routeItems, onClose }) => {
             {device?.name}
           </p>
         </div>
-        <span className="text-[9px] font-bold flex-shrink-0" style={{ color: theme.textMuted }}>
-          {routeItems.length} registros
+        <span className="text-[8px] font-bold flex-shrink-0 hidden sm:block" style={{ color: theme.textMuted }}>
+          {routeItems.length} reg.
         </span>
 
         {/* Export buttons */}
@@ -217,10 +217,10 @@ const RouteReportOverlay = ({ device, routeItems, onClose }) => {
             type="button"
             onClick={() => handleExport(type)}
             disabled={!!exporting}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider active:scale-95 transition-all flex-shrink-0 disabled:opacity-40"
+            className="flex items-center gap-0.5 px-1.5 py-1 rounded-lg border text-[8px] font-black uppercase tracking-wide active:scale-95 transition-all flex-shrink-0 disabled:opacity-40"
             style={{ background: `${color}12`, borderColor: `${color}35`, color }}
           >
-            <Icon sx={{ fontSize: 12 }} />
+            <Icon sx={{ fontSize: 10 }} />
             {exporting === type ? '…' : label}
           </button>
         ))}

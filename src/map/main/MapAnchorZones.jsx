@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { map } from '../core/MapView';
-import { ANCHOR_STORAGE_KEY } from '../../common/util/constants';
+import { STORAGE } from '../../common/util/constants';
 
 const SOURCE_ID = 'anchor-zones-source';
 
@@ -19,7 +19,7 @@ function circlePolygon(lat, lon, radiusMeters, points = 64) {
 }
 
 function buildGeoJSON() {
-  const stored = JSON.parse(localStorage.getItem(ANCHOR_STORAGE_KEY) || '{}');
+  const stored = JSON.parse(localStorage.getItem(STORAGE.ANCHORS) || '{}');
   const features = Object.entries(stored).map(([deviceId, anchor]) => ({
     type: 'Feature',
     properties: {

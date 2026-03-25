@@ -137,8 +137,11 @@ const GeofenceScreen = () => {
       {/* ═══════════════ MOBILE LAYOUT ════════════════ */}
       {!desktop && (
         <>
-          {/* Floating top bar (back + instruction) */}
-          <div className="absolute top-0 left-0 right-0 z-10 p-3 flex items-center gap-2.5 pointer-events-none">
+          {/* Floating top bar (back + instruction) — right-[54px] leaves room for maplibre ctrl pill */}
+          <div
+            className="absolute top-0 left-0 right-[54px] z-10 flex items-center gap-2.5 pointer-events-none"
+            style={{ padding: '12px 12px 12px 12px', paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))' }}
+          >
             <button
               type="button"
               onClick={handleBack}

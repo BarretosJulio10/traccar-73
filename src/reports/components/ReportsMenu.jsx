@@ -50,12 +50,6 @@ const ReportsMenu = () => {
     <>
       <List>
         <MenuItem
-          title={t('reportCombined')}
-          link={buildLink('/reports/combined')}
-          icon={<StarIcon />}
-          selected={location.pathname === '/app/reports/combined'}
-        />
-        <MenuItem
           title={t('reportEvents')}
           link={buildLink('/reports/events')}
           icon={<NotificationsActiveIcon />}

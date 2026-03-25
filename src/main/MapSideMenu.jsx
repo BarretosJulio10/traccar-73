@@ -1,16 +1,11 @@
 import { Tooltip, Box } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useNavigate } from 'react-router-dom';
-import DevicesIcon from '@mui/icons-material/Devices';
 import FenceIcon from '@mui/icons-material/Fence';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import DescriptionIcon from '@mui/icons-material/Description';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import { useState } from 'react';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import WhatsAppAlertsDialog from '../settings/WhatsAppAlertsDialog';
 import { useHudTheme } from '../common/util/ThemeContext';
 
 // Static styles using CSS variables set by ThemeContext on :root
@@ -64,7 +59,6 @@ const MapSideMenu = ({ inline = false }) => {
   const navigate = useNavigate();
   const t = useTranslation();
   const { theme } = useHudTheme();
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
 
   const items = [
     { label: 'Mapa', icon: <DashboardIcon className={classes.icon} />, path: '/app' },
@@ -72,7 +66,7 @@ const MapSideMenu = ({ inline = false }) => {
     {
       label: t('reportTitle'),
       icon: <DescriptionIcon className={classes.icon} />,
-      path: '/app/reports/combined',
+      path: '/app/reports',
     },
     {
       label: t('sharedPreferences'),
@@ -96,18 +90,15 @@ const MapSideMenu = ({ inline = false }) => {
     : {};
 
   return (
-    <>
-      <div className={inline ? '' : classes.root} style={containerStyle}>
-        {items.map((item) => (
-          <Tooltip key={item.path || item.label} title={item.label} placement="right" arrow>
-            <Box className={classes.item} onClick={item.onClick || (() => navigate(item.path))}>
-              {item.icon}
-            </Box>
-          </Tooltip>
-        ))}
-      </div>
-      <WhatsAppAlertsDialog open={whatsappOpen} onClose={() => setWhatsappOpen(false)} />
-    </>
+    <div className={inline ? '' : classes.root} style={containerStyle}>
+      {items.map((item) => (
+        <Tooltip key={item.path || item.label} title={item.label} placement="right" arrow>
+          <Box className={classes.item} onClick={item.onClick || (() => navigate(item.path))}>
+            {item.icon}
+          </Box>
+        </Tooltip>
+      ))}
+    </div>
   );
 };
 

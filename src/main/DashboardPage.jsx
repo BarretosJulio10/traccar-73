@@ -42,7 +42,7 @@ const DashboardPage = () => {
   return (
     <div
       className="flex flex-col font-['Quicksand'] transition-colors duration-500"
-      style={{ background: theme.bg, height: '100dvh' }}
+      style={{ background: theme.bg, height: '100%' }}
     >
       {/* Header */}
       <header className="px-4 pt-8 pb-3 shrink-0">
@@ -97,7 +97,7 @@ const DashboardPage = () => {
           minHeight: 0,
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
-          paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
         }}
       >
         {filteredDevices.map((_, index) => (

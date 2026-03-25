@@ -25,7 +25,7 @@ export const THEMES = {
         name: 'EV Lifestyle',
         bg: '#f8fafc',
         bgSecondary: '#ffffff',
-        bgCard: '#ffffff', // Pure white cards for the new look
+        bgCard: '#ffffff',
         border: 'rgba(6,182,212,0.08)',
         borderCard: 'rgba(0,0,0,0.04)',
         textPrimary: '#0f172a',
@@ -43,7 +43,11 @@ export const THEMES = {
 
 export const ThemeProvider = ({ children }) => {
     const [themeKey, setThemeKey] = useState(
-        () => localStorage.getItem('hudTheme') || 'dark',
+        () => {
+            const saved = localStorage.getItem('hudTheme');
+            // Fallback to 'dark' if saved key is no longer valid
+            return (saved && THEMES[saved]) ? saved : 'dark';
+        },
     );
 
     const baseTheme = THEMES[themeKey] || THEMES.dark;
@@ -73,7 +77,7 @@ export const ThemeProvider = ({ children }) => {
 
     const contextValue = useMemo(() => ({ theme, themeKey, toggleTheme }), [theme, themeKey, toggleTheme]);
 
-    // Apply CSS variables and Global Theme Class to :root so all components can use them
+    // Apply CSS variables to :root so all components can use them
     useEffect(() => {
         const root = document.documentElement;
         root.style.setProperty('--hud-bg', theme.bg);
@@ -87,7 +91,11 @@ export const ThemeProvider = ({ children }) => {
         root.style.setProperty('--hud-accent', theme.accent);
         root.style.setProperty('--hud-accent2', theme.accentSecondary);
         root.style.setProperty('--hud-accent-rgb', theme.accentRgb);
-        
+        // Neumorphic shadow vars (inactive — reserved for future models)
+        root.style.setProperty('--hud-nm-card',   'none');
+        root.style.setProperty('--hud-nm-inset',  'none');
+        root.style.setProperty('--hud-nm-button', 'none');
+
         // Sync body classes for pure CSS components (like MapLibre Controls)
         if (theme.isDark) {
             document.body.classList.add('theme-dark');

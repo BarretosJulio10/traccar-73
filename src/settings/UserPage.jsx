@@ -67,9 +67,6 @@ const UserPage = () => {
 
   const [deleteEmail, setDeleteEmail] = useState();
   const [deleteFailed, setDeleteFailed] = useState(false);
-  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
-  const [revokeToken, setRevokeToken] = useState('');
-
   const handleDelete = useCatch(async () => {
     if (deleteEmail === currentUser.email) {
       setDeleteFailed(false);
@@ -84,20 +81,6 @@ const UserPage = () => {
   const handleGenerateTotp = useCatch(async () => {
     const response = await fetchOrThrow('/api/users/totp', { method: 'POST' });
     setItem({ ...item, totpKey: await response.text() });
-  });
-
-  const closeRevokeDialog = () => {
-    setRevokeDialogOpen(false);
-    setRevokeToken('');
-  };
-
-  const handleRevokeToken = useCatch(async () => {
-    await fetchOrThrow('/api/session/token/revoke', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ token: revokeToken }).toString(),
-    });
-    closeRevokeDialog();
   });
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -174,7 +157,7 @@ const UserPage = () => {
     >
       {item && (
         <div className="flex flex-col gap-1 px-1">
-          <NeumorphicSection title={t('sharedRequired')} icon={PersonIcon} defaultOpen={!attribute}>
+          <NeumorphicSection title={t('sharedRequired')} icon={PersonIcon}>
             <div className="flex flex-col gap-1.5">
               <span className="text-[9px] font-black text-slate-500 uppercase px-1">{t('sharedName')}</span>
               <TextField
@@ -492,14 +475,6 @@ const UserPage = () => {
                 )}
               </>
             )}
-            <button
-              type="button"
-              className="py-2.5 rounded-xl border shadow-md text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all"
-              style={{ background: theme.bg, borderColor: theme.border, color: theme.textMuted }}
-              onClick={() => setRevokeDialogOpen(true)}
-            >
-              {t('userRevokeToken')}
-            </button>
           </NeumorphicSection>
 
           <NeumorphicSection title="Integrações" icon={LinkIcon}>
@@ -582,28 +557,6 @@ const UserPage = () => {
           )}
         </div>
       )}
-      <Dialog open={revokeDialogOpen} onClose={closeRevokeDialog} fullWidth maxWidth="xs" PaperProps={{ sx: { background: theme.bgSecondary, borderRadius: '28px', border: `1px solid ${theme.border}`, boxShadow: theme.sidebarShadow } }}>
-        <DialogContent sx={{ p: 4 }}>
-          <h2 className="text-sm font-black uppercase tracking-widest mb-6" style={{ color: theme.textPrimary }}>Revogar Token</h2>
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-black uppercase px-1" style={{ color: theme.textMuted }}>{t('userToken')}</span>
-            <TextField
-              value={revokeToken}
-              onChange={(e) => setRevokeToken(e.target.value)}
-              autoFocus
-              fullWidth
-              size="small"
-              sx={{ '& .MuiInputBase-input': { fontSize: '13px' }, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-            />
-          </div>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, gap: 2 }}>
-          <Button onClick={closeRevokeDialog} sx={{ color: theme.textMuted, fontBold: true, fontSize: '12px' }}>{t('sharedCancel')}</Button>
-          <Button onClick={handleRevokeToken} disabled={!revokeToken} variant="contained" sx={{ bgcolor: theme.accent, color: theme.isDark ? 'black' : 'white', borderRadius: '12px', fontBlack: true, fontSize: '12px', '&:hover': { bgcolor: theme.accent, opacity: 0.9 } }}>
-            {t('userRevokeToken')}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </EditItemView>
   );
 };

@@ -113,6 +113,7 @@ const AdminDashboard = () => {
           login_sidebar_color: tenant.login_sidebar_color,
           login_bg_image: tenant.login_bg_image,
           login_bg_color: tenant.login_bg_color,
+          ui_model: tenant.ui_model || 'default',
         })
         .eq('id', tenant.id);
       if (error) throw error;
@@ -282,6 +283,7 @@ const AdminDashboard = () => {
 
   const tabs = [
     { id: 'pwa', label: `🎨 ${t('adminCustomize')}` },
+    { id: 'interface', label: '🖥️ Interface' },
     { id: 'link', label: `🔗 ${t('adminAppLink')}` },
     { id: 'whatsapp', label: t('whatsappTab') },
     { id: 'plan', label: `📋 ${t('adminPlan')}` },
@@ -1324,6 +1326,139 @@ const AdminDashboard = () => {
                   <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 600 }}>{value}</span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Interface Tab */}
+        {activeTab === 'interface' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={cardStyle}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                🖥️ Modelo de Interface
+              </h3>
+              <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 24px' }}>
+                Escolha o layout que seus usuários verão ao acessar o aplicativo.
+                A alteração é imediata após salvar.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+                {[
+                  {
+                    id: 'default',
+                    name: 'Interface Padrão',
+                    description: 'Mapa ao centro, sidebar de veículos, painel de detalhes e controles táticos. Recomendada para a maioria das empresas.',
+                    icon: '🗺️',
+                    status: 'active',
+                  },
+                  {
+                    id: 'compact',
+                    name: 'Interface Compacta',
+                    description: 'Layout simplificado para operadores que precisam de uma visão rápida da frota. Ideal para telas menores.',
+                    icon: '📋',
+                    status: 'coming_soon',
+                  },
+                ].map((model) => {
+                  const isSelected = (tenant?.ui_model || 'default') === model.id;
+                  const isAvailable = model.status === 'active';
+                  return (
+                    <div
+                      key={model.id}
+                      onClick={() => isAvailable && updateField('ui_model', model.id)}
+                      style={{
+                        padding: 20,
+                        borderRadius: 12,
+                        border: `2px solid ${isSelected ? '#00f5a0' : isAvailable ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)'}`,
+                        background: isSelected ? 'rgba(0,245,160,0.06)' : 'rgba(255,255,255,0.02)',
+                        cursor: isAvailable ? 'pointer' : 'default',
+                        opacity: isAvailable ? 1 : 0.5,
+                        transition: 'all 0.2s',
+                        position: 'relative',
+                      }}
+                    >
+                      {/* Badge topo */}
+                      {isSelected && (
+                        <div style={{
+                          position: 'absolute', top: 12, right: 12,
+                          fontSize: 10, fontWeight: 700, padding: '2px 8px',
+                          borderRadius: 4, background: 'rgba(0,245,160,0.2)', color: '#00f5a0',
+                          textTransform: 'uppercase', letterSpacing: '0.5px',
+                        }}>
+                          Ativo
+                        </div>
+                      )}
+                      {model.status === 'coming_soon' && (
+                        <div style={{
+                          position: 'absolute', top: 12, right: 12,
+                          fontSize: 10, fontWeight: 700, padding: '2px 8px',
+                          borderRadius: 4, background: 'rgba(255,200,0,0.15)', color: '#ffc800',
+                          textTransform: 'uppercase', letterSpacing: '0.5px',
+                        }}>
+                          Em breve
+                        </div>
+                      )}
+
+                      <div style={{ fontSize: 32, marginBottom: 12 }}>{model.icon}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>
+                        {model.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6, marginBottom: isAvailable ? 16 : 0 }}>
+                        {model.description}
+                      </div>
+
+                      {/* Botão Ver Demo — só para modelos disponíveis */}
+                      {isAvailable && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`/app?preview=${model.id}`, '_blank', 'noopener,noreferrer');
+                          }}
+                          style={{
+                            width: '100%', padding: '9px 0', borderRadius: 8, border: 'none',
+                            background: isSelected
+                              ? 'rgba(0,245,160,0.15)'
+                              : 'rgba(255,255,255,0.07)',
+                            color: isSelected ? '#00f5a0' : '#94a3b8',
+                            fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                            fontFamily: 'inherit', letterSpacing: '0.5px',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          👁️ Ver Demo
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Aviso */}
+              <div style={{
+                marginTop: 20, padding: '12px 16px', borderRadius: 8,
+                background: 'rgba(0,217,245,0.06)', border: '1px solid rgba(0,217,245,0.2)',
+                fontSize: 12, color: '#94a3b8', lineHeight: 1.6,
+              }}>
+                💡 <strong style={{ color: '#00d9f5' }}>Como funciona:</strong> ao selecionar um modelo e clicar em Salvar,
+                todos os usuários desta empresa verão a nova interface no próximo acesso.
+                Modelos "em breve" estarão disponíveis em atualizações futuras.
+              </div>
+            </div>
+
+            {/* Botão Salvar */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  padding: '12px 32px', borderRadius: 10, border: 'none',
+                  background: saving ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #00f5a0, #00d9f5)',
+                  color: saving ? '#64748b' : '#0a0a0f',
+                  fontWeight: 700, fontSize: 14, cursor: saving ? 'default' : 'pointer',
+                  fontFamily: 'inherit', transition: 'all 0.2s',
+                }}
+              >
+                {saving ? 'Salvando…' : 'Salvar Interface'}
+              </button>
             </div>
           </div>
         )}

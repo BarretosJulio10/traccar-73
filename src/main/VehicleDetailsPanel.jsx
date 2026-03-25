@@ -38,15 +38,14 @@ import { Tooltip, CircularProgress } from '@mui/material';
 import { useMediaQuery, useTheme as useMuiTheme } from '@mui/material';
 
 import { useCatch } from '../reactHelper';
-import fetchOrThrow from '../common/util/fetchOrThrow';
-import { devicesActions, geofencesActions, errorsActions } from '../store';
+import { geofencesActions, errorsActions } from '../store';
+import { useDeviceCommands, useRouteReport } from '../core/hooks';
 import { createGeofence, linkGeofenceToDevice, updateGeofence, deleteGeofence } from '../features/geofence/geofenceService';
 import useGeofence from '../features/geofence/useGeofence';
 import GeofenceMap from '../features/geofence/GeofenceMap';
 import MapRoutePath from '../map/MapRoutePath';
 import MapRoutePoints from '../map/MapRoutePoints';
 import MapCamera from '../map/MapCamera';
-import { getMockReportData } from './DemoController';
 import RouteReportOverlay from './RouteReportOverlay';
 import RoutePlayback from './RoutePlayback';
 import TacticalGauges from './TacticalGauges';
@@ -134,22 +133,19 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
     const geo = useGeofence(deviceId);
     const [geoSaving, setGeoSaving] = useState(false);
 
-    // ── Inline route report ────────────────────────────────────────────────
-    const [routePeriod, setRoutePeriod] = useState('today');
-    const [routeItems, setRouteItems] = useState([]);
-    const [routeLoading, setRouteLoading] = useState(false);
-    const [routeSelectedItem, setRouteSelectedItem] = useState(null);
+    // ── Core hooks ────────────────────────────────────────────────────────
+    const cmd   = useDeviceCommands(deviceId);
+    const route = useRouteReport(deviceId);
+
     const [showRouteOnMap, setShowRouteOnMap] = useState(false);
     const [showRouteReport, setShowRouteReport] = useState(false);
     const [showPlayback, setShowPlayback] = useState(false);
 
     const [activeTab, setActiveTab] = useState('dados');
     const handleSetTab = (tab) => {
-      if (tab !== 'rota') { setRouteItems([]); setRouteSelectedItem(null); setShowRouteOnMap(false); setShowRouteReport(false); setShowPlayback(false); }
+      if (tab !== 'rota') { route.reset(); setShowRouteOnMap(false); setShowRouteReport(false); setShowPlayback(false); }
       setActiveTab(tab);
     };
-    const [isBlocked, setIsBlocked] = useState(device?.attributes?.blocked || false);
-    const [isCommandLoading, setIsCommandLoading] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, type: null });
 
     const allGeofences = useSelector((state) => Object.values(state.geofences.items));
@@ -189,35 +185,6 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
       } finally { setGeofenceLoading(null); }
     });
 
-    const handleShowRoute = async () => {
-      if (!device) return;
-      setRouteLoading(true);
-      setRouteItems([]);
-      setRouteSelectedItem(null);
-      setShowRouteOnMap(false);
-      try {
-        let from; let to;
-        switch (routePeriod) {
-          case 'yesterday': from = dayjs().subtract(1, 'day').startOf('day'); to = dayjs().subtract(1, 'day').endOf('day'); break;
-          case 'thisWeek': from = dayjs().startOf('week'); to = dayjs().endOf('week'); break;
-          case 'thisMonth': from = dayjs().startOf('month'); to = dayjs().endOf('month'); break;
-          default: from = dayjs().startOf('day'); to = dayjs().endOf('day');
-        }
-        const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
-        if (isDemo) {
-          await new Promise((r) => setTimeout(r, 700));
-          setRouteItems(getMockReportData('positions', [device.id], from.toISOString(), to.toISOString()));
-        } else {
-          const query = new URLSearchParams({ from: from.toISOString(), to: to.toISOString(), deviceId: device.id });
-          const response = await fetchOrThrow(`/api/positions?${query}`);
-          setRouteItems(await response.json());
-        }
-      } catch (err) {
-        dispatch(errorsActions.push(err.message));
-      } finally {
-        setRouteLoading(false);
-      }
-    };
 
     const handleInlineGeoSave = async () => {
       if (!geo.canSave || !geo.area) return;
@@ -249,26 +216,6 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
         { key: 'eventos', label: 'Eventos', Icon: WarningAmberIcon },
     ];
 
-    const sendCommand = useCatch(async (type) => {
-        setIsCommandLoading(true);
-        setConfirmDialog({ open: false, type: null });
-        try {
-            const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
-            if (!isDemo) {
-                await fetchOrThrow('/api/commands/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ deviceId: device.id, type, attributes: {} }),
-                });
-            } else {
-                await new Promise(r => setTimeout(r, 800));
-            }
-            setIsBlocked(type === 'engineStop');
-            dispatch(devicesActions.update([{ ...device, attributes: { ...device.attributes, blocked: type === 'engineStop' } }]));
-        } finally {
-            setIsCommandLoading(false);
-        }
-    });
 
     if (!device) return null;
 
@@ -303,7 +250,7 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                                 <button onClick={() => setConfirmDialog({ open: false, type: null })}
                                     className="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest"
                                     style={{ background: cardBg, color: theme.textMuted }}>Cancelar</button>
-                                <button onClick={() => sendCommand(confirmDialog.type)}
+                                <button onClick={() => { setConfirmDialog({ open: false, type: null }); if (confirmDialog.type === 'engineStop') cmd.lock(); else cmd.unlock(); }}
                                     className="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest"
                                     style={{ background: cardBg, color: confirmDialog.type === 'engineStop' ? '#ef4444' : theme.accent }}>Confirmar</button>
                             </div>
@@ -407,21 +354,21 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                         ))}
                     </div>
                     {/* Lock pill */}
-                    <Tooltip title={isBlocked ? 'Liberar veículo' : 'Bloquear veículo'} placement="left" arrow>
+                    <Tooltip title={cmd.isBlocked ? 'Liberar veículo' : 'Bloquear veículo'} placement="left" arrow>
                         <button
                             type="button"
-                            onClick={() => setConfirmDialog({ open: true, type: isBlocked ? 'engineResume' : 'engineStop' })}
-                            disabled={isCommandLoading}
+                            onClick={() => setConfirmDialog({ open: true, type: cmd.isBlocked ? 'engineResume' : 'engineStop' })}
+                            disabled={cmd.isPending}
                             className="w-10 h-10 rounded-2xl flex items-center justify-center border transition-all active:scale-95 disabled:opacity-40 flex-shrink-0"
                             style={{
-                                background: isBlocked ? 'rgba(239,68,68,0.12)' : theme.bgCard,
-                                borderColor: isBlocked ? 'rgba(239,68,68,0.4)' : theme.borderCard,
-                                color: isBlocked ? '#ef4444' : theme.textMuted,
+                                background: cmd.isBlocked ? 'rgba(239,68,68,0.12)' : theme.bgCard,
+                                borderColor: cmd.isBlocked ? 'rgba(239,68,68,0.4)' : theme.borderCard,
+                                color: cmd.isBlocked ? '#ef4444' : theme.textMuted,
                             }}
                         >
-                            {isCommandLoading
+                            {cmd.isPending
                                 ? <RefreshIcon sx={{ fontSize: 15, opacity: 0.5 }} className="animate-spin" />
-                                : isBlocked
+                                : cmd.isBlocked
                                     ? <LockIcon sx={{ fontSize: 15 }} />
                                     : <LockOpenIcon sx={{ fontSize: 15 }} />}
                         </button>
@@ -430,7 +377,7 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
             </div>
 
             {/* ── Scroll Area ── */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-4">
+            <div className="grow-0 shrink min-h-0 overflow-y-auto scrollbar-hide px-4 pb-6">
 
               {/* ══ TAB: DADOS ══ */}
               {activeTab === 'dados' && (<>
@@ -457,7 +404,7 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                             <DataRow label="Ignição" value={ignitionOn ? 'Ligada' : 'Desligada'} highlight={ignitionOn} theme={theme} />
                             <DataRow label="Bateria" value={data.batteryLevel !== null ? `${Math.round(data.batteryLevel)}%` : '--'} theme={theme} />
                             <DataRow label="Movimento" value={data.motion ? 'Sim' : 'Não'} highlight={data.motion} theme={theme} />
-                            <DataRow label="Bloqueio" value={isBlocked ? 'Bloqueado' : 'Livre'} theme={theme} />
+                            <DataRow label="Bloqueio" value={cmd.isBlocked ? 'Bloqueado' : 'Livre'} theme={theme} />
                         </div>
                     </div>
                 )}
@@ -543,7 +490,7 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                     <DataRow label="Modelo" value={device.model || '--'} theme={theme} />
                     <DataRow label="Contato" value={device.contact || '--'} theme={theme} />
                     <DataRow label="Categoria" value={device.category || '--'} theme={theme} />
-                    <DataRow label="Bloqueado" value={isBlocked ? 'Sim' : 'Não'} highlight={isBlocked} theme={theme} />
+                    <DataRow label="Bloqueado" value={cmd.isBlocked ? 'Sim' : 'Não'} highlight={cmd.isBlocked} theme={theme} />
                 </Section>
 
                 {/* SEÇÃO: Motorista (se disponível) */}
@@ -725,23 +672,23 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
               {activeTab === 'rota' && (
                 <>
                   {/* Route map layers — only when not in playback mode (playback owns its own layers) */}
-                  {routeItems.length > 0 && showRouteOnMap && !showPlayback && (
+                  {route.items.length > 0 && showRouteOnMap && !showPlayback && (
                     <>
-                      <MapRoutePath positions={routeItems} />
-                      <MapRoutePoints positions={routeItems} onClick={(id) => setRouteSelectedItem(routeItems.find((it) => it.id === id))} />
-                      <MapCamera positions={routeItems} />
+                      <MapRoutePath positions={route.items} />
+                      <MapRoutePoints positions={route.items} onClick={(id) => route.selectItem(route.items.find((it) => it.id === id))} />
+                      <MapCamera positions={route.items} />
                     </>
                   )}
-                  {routeSelectedItem && !showRouteOnMap && !showPlayback && (
-                    <MapCamera positions={[routeSelectedItem]} />
+                  {route.selectedItem && !showRouteOnMap && !showPlayback && (
+                    <MapCamera positions={[route.selectedItem]} />
                   )}
 
                   <div className="flex flex-col gap-3 pt-1">
                     {/* Period + Mostrar */}
                     <div className="flex gap-2 items-center">
                       <select
-                        value={routePeriod}
-                        onChange={(e) => setRoutePeriod(e.target.value)}
+                        value={route.period}
+                        onChange={(e) => route.setPeriod(e.target.value)}
                         className="flex-1 px-3 py-2.5 rounded-2xl border text-xs font-bold outline-none appearance-none"
                         style={{ background: theme.bgCard, borderColor: theme.borderCard, color: theme.textPrimary }}
                       >
@@ -752,12 +699,12 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                       </select>
                       <button
                         type="button"
-                        onClick={handleShowRoute}
-                        disabled={routeLoading}
+                        onClick={() => route.fetch()}
+                        disabled={route.loading}
                         className="h-10 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 flex-shrink-0 active:scale-95 transition-all disabled:opacity-50"
                         style={{ background: theme.accent, color: '#fff', boxShadow: `0 4px 14px ${theme.accent}44` }}
                       >
-                        {routeLoading
+                        {route.loading
                           ? <CircularProgress size={12} color="inherit" />
                           : <RouteIcon sx={{ fontSize: 14 }} />}
                         Mostrar
@@ -765,19 +712,19 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                     </div>
 
                     {/* Empty state */}
-                    {!routeLoading && routeItems.length === 0 && (
+                    {!route.loading && route.items.length === 0 && (
                       <p className="text-xs py-4 text-center" style={{ color: theme.textMuted }}>
                         Selecione o período e toque em Mostrar
                       </p>
                     )}
 
                     {/* Results list */}
-                    {!routeLoading && routeItems.length > 0 && (
+                    {!route.loading && route.items.length > 0 && (
                       <>
                         {/* Header: count + map toggle + relatório */}
                         <div className="flex items-center gap-2">
                           <p className="text-[9px] font-black uppercase tracking-widest flex-1" style={{ color: theme.textMuted }}>
-                            {routeItems.length} Registros
+                            {route.items.length} Registros
                           </p>
                           <button
                             type="button"
@@ -820,14 +767,14 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
                           </button>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          {routeItems.map((item) => {
-                            const isSelected = routeSelectedItem?.id === item.id;
+                          {route.items.map((item) => {
+                            const isSelected = route.selectedItem?.id === item.id;
                             const speed = Math.round(item.speed * 1.852);
                             return (
                               <button
                                 key={item.id}
                                 type="button"
-                                onClick={() => setRouteSelectedItem(item)}
+                                onClick={() => route.selectItem(item)}
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-2xl border text-left transition-all active:scale-[0.98]"
                                 style={{
                                   background: isSelected ? `${theme.accent}12` : theme.bgCard,
@@ -876,18 +823,18 @@ const VehicleDetailsPanel = ({ deviceId, onClose }) => {
             </div>
 
             {/* ── Full-screen route report overlay ── */}
-            {showRouteReport && routeItems.length > 0 && (
+            {showRouteReport && route.items.length > 0 && (
               <RouteReportOverlay
                 device={device}
-                routeItems={routeItems}
+                routeItems={route.items}
                 onClose={() => setShowRouteReport(false)}
               />
             )}
             {/* ── Route playback ── */}
-            {showPlayback && routeItems.length > 0 && (
+            {showPlayback && route.items.length > 0 && (
               <RoutePlayback
                 device={device}
-                routeItems={routeItems}
+                routeItems={route.items}
                 onClose={() => setShowPlayback(false)}
               />
             )}

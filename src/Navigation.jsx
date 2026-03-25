@@ -6,11 +6,9 @@ import AdminDashboard from './admin/AdminDashboard';
 import { useDispatch } from 'react-redux';
 import DashboardPage from './main/DashboardPage';
 import MapPage from './main/MapPage';
-import CombinedReportPage from './reports/CombinedReportPage';
 import ReportsHubPage from './reports/ReportsHubPage';
 import PositionsReportPage from './reports/PositionsReportPage';
 import HeatmapReportPage from './reports/HeatmapReportPage';
-import DriverScoreReportPage from './reports/DriverScoreReportPage';
 import ServerPage from './settings/ServerPage';
 import UsersPage from './settings/UsersPage';
 import DevicePage from './settings/DevicePage';
@@ -52,7 +50,7 @@ import AccumulatorsPage from './settings/AccumulatorsPage';
 import CommandDevicePage from './settings/CommandDevicePage';
 import CommandCenterPage from './settings/CommandCenterPage';
 import CommandGroupPage from './settings/CommandGroupPage';
-import App from './App';
+import ModelRouter from './ModelRouter';
 import ChangeServerPage from './login/ChangeServerPage';
 import DevicesPage from './settings/DevicesPage';
 import ScheduledPage from './reports/ScheduledPage';
@@ -60,7 +58,6 @@ import DeviceConnectionsPage from './settings/DeviceConnectionsPage';
 import GroupConnectionsPage from './settings/GroupConnectionsPage';
 import UserConnectionsPage from './settings/UserConnectionsPage';
 import LogsPage from './reports/LogsPage';
-import SharePage from './settings/SharePage';
 import AnnouncementPage from './settings/AnnouncementPage';
 import EmulatorPage from './other/EmulatorPage';
 import InstallPage from './pwa/InstallPage';
@@ -70,6 +67,7 @@ import { useLocalization } from './common/components/LocalizationProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
 
 import AuditPage from './reports/AuditPage';
+import GeofenceScreen from './features/geofence/GeofenceScreen';
 
 const Navigation = () => {
   const dispatch = useDispatch();
@@ -132,7 +130,7 @@ const Navigation = () => {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/change-server" element={<ChangeServerPage />} />
       <Route path="/install" element={<InstallPage />} />
-      <Route path="/app" element={<App />}>
+      <Route path="/app" element={<ModelRouter />}>
         <Route index element={<DashboardPage />} />
         <Route path="map" element={<MapPage />} />
 
@@ -141,6 +139,7 @@ const Navigation = () => {
         <Route path="event/:id" element={<EventPage />} />
         <Route path="replay" element={<ReplayPage />} />
         <Route path="geofences" element={<GeofencesPage />} />
+        <Route path="geofence/new" element={<GeofenceScreen />} />
         <Route path="emulator" element={<EmulatorPage />} />
 
         <Route path="settings">
@@ -159,7 +158,6 @@ const Navigation = () => {
           <Route path="devices" element={<DevicesPage />} />
           <Route path="device/:id/connections" element={<DeviceConnectionsPage />} />
           <Route path="device/:id/command" element={<CommandDevicePage />} />
-          <Route path="device/:id/share" element={<SharePage />} />
           <Route path="device/:id" element={<DevicePage />} />
           <Route path="device" element={<DevicePage />} />
           <Route path="drivers" element={<DriversPage />} />
@@ -188,10 +186,8 @@ const Navigation = () => {
 
         <Route path="reports">
           <Route index element={<ReportsHubPage />} />
-          <Route path="combined" element={<CombinedReportPage />} />
           <Route path="chart" element={<ChartReportPage />} />
           <Route path="heatmap" element={<HeatmapReportPage />} />
-          <Route path="score" element={<DriverScoreReportPage />} />
           <Route path="events" element={<EventReportPage />} />
           <Route path="geofences" element={<GeofenceReportPage />} />
           <Route path="route" element={<PositionsReportPage />} />

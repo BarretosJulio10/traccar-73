@@ -1,22 +1,13 @@
-// Centralized constants for the application
-// Avoids hardcoding business-specific values across multiple files
+// Re-exporta do core/config — não edite aqui, edite em src/core/config/constants.js
+export {
+  DEFAULT_TENANT_SLUG,
+  PRODUCT_NAME,
+  COMPACT_HEIGHT,
+  EXPANDED_HEIGHT,
+  ANCHOR_EXPANDED_HEIGHT,
+  DEMO_USER,
+  UI_MODELS,
+} from '../../core/config/constants';
 
-export const DEFAULT_TENANT_SLUG = import.meta.env.VITE_DEFAULT_TENANT_SLUG || 'mabtracker';
-
-export const PRODUCT_NAME = 'HyperTraccar';
-
-export const COMPACT_HEIGHT = 80;
-export const EXPANDED_HEIGHT = 260;
-export const ANCHOR_EXPANDED_HEIGHT = 370;
-export const ANCHOR_AUTOBLOCK_KEY = 'traccar_anchor_autoblock';
-export const ANCHOR_STORAGE_KEY = 'traccar_anchors';
-export const DEMO_USER = {
-  id: 99999,
-  name: 'Cliente Demo',
-  email: 'demo@mabtracker.com.br',
-  administrator: false,
-  readonly: false,
-  deviceReadonly: false,
-  userLimit: 0,
-  attributes: {},
-};
+// Chaves de storage também disponíveis aqui para compatibilidade
+export { STORAGE, SESSION } from '../../core/config/storageKeys';

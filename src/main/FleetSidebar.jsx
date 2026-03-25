@@ -89,6 +89,7 @@ const FleetSidebar = ({ search, setSearch, onOpenPanel, onClosePanel, panelDevic
                         style={{
                             background: theme.bgSecondary,
                             borderColor: theme.borderCard,
+                            boxShadow: 'var(--hud-nm-inset, none)',
                         }}
                     >
                         <SearchIcon sx={{ color: theme.accent, fontSize: 18, opacity: 0.7 }} />

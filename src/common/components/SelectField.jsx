@@ -36,6 +36,7 @@ const SelectField = ({
   helperText,
   placeholder,
   singleLine,
+  sx,
 }) => {
   const { classes } = useStyles();
   const [items, setItems] = useState();
@@ -113,7 +114,9 @@ const SelectField = ({
             : undefined
         }
         fullWidth={fullWidth}
-        disableCloseOnSelect={multiple}
+        disableCloseOnSelect={false}
+        disableClearable={singleLine}
+        sx={sx}
         renderInput={(params) => (
           <TextField
             {...params}

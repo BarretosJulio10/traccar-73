@@ -1,25 +1,14 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Collapse,
-  CircularProgress,
-} from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Collapse } from '@mui/material';
 import MapIcon from '@mui/icons-material/Map';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import SpeedIcon from '@mui/icons-material/Speed';
-import FenceIcon from '@mui/icons-material/Fence';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import { useSelector } from 'react-redux';
-import { formatTime } from '../common/util/formatter';
-import ReportFilter, { updateReportParams } from './components/ReportFilter';
 import { prefixString } from '../common/util/stringUtils';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PwaPageLayout from '../common/components/PwaPageLayout';
-import { useCatch, useEffectAsync } from '../reactHelper';
+import { useCatch } from '../reactHelper';
 import { useHudTheme } from '../common/util/ThemeContext';
 import MapView from '../map/core/MapView';
 import MapGeofence from '../map/MapGeofence';
@@ -29,9 +18,20 @@ import MapScale from '../map/MapScale';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import dayjs from 'dayjs';
 import { getMockReportData } from '../main/DemoController';
+import ReportFilter, { updateReportParams } from './components/ReportFilter';
+import ReportTable from './components/ReportTable';
+import { exportToPdf, exportToHtml, exportToXml } from './common/exportUtils';
+import { FormControl, Select, MenuItem } from '@mui/material';
+
+const COLUMNS = ['Veículo', 'Data', 'Hora', 'Tipo de Evento', 'Cerca Virtual', 'Endereço'];
+
+const formatEventType = (type, t) => {
+  const key = prefixString('event', type);
+  const translated = t(key);
+  return translated !== key ? translated : type;
+};
 
 const EventReportPage = () => {
-  const navigate = useNavigate();
   const t = useTranslation();
   const { theme } = useHudTheme();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -45,10 +45,11 @@ const EventReportPage = () => {
   const [items, setItems] = useState([]);
   const [positions, setPositions] = useState({});
   const [loading, setLoading] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [position, setPosition] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
+  const [exporting, setExporting] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [mapPosition, setMapPosition] = useState(null);
+  const [filterInfo, setFilterInfo] = useState('');
+  const [mapExpanded, setMapExpanded] = useState(false);
 
   useEffect(() => {
     if (!eventTypes.length) {
@@ -57,14 +58,6 @@ const EventReportPage = () => {
   }, [searchParams, setSearchParams, eventTypes]);
 
   useEffect(() => {
-    if (selectedItem?.positionId) {
-      setPosition(positions[selectedItem.positionId] || null);
-    } else {
-      setPosition(null);
-    }
-  }, [selectedItem, positions]);
-
-  useEffectAsync(async () => {
     const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
     if (isDemo) {
       setAllEventTypes([
@@ -72,65 +65,59 @@ const EventReportPage = () => {
         ['deviceOverspeed', t('demoOverspeed')],
         ['geofenceEnter', t('demoGeofenceEnter')],
         ['geofenceExit', t('demoGeofenceExit')],
-        ['alarm', t('demoAlarmSos')]
+        ['alarm', t('demoAlarmSos')],
       ]);
       return;
     }
-    try {
-      const response = await fetchOrThrow('/api/notifications/types');
-      const types = await response.json();
-      setAllEventTypes([
-        ['allEvents', 'eventAll'],
-        ...types.map((it) => [it.type, prefixString('event', it.type)]),
-      ]);
-    } catch (e) { }
+    fetchOrThrow('/api/notifications/types')
+      .then((r) => r.json())
+      .then((types) =>
+        setAllEventTypes([
+          ['allEvents', 'eventAll'],
+          ...types.map((it) => [it.type, prefixString('event', it.type)]),
+        ]),
+      )
+      .catch(() => {});
   }, []);
 
   const onShow = useCatch(async ({ deviceIds, from, to }) => {
     const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
-    setSelectedItem(null);
-    setPosition(null);
+    setMapPosition(null);
     setLoading(true);
+    const deviceNames = deviceIds
+      .map((id) => devices[id]?.name)
+      .filter(Boolean)
+      .join(', ');
+    setFilterInfo(
+      `${deviceNames || 'Todos'} | ${dayjs(from).format('DD/MM/YYYY HH:mm')} – ${dayjs(to).format('DD/MM/YYYY HH:mm')}`,
+    );
     try {
       if (isDemo) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((r) => setTimeout(r, 800));
         const events = getMockReportData('events', deviceIds, from, to);
         setItems(events);
-
-        // Populate mock positions for demo events
         const pMap = {};
         events.forEach((e) => {
           if (e.positionId) {
-            pMap[e.positionId] = {
-              id: e.positionId,
-              deviceId: e.deviceId,
-              latitude: e.latitude,
-              longitude: e.longitude,
-              address: e.address,
-              fixTime: e.eventTime,
-            };
+            pMap[e.positionId] = { id: e.positionId, deviceId: e.deviceId, latitude: e.latitude, longitude: e.longitude, address: e.address, fixTime: e.eventTime };
           }
         });
         setPositions(pMap);
       } else {
         const query = new URLSearchParams({ from, to });
-        deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
+        deviceIds.forEach((id) => query.append('deviceId', id));
         eventTypes.forEach((it) => query.append('type', it));
-
-        const response = await fetchOrThrow(`/api/reports/events?${query.toString()}`, {
-          headers: { Accept: 'application/json' },
-        });
+        const response = await fetchOrThrow(`/api/reports/events?${query}`, { headers: { Accept: 'application/json' } });
         const events = await response.json();
         setItems(events);
-
-        const positionIds = Array.from(new Set(events.map((e) => e.positionId).filter((id) => id)));
-        if (positionIds.length > 0) {
+        const posIds = [...new Set(events.map((e) => e.positionId).filter(Boolean))];
+        if (posIds.length) {
           const pQuery = new URLSearchParams();
-          positionIds.slice(0, 100).forEach((id) => pQuery.append('id', id));
-          const pRes = await fetchOrThrow(`/api/positions?${pQuery.toString()}`);
-          const pArray = await pRes.json();
+          posIds.slice(0, 100).forEach((id) => pQuery.append('id', id));
+          const pRes = await fetchOrThrow(`/api/positions?${pQuery}`);
+          const pArr = await pRes.json();
           const pMap = {};
-          pArray.forEach((p) => (pMap[p.id] = p));
+          pArr.forEach((p) => (pMap[p.id] = p));
           setPositions(pMap);
         }
       }
@@ -139,27 +126,81 @@ const EventReportPage = () => {
     }
   });
 
-  const getEventIcon = (type) => {
-    switch (type) {
-      case 'ignitionOn': return <PlayArrowIcon sx={{ color: '#39ff14' }} />;
-      case 'ignitionOff': return <PauseIcon sx={{ color: '#ff3939' }} />;
-      case 'deviceOverspeed': return <SpeedIcon sx={{ color: '#f59e0b' }} />;
-      case 'geofenceEnter':
-      case 'geofenceExit': return <FenceIcon sx={{ color: '#8b5cf6' }} />;
-      case 'alarm': return <NotificationsActiveIcon sx={{ color: '#ef4444' }} />;
-      default: return <NotificationsActiveIcon sx={{ color: '#3b82f6' }} />;
+  // Build plain-text rows for export
+  const exportRows = useMemo(
+    () =>
+      items.map((item) => [
+        devices[item.deviceId]?.name || String(item.deviceId),
+        dayjs(item.eventTime).format('DD/MM/YYYY'),
+        dayjs(item.eventTime).format('HH:mm:ss'),
+        formatEventType(item.type, t),
+        item.geofenceId > 0 ? (geofences[item.geofenceId]?.name || String(item.geofenceId)) : '',
+        positions[item.positionId]?.address || '',
+      ]),
+    [items, devices, geofences, positions, t],
+  );
+
+  // Build display rows (can include styled JSX in the cell)
+  const displayRows = useMemo(
+    () =>
+      items.map((item) => {
+        const pos = positions[item.positionId];
+        return [
+          <span style={{ color: theme.textPrimary, fontWeight: 700 }}>{devices[item.deviceId]?.name || item.deviceId}</span>,
+          dayjs(item.eventTime).format('DD/MM/YYYY'),
+          dayjs(item.eventTime).format('HH:mm:ss'),
+          <span style={{ color: theme.accent, fontWeight: 700, fontSize: 10 }}>{formatEventType(item.type, t)}</span>,
+          item.geofenceId > 0 ? <span style={{ color: '#8b5cf6' }}>{geofences[item.geofenceId]?.name || '—'}</span> : '—',
+          pos ? (
+            <button
+              onClick={() => { setMapPosition(pos); setShowMap(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              style={{ color: theme.accent, fontSize: 10, textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none' }}
+            >
+              {pos.address || 'Ver no mapa'}
+            </button>
+          ) : (positions[item.positionId] ? 'Endereço indisponível' : '—'),
+        ];
+      }),
+    [items, devices, geofences, positions, theme, t],
+  );
+
+  const getTenantLogo = () => {
+    try { return JSON.parse(localStorage.getItem('tenantConfig') || '{}').logoUrl || null; } catch { return null; }
+  };
+
+  const handleExportPdf = useCatch(async () => {
+    setExporting(true);
+    try {
+      await exportToPdf({
+        title: 'Relatório de Eventos',
+        subtitle: filterInfo,
+        columns: COLUMNS,
+        rows: exportRows,
+        logoUrl: getTenantLogo(),
+      });
+    } finally {
+      setExporting(false);
     }
+  });
+
+  const handleExportHtml = useCatch(async () => {
+    setExporting(true);
+    try {
+      await exportToHtml({ title: 'Relatório de Eventos', subtitle: filterInfo, columns: COLUMNS, rows: exportRows, logoUrl: getTenantLogo() });
+    } finally {
+      setExporting(false);
+    }
+  });
+
+  const handleExportXml = () => {
+    exportToXml({ title: 'Relatório de Eventos', subtitle: filterInfo, columns: COLUMNS, rows: exportRows });
   };
 
   const headerActions = (
     <button
-      onClick={() => setShowMap(!showMap)}
-      className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-[4px_4px_10px_rgba(0,0,0,0.1)] transition-all duration-300 active:shadow-inner"
-      style={{
-        background: theme.bgSecondary,
-        color: showMap ? theme.accent : theme.textMuted,
-        border: `1px solid ${theme.border}`
-      }}
+      onClick={() => setShowMap((v) => !v)}
+      className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md transition-all duration-300 active:scale-95"
+      style={{ background: theme.bgSecondary, color: showMap ? theme.accent : theme.textMuted, border: `1px solid ${theme.border}` }}
     >
       <MapIcon sx={{ fontSize: 20 }} />
     </button>
@@ -168,141 +209,70 @@ const EventReportPage = () => {
   return (
     <PwaPageLayout title="Eventos e Alertas" actions={headerActions}>
       <div className="flex flex-col gap-4">
+        {/* Filter */}
+        <ReportFilter onShow={onShow} deviceType="multiple" loading={loading}>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-black uppercase tracking-widest px-1" style={{ color: theme.textMuted }}>
+              Tipo de Evento
+            </span>
+            <FormControl fullWidth size="small">
+              <Select
+                multiple
+                value={eventTypes}
+                onChange={(e) =>
+                  updateReportParams(searchParams, setSearchParams, 'eventType', typeof e.target.value === 'string' ? [e.target.value] : e.target.value)
+                }
+                sx={{
+                  borderRadius: '14px',
+                  background: theme.bg,
+                  '& .MuiSelect-select': { py: 1.5, fontSize: '12px', color: theme.textPrimary },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.border },
+                }}
+                renderValue={(selected) => selected.map((s) => t(s)).join(', ')}
+              >
+                {allEventTypes.map(([value, label]) => (
+                  <MenuItem key={value} value={value}>{t(label)}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+        </ReportFilter>
 
-        {/* Floating Map */}
+        {/* Map */}
         <Collapse in={showMap}>
-          <div className="h-[35vh] min-h-[200px] max-h-[300px] mb-6 rounded-3xl overflow-hidden shadow-[inset_4px_4px_10px_rgba(0,0,0,0.5)] border border-white/5 relative">
+          <div
+            className="mb-2 rounded-3xl overflow-hidden shadow border border-white/5 relative transition-all duration-300"
+            style={{ height: mapExpanded ? '70vh' : '35vh', minHeight: mapExpanded ? 400 : 200, maxHeight: mapExpanded ? 600 : 300 }}
+          >
             <MapView>
               <MapGeofence />
-              {position && <MapPositions positions={[position]} titleField="fixTime" />}
+              {mapPosition && <MapPositions positions={[mapPosition]} titleField="fixTime" />}
             </MapView>
             <div className="absolute right-3 bottom-3"><MapScale /></div>
-            {position && <MapCamera latitude={position.latitude} longitude={position.longitude} />}
+            {mapPosition && <MapCamera latitude={mapPosition.latitude} longitude={mapPosition.longitude} />}
+            <button
+              onClick={() => setMapExpanded((v) => !v)}
+              className="absolute left-3 top-3 w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-md shadow transition-all active:scale-95"
+              style={{ background: `${theme.bg}CC`, color: theme.textMuted, border: `1px solid ${theme.border}` }}
+              title={mapExpanded ? 'Diminuir mapa' : 'Expandir mapa'}
+            >
+              {mapExpanded ? <CloseFullscreenIcon sx={{ fontSize: 14 }} /> : <OpenInFullIcon sx={{ fontSize: 14 }} />}
+            </button>
           </div>
         </Collapse>
 
-        <ReportFilter onShow={onShow} deviceType="multiple" loading={loading} />
-
-        {/* Events List */}
-        <div className="flex flex-col gap-4 pb-20">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <CircularProgress size={32} sx={{ color: '#39ff14' }} />
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Buscando Alertas...</span>
-            </div>
-          ) : items.length === 0 ? (
-            <div 
-              className="p-10 rounded-3xl border flex flex-col items-center justify-center gap-3 shadow-sm transition-colors"
-              style={{ background: theme.bgSecondary, borderColor: theme.border }}
-            >
-              <NotificationsActiveIcon sx={{ fontSize: 40, color: theme.textMuted, opacity: 0.5 }} />
-              <p className="text-xs font-bold uppercase tracking-widest text-center" style={{ color: theme.textMuted }}>Nenhum alerta registrado.</p>
-            </div>
-          ) : (
-            items.map((item) => {
-              const isExpanded = expandedId === item.id;
-              const isSelected = selectedItem?.id === item.id;
-              const deviceName = devices[item.deviceId]?.name || 'Veículo';
-              const pos = positions[item.positionId];
-
-              return (
-                <div
-                  key={item.id}
-                  className="rounded-2xl overflow-hidden shadow-md border transition-colors duration-300"
-                  style={{
-                    background: theme.bgSecondary,
-                    borderColor: isSelected ? theme.accent : theme.border,
-                    boxShadow: isSelected ? `0 0 0 1px ${theme.accent}` : theme.sidebarShadow
-                  }}
-                >
-                  <div
-                    className="p-4 flex items-center justify-between cursor-pointer"
-                    onClick={() => {
-                      setExpandedId(isExpanded ? null : item.id);
-                      setSelectedItem(item);
-                    }}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner"
-                        style={{ background: theme.bg, color: theme.textPrimary }}
-                      >
-                        {getEventIcon(item.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-black uppercase tracking-tighter" style={{ color: theme.textPrimary }}>
-                            {t(prefixString('event', item.type))}
-                          </span>
-                          {item.type === 'alarm' && (
-                            <span className="text-[7px] font-black bg-red-500/10 text-red-500 border border-red-500/20 px-1.5 py-0.5 rounded uppercase">
-                              {t(prefixString('alarm', item.attributes.alarm))}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <DirectionsCarIcon sx={{ fontSize: 10, color: theme.accent }} />
-                          <span className="text-[9px] font-bold uppercase tracking-widest truncate" style={{ color: theme.textMuted }}>{deviceName}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-[10px] font-black" style={{ color: theme.textPrimary }}>
-                        {dayjs(item.eventTime).format('HH:mm')}
-                      </span>
-                      <span className="text-[8px] font-bold uppercase" style={{ color: theme.textMuted }}>
-                        {dayjs(item.eventTime).format('DD/MM')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <Collapse in={isExpanded}>
-                    <div className="px-5 pb-5 pt-1 flex flex-col gap-4 border-t" style={{ borderColor: theme.border, background: theme.bgSecondary }}>
-                      <div className="flex items-start gap-3 mt-3">
-                        <div 
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner"
-                          style={{ background: theme.bg, color: theme.textMuted }}
-                        >
-                          <LocationOnIcon sx={{ fontSize: 16 }} />
-                        </div>
-                        <div>
-                          <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: theme.textMuted }}>Localização aproximada</p>
-                          <p className="text-[10px] font-medium leading-tight mt-0.5" style={{ color: theme.textPrimary }}>
-                            {pos?.address || 'Endereço indisponível'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {item.geofenceId > 0 && (
-                        <div className="p-3 rounded-xl shadow-inner border" style={{ background: theme.bgSecondary, borderColor: theme.border }}>
-                          <p className="text-[8px] font-bold uppercase mb-1" style={{ color: theme.textMuted }}>Cerca Virtual</p>
-                          <p className="text-[10px] font-black uppercase" style={{ color: '#8b5cf6' }}>{geofences[item.geofenceId]?.name || 'Geofence'}</p>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between items-center pt-2">
-                        {pos && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedItem(item);
-                              setShowMap(true);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className="px-4 py-2 rounded-xl shadow-md border text-[9px] font-black uppercase tracking-widest transition-colors"
-                            style={{ background: theme.bgSecondary, borderColor: theme.borderCard, color: theme.accent }}
-                          >
-                            Ver no Mapa
-                          </button>
-                        )}
-                        <span className="text-[9px] font-medium uppercase" style={{ color: theme.textMuted }}>Log #{item.id}</span>
-                      </div>
-                    </div>
-                  </Collapse>
-                </div>
-              );
-            })
-          )}
+        {/* Table */}
+        <div className="pb-20">
+          <ReportTable
+            columns={COLUMNS}
+            rows={displayRows}
+            loading={loading}
+            emptyText="Nenhum evento encontrado. Selecione um período e clique em Mostrar."
+            onExportPdf={handleExportPdf}
+            onExportHtml={handleExportHtml}
+            onExportXml={handleExportXml}
+            exporting={exporting}
+          />
         </div>
       </div>
     </PwaPageLayout>

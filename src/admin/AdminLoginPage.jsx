@@ -111,6 +111,7 @@ const AdminLoginPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="email@example.com"
+              autoComplete="email"
               required
               style={inputStyle}
             />
@@ -132,6 +133,7 @@ const AdminLoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••"
+              autoComplete="current-password"
               required
               style={inputStyle}
             />

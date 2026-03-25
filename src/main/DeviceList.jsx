@@ -8,6 +8,7 @@ import { useEffectAsync } from '../reactHelper';
 import { COMPACT_HEIGHT, EXPANDED_HEIGHT, ANCHOR_EXPANDED_HEIGHT } from '../common/util/constants';
 import DeviceRow from './DeviceRow';
 import { traccarDevicesAdapter } from '../adapters/traccar/devicesAdapter';
+import { demoService } from '../core/services';
 
 const useStyles = makeStyles()((theme) => ({
   list: {
@@ -55,7 +56,7 @@ const DeviceList = ({ devices, onOpenPanel, onClosePanel, panelDeviceId }) => {
   }, []);
 
   useEffectAsync(async () => {
-    if (window.sessionStorage.getItem('demoMode') === 'true') {
+    if (demoService.isActive()) {
       return;
     }
     const data = await traccarDevicesAdapter.fetchDevices();

@@ -1,3 +1,4 @@
+import { demoService } from '../core/services';
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Collapse } from '@mui/material';
@@ -44,7 +45,7 @@ const StopReportPage = () => {
   const [mapExpanded, setMapExpanded] = useState(false);
 
   const onShow = useCatch(async ({ deviceIds, groupIds, from, to }) => {
-    const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+    const isDemo = demoService.isActive();
     setLoading(true);
     setSelectedItem(null);
     const deviceNames = deviceIds.map((id) => devices[id]?.name).filter(Boolean).join(', ');

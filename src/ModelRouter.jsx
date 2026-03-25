@@ -1,9 +1,32 @@
-import { useState, useEffect, Suspense } from 'react';
+import { Component, useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTenant } from './common/components/TenantProvider';
 import { loadModel } from './models/registry';
 import { demoService } from './core/services';
 import Loader from './common/components/Loader';
+
+class ModelErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16, color: '#64748b', fontFamily: 'sans-serif' }}>
+          <div style={{ fontSize: 48 }}>⚠️</div>
+          <div style={{ fontSize: 18, fontWeight: 600 }}>Falha ao carregar o painel</div>
+          <div style={{ fontSize: 14 }}>Ocorreu um erro inesperado.</div>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ marginTop: 8, padding: '10px 24px', background: '#06b6d4', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+          >
+            Recarregar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /**
  * ModelRouter — carrega o AppShell do modelo configurado no tenant.
@@ -59,9 +82,11 @@ const ModelRouter = () => {
   }
 
   return (
-    <Suspense fallback={<Loader />}>
-      <AppShell />
-    </Suspense>
+    <ModelErrorBoundary>
+      <Suspense fallback={<Loader />}>
+        <AppShell />
+      </Suspense>
+    </ModelErrorBoundary>
   );
 };
 

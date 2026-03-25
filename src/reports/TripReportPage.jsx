@@ -1,3 +1,4 @@
+import { demoService } from '../core/services';
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Collapse } from '@mui/material';
@@ -56,7 +57,7 @@ const TripReportPage = () => {
       : [];
 
   useEffectAsync(async () => {
-    const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+    const isDemo = demoService.isActive();
     if (selectedItem) {
       if (isDemo) {
         setRoute([
@@ -80,7 +81,7 @@ const TripReportPage = () => {
   }, [selectedItem]);
 
   const onShow = useCatch(async ({ deviceIds, groupIds, from, to }) => {
-    const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+    const isDemo = demoService.isActive();
     setLoading(true);
     setSelectedItem(null);
     const deviceNames = deviceIds.map((id) => devices[id]?.name).filter(Boolean).join(', ');

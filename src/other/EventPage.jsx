@@ -1,3 +1,4 @@
+import { demoService } from '../core/services';
 import { useCallback, useState } from 'react';
 
 import { Typography, AppBar, Toolbar, IconButton } from '@mui/material';
@@ -56,7 +57,7 @@ const EventPage = () => {
   );
 
   useEffectAsync(async () => {
-    const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+    const isDemo = demoService.isActive();
     if (id) {
       if (isDemo) {
         setEvent({
@@ -74,7 +75,7 @@ const EventPage = () => {
   }, [id]);
 
   useEffectAsync(async () => {
-    const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+    const isDemo = demoService.isActive();
     if (event && event.positionId) {
       if (isDemo) {
         setPosition({

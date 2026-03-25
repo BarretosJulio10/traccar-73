@@ -15,6 +15,7 @@ import {
 } from './common/components/NativeInterface';
 import fetchOrThrow from './common/util/fetchOrThrow';
 import useNotifications from './common/notifications/useNotifications';
+import { STORAGE, scopedKey } from './core/config/storageKeys';
 // import useGeofenceAlerts from './common/util/useGeofenceAlerts';
 
 const POLLING_INTERVAL = 5000; // 5 seconds
@@ -69,9 +70,9 @@ const SocketController = ({ demoMode }) => {
 
       // Auto-block/unblock: read per-device rules (legacy) and per-geofence rules (new)
       let autoBlockRules = {};
-      try { autoBlockRules = JSON.parse(localStorage.getItem('traccar_anchor_autoblock') || '{}'); } catch { /* invalid JSON */ }
+      try { autoBlockRules = JSON.parse(localStorage.getItem(scopedKey(STORAGE.ANCHOR_AUTOBLOCK)) || '{}'); } catch { /* invalid JSON */ }
       let geoRules = {};
-      try { geoRules = JSON.parse(localStorage.getItem('traccar_anchor_autoblock_geofence') || '{}'); } catch { /* invalid JSON */ }
+      try { geoRules = JSON.parse(localStorage.getItem(scopedKey(STORAGE.ANCHOR_AUTOBLOCK_GEOFENCE)) || '{}'); } catch { /* invalid JSON */ }
 
       events
         .filter((e) => e.type === 'geofenceExit' && e.geofenceId)

@@ -44,6 +44,7 @@ import { lightInputSx } from './loginStyles';
 import usePwaInstallPrompt from '../common/util/usePwaInstallPrompt';
 import useDevicePermissions from '../common/util/useDevicePermissions';
 import { auditLog } from '../common/util/audit';
+import { demoService } from '../core/services';
 import { useHudTheme } from '../common/util/ThemeContext';
 
 const useStyles = makeStyles()((theme) => ({
@@ -164,7 +165,7 @@ const LoginPage = () => {
     dispatch(devicesActions.refresh([]));
     dispatch(eventsActions.deleteAll());
     dispatch(sessionActions.updatePositions([]));
-    window.sessionStorage.setItem('demoMode', 'true');
+    demoService.enable();
     navigate('/app', { replace: true });
   };
 

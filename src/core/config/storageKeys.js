@@ -10,8 +10,9 @@ export const STORAGE = {
   TENANT_CONFIG:      'tenantConfig',
 
   // Funcionalidades de âncora
-  ANCHORS:            'traccar_anchors',
-  ANCHOR_AUTOBLOCK:   'traccar_anchor_autoblock',
+  ANCHORS:                   'traccar_anchors',
+  ANCHOR_AUTOBLOCK:          'traccar_anchor_autoblock',
+  ANCHOR_AUTOBLOCK_GEOFENCE: 'traccar_anchor_autoblock_geofence',
 
   // PWA / install
   PWA_INSTALL_SHOWN:  'pwaInstallShown',
@@ -22,4 +23,13 @@ export const SESSION = {
   DEMO_MODE:    'demoMode',
   POST_LOGIN:   'postLogin',
   SESSION_EXP:  'sessionExpired',
+};
+
+/**
+ * Returns a tenant-scoped localStorage key.
+ * Prevents key collisions when multiple tenants share the same device/browser.
+ */
+export const scopedKey = (baseKey) => {
+  const slug = localStorage.getItem(STORAGE.TENANT_SLUG) || 'default';
+  return `${slug}:${baseKey}`;
 };

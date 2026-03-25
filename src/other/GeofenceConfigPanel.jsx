@@ -8,6 +8,7 @@ import SaveIcon from '@mui/icons-material/Save';
 
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { errorsActions, geofencesActions } from '../store';
+import { STORAGE, scopedKey } from '../core/config/storageKeys';
 import { useHudTheme } from '../common/util/ThemeContext';
 
 const WEEK_DAYS = [
@@ -74,7 +75,7 @@ function parseICS(base64Data) {
 
 function getGeoRules(geofenceId) {
   try {
-    return JSON.parse(localStorage.getItem('traccar_anchor_autoblock_geofence') || '{}')[geofenceId] || {};
+    return JSON.parse(localStorage.getItem(scopedKey(STORAGE.ANCHOR_AUTOBLOCK_GEOFENCE)) || '{}')[geofenceId] || {};
   } catch {
     return {};
   }
@@ -82,8 +83,8 @@ function getGeoRules(geofenceId) {
 
 function saveGeoRules(geofenceId, rules) {
   try {
-    const all = JSON.parse(localStorage.getItem('traccar_anchor_autoblock_geofence') || '{}');
-    localStorage.setItem('traccar_anchor_autoblock_geofence', JSON.stringify({ ...all, [geofenceId]: rules }));
+    const all = JSON.parse(localStorage.getItem(scopedKey(STORAGE.ANCHOR_AUTOBLOCK_GEOFENCE)) || '{}');
+    localStorage.setItem(scopedKey(STORAGE.ANCHOR_AUTOBLOCK_GEOFENCE), JSON.stringify({ ...all, [geofenceId]: rules }));
   } catch { /* */ }
 }
 

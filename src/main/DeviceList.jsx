@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
@@ -46,14 +46,6 @@ const DeviceList = ({ devices, onOpenPanel, onClosePanel, panelDeviceId }) => {
     // but List in 2.x handles dynamic heights via the rowHeight prop reactivity.
   }, [selectedId, devices]);
 
-  const [, setTime] = useState(Date.now());
-
-  useEffect(() => {
-    const interval = setInterval(() => setTime(Date.now()), 60000);
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
 
   useEffectAsync(async () => {
     if (demoService.isActive()) {

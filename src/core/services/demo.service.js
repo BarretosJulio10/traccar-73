@@ -4,12 +4,24 @@
 
 import { SESSION } from '../config/storageKeys';
 
-export const demoService = {
-  /** Verifica se o modo demo está ativo. */
-  isActive: () => window.sessionStorage.getItem(SESSION.DEMO_MODE) === 'true',
+const DEMO_TOKEN_PREFIX = 'demo_';
 
-  /** Ativa o modo demo. */
-  enable: () => window.sessionStorage.setItem(SESSION.DEMO_MODE, 'true'),
+export const demoService = {
+  /**
+   * Verifica se o modo demo está ativo.
+   * Requer um token gerado por enable() — não aceita 'true' literal.
+   * Isso impede ativação trivial via console: sessionStorage.setItem('demoMode', 'true').
+   */
+  isActive: () => {
+    const val = window.sessionStorage.getItem(SESSION.DEMO_MODE);
+    return val !== null && val.startsWith(DEMO_TOKEN_PREFIX);
+  },
+
+  /** Ativa o modo demo com token opaco (não trivialmente adivinhável). */
+  enable: () => {
+    const token = `${DEMO_TOKEN_PREFIX}${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    window.sessionStorage.setItem(SESSION.DEMO_MODE, token);
+  },
 
   /** Desativa o modo demo. */
   disable: () => window.sessionStorage.removeItem(SESSION.DEMO_MODE),

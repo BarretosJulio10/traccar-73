@@ -10,8 +10,6 @@ import { groupsReducer as groups } from './groups';
 import { driversReducer as drivers } from './drivers';
 import { maintenancesReducer as maintenances } from './maintenances';
 import { calendarsReducer as calendars } from './calendars';
-import throttleMiddleware from './throttleMiddleware';
-
 const appReducer = combineReducers({
   errors,
   session,
@@ -54,5 +52,4 @@ export { calendarsActions } from './calendars';
 
 export default configureStore({
   reducer: rootReducer,
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(throttleMiddleware),
 });

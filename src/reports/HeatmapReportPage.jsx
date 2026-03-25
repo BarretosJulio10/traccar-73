@@ -1,3 +1,4 @@
+import { demoService } from '../core/services';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CircularProgress } from '@mui/material';
@@ -27,7 +28,7 @@ const HeatmapReportPage = () => {
     setLoading(true);
     setPositions([]);
     try {
-      const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+      const isDemo = demoService.isActive();
       if (isDemo) {
         await new Promise((resolve) => setTimeout(resolve, 800));
         // Mock points around a center

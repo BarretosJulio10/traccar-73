@@ -1,3 +1,4 @@
+import { demoService } from '../core/services';
 import { useState, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { CircularProgress } from '@mui/material';
@@ -27,7 +28,7 @@ const DriverScoreReportPage = () => {
   const onShow = useCatch(async ({ deviceIds, groupIds, from, to }) => {
     setLoading(true);
     try {
-      const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+      const isDemo = demoService.isActive();
       let data = [];
       if (isDemo) {
         await new Promise((resolve) => setTimeout(resolve, 800));

@@ -1,3 +1,4 @@
+import { demoService } from '../core/services';
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Collapse } from '@mui/material';
@@ -63,7 +64,7 @@ const CombinedReportPage = () => {
   );
 
   const onShow = useCatch(async ({ deviceIds, groupIds, from, to }) => {
-    const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+    const isDemo = demoService.isActive();
     setLoading(true);
     const deviceNames = deviceIds.map((id) => devices[id]?.name).filter(Boolean).join(', ');
     setFilterInfo(`${deviceNames || 'Todos'} | ${dayjs(from).format('DD/MM/YYYY HH:mm')} – ${dayjs(to).format('DD/MM/YYYY HH:mm')}`);

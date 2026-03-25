@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Route, Routes, useSearchParams } from 'react-router-dom';
 import LandingPage from './landing/LandingPage';
 import OnboardingPage from './landing/OnboardingPage';
@@ -25,7 +26,7 @@ import ReplayPage from './other/ReplayPage';
 import TripReportPage from './reports/TripReportPage';
 import StopReportPage from './reports/StopReportPage';
 import SummaryReportPage from './reports/SummaryReportPage';
-import ChartReportPage from './reports/ChartReportPage';
+const ChartReportPage = lazy(() => import('./reports/ChartReportPage'));
 import DriversPage from './settings/DriversPage';
 import DriverPage from './settings/DriverPage';
 import CalendarsPage from './settings/CalendarsPage';
@@ -186,7 +187,7 @@ const Navigation = () => {
 
         <Route path="reports">
           <Route index element={<ReportsHubPage />} />
-          <Route path="chart" element={<ChartReportPage />} />
+          <Route path="chart" element={<Suspense fallback={null}><ChartReportPage /></Suspense>} />
           <Route path="heatmap" element={<HeatmapReportPage />} />
           <Route path="events" element={<EventReportPage />} />
           <Route path="geofences" element={<GeofenceReportPage />} />

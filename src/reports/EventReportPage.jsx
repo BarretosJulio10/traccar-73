@@ -1,3 +1,4 @@
+import { demoService } from '../core/services';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Collapse } from '@mui/material';
@@ -58,7 +59,7 @@ const EventReportPage = () => {
   }, [searchParams, setSearchParams, eventTypes]);
 
   useEffect(() => {
-    const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+    const isDemo = demoService.isActive();
     if (isDemo) {
       setAllEventTypes([
         ['allEvents', 'eventAll'],
@@ -81,7 +82,7 @@ const EventReportPage = () => {
   }, []);
 
   const onShow = useCatch(async ({ deviceIds, from, to }) => {
-    const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+    const isDemo = demoService.isActive();
     setMapPosition(null);
     setLoading(true);
     const deviceNames = deviceIds

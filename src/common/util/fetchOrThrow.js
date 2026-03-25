@@ -1,3 +1,4 @@
+import { demoService } from '../../core/services';
 import { apiUrl } from './apiUrl';
 import { DEFAULT_TENANT_SLUG } from './constants';
 
@@ -100,7 +101,7 @@ const translateError = (rawMessage) => {
 };
 
 const fetchOrThrow = async (input, init) => {
-  const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+  const isDemo = demoService.isActive();
   const url = typeof input === 'string' && input.startsWith('/api') ? apiUrl(input) : input;
 
   // Intercept non-GET requests in demo mode to "liberate" all functions

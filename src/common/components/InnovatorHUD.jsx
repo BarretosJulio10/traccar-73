@@ -1,3 +1,4 @@
+import { demoService } from '../../core/services';
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -145,7 +146,7 @@ const InnovatorHUD = ({ device: deviceProp, onClose, onCommand }) => {
     setIsCommandLoading(true);
     setConfirmOpen(null);
     try {
-      const isDemo = window.sessionStorage.getItem('demoMode') === 'true';
+      const isDemo = demoService.isActive();
       if (!isDemo) {
         await fetchOrThrow('/api/commands/send', {
           method: 'POST',

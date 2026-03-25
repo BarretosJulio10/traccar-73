@@ -3,8 +3,6 @@
  * PDF uses jsPDF + jspdf-autotable.
  * XML is generated as a UTF-8 encoded Blob.
  */
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 
 const BRAND_COLOR = [6, 182, 212]; // Cyan 500 — matches accent in light theme
@@ -59,6 +57,10 @@ export const exportToPdf = async ({
   dateTo = '',
   stats = null,
 }) => {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const generatedAt = dayjs().format('DD/MM/YYYY HH:mm');

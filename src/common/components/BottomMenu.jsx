@@ -12,6 +12,7 @@ import { nativePostMessage } from './NativeInterface';
 import { auditLog } from '../util/audit';
 import fetchOrThrow from '../util/fetchOrThrow';
 import { useHudTheme } from '../util/ThemeContext';
+import { STORAGE, SESSION, scopedKey } from '../../core/config/storageKeys';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 
@@ -50,11 +51,15 @@ const BottomMenu = () => {
     // Wipe all tenant data from Redux store
     dispatch(resetAll());
     // Clear user-specific localStorage keys so next user starts fresh
-    ['notificationToken', 'traccar_anchor_autoblock', 'traccar_anchors', 'traccarEmail'].forEach(
+    [STORAGE.NOTIFICATION_TOKEN, STORAGE.TRACCAR_EMAIL].forEach(
       (key) => window.localStorage.removeItem(key),
     );
+    // Clear tenant-scoped keys for this tenant
+    [STORAGE.ANCHOR_AUTOBLOCK, STORAGE.ANCHORS, STORAGE.ANCHOR_AUTOBLOCK_GEOFENCE].forEach(
+      (key) => window.localStorage.removeItem(scopedKey(key)),
+    );
     // Clear session flags
-    ['sessionExpired', 'postLogin'].forEach((key) => window.sessionStorage.removeItem(key));
+    [SESSION.SESSION_EXP, SESSION.POST_LOGIN].forEach((key) => window.sessionStorage.removeItem(key));
     navigate('/login');
   };
 

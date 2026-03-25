@@ -71,13 +71,19 @@ const ReportsHubPage = () => {
     
     const devices = useSelector((state) => state.devices.items);
     const positions = useSelector((state) => state.session.positions);
-    
+
     const deviceList = Object.values(devices);
-    const activeVehicles = deviceList.filter(d => d.status === 'online').length;
-    const movingVehicles = Object.values(positions).filter(p => p.speed > 0).length;
-    const avgSpeed = Object.values(positions).length > 0 
-        ? Math.round(Object.values(positions).reduce((acc, p) => acc + (p.speed || 0), 0) / Object.values(positions).length * 1.852)
-        : 0;
+    const positionList = Object.values(positions);
+
+    // Traccar device.status: 'online' | 'offline' | 'unknown'
+    const stats = {
+        total:      deviceList.length,
+        online:     deviceList.filter(d => d.status === 'online').length,
+        offline:    deviceList.filter(d => d.status === 'offline').length,
+        moving:     positionList.filter(p => p.speed > 0).length,
+        stopped:    positionList.filter(p => p.speed === 0).length,
+        noSignal:   deviceList.filter(d => d.status === 'unknown').length,
+    };
 
     return (
         <PwaPageLayout title={t('reportMain')}>
@@ -96,21 +102,32 @@ const ReportsHubPage = () => {
                         Estatísticas em <span style={{ color: theme.accent }}>Tempo Real</span>
                     </h2>
                     
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-x-3 gap-y-4">
+                        {/* Row 1 */}
                         <div className="flex flex-col">
-                            <span className="text-2xl font-black" style={{ color: theme.textPrimary }}>{activeVehicles}</span>
-                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>Ativos</span>
+                            <span className="text-2xl font-black" style={{ color: theme.textPrimary }}>{stats.total}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>Total</span>
                         </div>
                         <div className="flex flex-col border-l pl-3" style={{ borderColor: theme.border }}>
-                            <span className="text-2xl font-black" style={{ color: theme.textPrimary }}>{movingVehicles}</span>
-                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>Em Movimento</span>
+                            <span className="text-2xl font-black" style={{ color: '#22c55e' }}>{stats.online}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>Online</span>
                         </div>
                         <div className="flex flex-col border-l pl-3" style={{ borderColor: theme.border }}>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-black" style={{ color: theme.textPrimary }}>{avgSpeed}</span>
-                                <span className="text-[10px] font-bold opacity-50" style={{ color: theme.textMuted }}>km/h</span>
-                            </div>
-                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>Velo. Média</span>
+                            <span className="text-2xl font-black" style={{ color: '#f59e0b' }}>{stats.offline}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>Offline</span>
+                        </div>
+                        {/* Row 2 */}
+                        <div className="flex flex-col pt-3 border-t" style={{ borderColor: theme.border }}>
+                            <span className="text-2xl font-black" style={{ color: theme.accent }}>{stats.moving}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>Movendo</span>
+                        </div>
+                        <div className="flex flex-col border-l pl-3 pt-3 border-t" style={{ borderColor: theme.border }}>
+                            <span className="text-2xl font-black" style={{ color: theme.textSecondary }}>{stats.stopped}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>Parados</span>
+                        </div>
+                        <div className="flex flex-col border-l pl-3 pt-3 border-t" style={{ borderColor: theme.border }}>
+                            <span className="text-2xl font-black" style={{ color: '#ef4444' }}>{stats.noSignal}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>Sem Sinal</span>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 import { supabase } from '../../integrations/supabase/client';
 
-const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'foifugnuaehjtjftpkrk';
+const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const EDGE_BASE = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1`;
 
 const getAuthHeaders = async () => {

@@ -30,6 +30,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import { useDispatch, useSelector } from 'react-redux';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
+import { useTenant } from '../common/components/TenantProvider';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import useUserAttributes from '../common/attributes/useUserAttributes';
 import { sessionActions } from '../store';
@@ -47,6 +48,7 @@ const UserPage = () => {
   const dispatch = useDispatch();
   const t = useTranslation();
   const { theme } = useHudTheme();
+  const { tenant } = useTenant() || {};
 
   const admin = useAdministrator();
   const manager = useManager();
@@ -157,6 +159,81 @@ const UserPage = () => {
     >
       {item && (
         <div className="flex flex-col gap-1 px-1">
+
+          {/* ── Profile Header ─────────────────────────────────────────── */}
+          <div
+            className="mb-5 rounded-3xl overflow-hidden border shadow-lg"
+            style={{ borderColor: theme.border }}
+          >
+            {/* Banner / logo area */}
+            <div
+              className="relative flex items-center justify-center py-8 px-6"
+              style={{
+                background: theme.isDark
+                  ? 'linear-gradient(135deg, rgba(6,182,212,0.12) 0%, rgba(15,23,42,0.9) 100%)'
+                  : 'linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(248,250,252,0.95) 100%)',
+              }}
+            >
+              {tenant?.logo_url ? (
+                <img
+                  src={tenant.logo_url}
+                  alt={tenant.company_name || 'Logo'}
+                  className="max-h-20 md:max-h-28 max-w-[220px] md:max-w-[320px] object-contain drop-shadow-md"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <div
+                    className="w-20 h-20 md:w-28 md:h-28 rounded-3xl flex items-center justify-center shadow-xl border-2"
+                    style={{
+                      background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                      borderColor: 'rgba(6,182,212,0.3)',
+                    }}
+                  >
+                    <span className="text-white font-black text-3xl md:text-4xl uppercase select-none">
+                      {item.name ? item.name.substring(0, 2) : 'US'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* User info strip */}
+            <div
+              className="flex items-center gap-4 px-5 py-4"
+              style={{ background: theme.bgSecondary, borderTop: `1px solid ${theme.border}` }}
+            >
+              {/* Avatar */}
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md border-2"
+                style={{
+                  background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                  borderColor: 'rgba(6,182,212,0.3)',
+                }}
+              >
+                <span className="text-white font-black text-base uppercase select-none">
+                  {item.name ? item.name.substring(0, 2) : 'US'}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-black uppercase tracking-wide truncate" style={{ color: theme.textPrimary }}>
+                  {item.name || '—'}
+                </p>
+                <p className="text-[10px] font-bold truncate" style={{ color: theme.textMuted }}>
+                  {item.email || '—'}
+                </p>
+              </div>
+              {item.administrator && (
+                <span
+                  className="ml-auto shrink-0 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest"
+                  style={{ background: 'rgba(6,182,212,0.12)', color: theme.accent, border: `1px solid rgba(6,182,212,0.25)` }}
+                >
+                  Admin
+                </span>
+              )}
+            </div>
+          </div>
+          {/* ─────────────────────────────────────────────────────────── */}
+
           <NeumorphicSection title={t('sharedRequired')} icon={PersonIcon}>
             <div className="flex flex-col gap-1.5">
               <span className="text-[9px] font-black text-slate-500 uppercase px-1">{t('sharedName')}</span>

@@ -99,7 +99,7 @@ const App = () => {
       const response = await fetch(apiUrl('/api/session'), {
         headers: {
           'x-tenant-slug': localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG,
-          'x-traccar-email': localStorage.getItem('traccarEmail') || '',
+          'x-traccar-email': sessionStorage.getItem('traccarEmail') || localStorage.getItem('traccarEmail') || '',
         },
       });
       if (response.ok) {

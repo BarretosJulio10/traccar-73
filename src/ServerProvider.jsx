@@ -55,7 +55,7 @@ const ServerProvider = ({ children }) => {
         const response = await fetch(apiUrl('/api/server'), {
           headers: {
             'x-tenant-slug': tenantSlug,
-            'x-traccar-email': localStorage.getItem('traccarEmail') || '',
+            'x-traccar-email': sessionStorage.getItem('traccarEmail') || localStorage.getItem('traccarEmail') || '',
           },
         });
         if (response.ok) {

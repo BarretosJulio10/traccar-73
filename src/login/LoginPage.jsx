@@ -187,7 +187,7 @@ const LoginPage = () => {
       if (response.ok) {
         const user = await response.json();
         auditLog('login_success', { email, user_id: user.id });
-        localStorage.setItem('traccarEmail', email);
+        sessionStorage.setItem('traccarEmail', email);
         generateLoginToken();
         dispatch(sessionActions.updateUser(user));
         const target = window.sessionStorage.getItem('postLogin') || '/app';

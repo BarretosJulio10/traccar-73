@@ -50,10 +50,12 @@ const BottomMenu = () => {
     nativePostMessage('logout');
     // Wipe all tenant data from Redux store
     dispatch(resetAll());
-    // Clear user-specific localStorage keys so next user starts fresh
+    // Clear user-specific keys so next user starts fresh
     [STORAGE.NOTIFICATION_TOKEN, STORAGE.TRACCAR_EMAIL].forEach(
       (key) => window.localStorage.removeItem(key),
     );
+    // traccarEmail is now stored in sessionStorage (moved from localStorage)
+    window.sessionStorage.removeItem(STORAGE.TRACCAR_EMAIL);
     // Clear tenant-scoped keys for this tenant
     [STORAGE.ANCHOR_AUTOBLOCK, STORAGE.ANCHORS, STORAGE.ANCHOR_AUTOBLOCK_GEOFENCE].forEach(
       (key) => window.localStorage.removeItem(scopedKey(key)),

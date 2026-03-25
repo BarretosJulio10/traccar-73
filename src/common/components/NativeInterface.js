@@ -35,16 +35,23 @@ export const generateLoginToken = async () => {
 
 export const handleLoginTokenListeners = new Set();
 window.handleLoginToken = (token) => {
+  // Only accept calls when running inside a recognized native WebView.
+  // This prevents browser-level JS (e.g., XSS) from injecting login tokens.
+  if (!nativeEnvironment) return;
   handleLoginTokenListeners.forEach((listener) => listener(token));
 };
 
 const updateNotificationTokenListeners = new Set();
 window.updateNotificationToken = (token) => {
+  // Guard: native environment only.
+  if (!nativeEnvironment) return;
   updateNotificationTokenListeners.forEach((listener) => listener(token));
 };
 
 export const handleNativeNotificationListeners = new Set();
 window.handleNativeNotification = (message) => {
+  // Guard: native environment only.
+  if (!nativeEnvironment) return;
   handleNativeNotificationListeners.forEach((listener) => listener(message));
 };
 

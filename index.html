@@ -5,6 +5,34 @@
   <meta charset="utf-8" />
   <meta name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+
+  <!-- Security headers via meta (supplement server-level headers) -->
+  <!--
+    CSP notes:
+    - script-src 'unsafe-inline': required for the inline PWA manifest loader and
+      MutationObserver scripts in this file. Replace with nonce-based CSP when build
+      tooling supports it.
+    - connect-src https: wss:: Traccar server URLs are client-configured (unknown at
+      build time). Supabase edge functions also vary. Broad https/wss is required.
+    - img-src https: blob: data:: map tiles come from Google/Bing/OSM/Mapbox etc.
+    - frame-ancestors 'none': equivalent to X-Frame-Options DENY (supported in meta CSP).
+      Also add X-Frame-Options: DENY at the CDN/hosting level for older browser support.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline';
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' data: blob: https:;
+    connect-src 'self' https: wss:;
+    worker-src 'self' blob:;
+    frame-src 'none';
+    frame-ancestors 'none';
+    base-uri 'self';
+    form-action 'self';
+    object-src 'none';
+  ">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#0d9488" />
   <meta name="description" content="Plataforma de rastreamento veicular em tempo real — HyperTraccar">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">

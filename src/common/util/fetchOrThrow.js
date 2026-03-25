@@ -3,7 +3,7 @@ import { apiUrl } from './apiUrl';
 import { DEFAULT_TENANT_SLUG } from './constants';
 
 const getTenantSlug = () => localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
-const getTraccarEmail = () => localStorage.getItem('traccarEmail') || '';
+const getTraccarEmail = () => sessionStorage.getItem('traccarEmail') || localStorage.getItem('traccarEmail') || '';
 
 // Static demo devices — shared with DemoController (keep IDs and names in sync)
 const DEMO_DEVICES = [

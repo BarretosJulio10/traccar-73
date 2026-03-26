@@ -19,6 +19,7 @@ import { supabase } from '../../integrations/supabase/client';
 import { DEFAULT_TENANT_SLUG } from '../util/constants';
 import { formatEventNotification, shouldNotify } from './notificationEvents';
 import { useTranslation } from '../components/LocalizationProvider';
+import { useTenant } from '../components/TenantProvider';
 
 // ─── Singleton: inicializado uma vez por carregamento de página ──────────────
 let _osPromise = null;
@@ -79,6 +80,7 @@ const useOneSignal = () => {
   const t = useTranslation();
   const devices = useSelector((state) => state.devices.items);
   const userId = useSelector((state) => state.session.user?.id);
+  const { tenant } = useTenant() || {};
 
   const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
 
@@ -186,7 +188,7 @@ const useOneSignal = () => {
     if (!notification) return;
 
     const tenantId = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
-    const iconUrl = `${window.location.origin}/pwa-192x192.png`;
+    const iconUrl = tenant?.logo_url || `${window.location.origin}/pwa-192x192.png`;
 
     supabase.functions.invoke('onesignal-notify', {
       body: {
@@ -200,7 +202,7 @@ const useOneSignal = () => {
         require_interaction: notification.requireInteraction ?? false,
       },
     }).catch(() => {}); // Silencioso — notificação local já foi exibida
-  }, [appId, devices, t]);
+  }, [appId, devices, t, tenant]);
 
   return {
     isInitialized,

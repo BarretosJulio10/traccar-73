@@ -66,6 +66,8 @@ import Loader from './common/components/Loader';
 import { generateLoginToken } from './common/components/NativeInterface';
 import { useLocalization } from './common/components/LocalizationProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
+import { useTenant } from './common/components/TenantProvider';
+import useDynamicManifest from './common/util/useDynamicManifest';
 
 import AuditPage from './reports/AuditPage';
 import GeofenceScreen from './features/geofence/GeofenceScreen';
@@ -73,6 +75,8 @@ import GeofenceScreen from './features/geofence/GeofenceScreen';
 const Navigation = () => {
   const dispatch = useDispatch();
   const { setLocalLanguage } = useLocalization();
+  const { tenant } = useTenant() || {};
+  useDynamicManifest(tenant);
 
   const [searchParams, setSearchParams] = useSearchParams();
 

@@ -8,6 +8,7 @@ import { snackBarDurationLongMs } from './common/util/duration';
 import alarm from './resources/alarm.mp3';
 import { eventsActions } from './store/events';
 import useFeatures from './common/util/useFeatures';
+import { DEMO_DEVICE_IDS, ALERT_TYPES } from './main/DemoController';
 import { useAttributePreference } from './common/util/preferences';
 import {
   handleNativeNotificationListeners,
@@ -207,6 +208,31 @@ const SocketController = ({ demoMode }) => {
     return () => document.removeEventListener('visibilitychange', onVisibility);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, demoMode]);
+
+  // Demo mode: generate a fake event every 20s to test OneSignal push
+  useEffect(() => {
+    if (!demoMode || !authenticated) return undefined;
+    let counter = 0;
+    const interval = setInterval(() => {
+      const alertType = ALERT_TYPES[counter % ALERT_TYPES.length];
+      const deviceId = DEMO_DEVICE_IDS[counter % DEMO_DEVICE_IDS.length];
+      counter += 1;
+      const fakeEvent = {
+        id: 900000 + counter,
+        type: alertType.type,
+        deviceId,
+        eventTime: new Date().toISOString(),
+        positionId: 0,
+        geofenceId: alertType.type.startsWith('geofence') ? 1001 : 0,
+        attributes: {
+          ...(alertType.alarm ? { alarm: alertType.alarm } : {}),
+          message: `[Demo] ${alertType.type}`,
+        },
+      };
+      handleEvents([fakeEvent]);
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [demoMode, authenticated, handleEvents]);
 
   const handleNativeNotification = useCatchCallback(
     async (message) => {

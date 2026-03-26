@@ -378,5 +378,5 @@ const DemoController = ({ active }) => {
   return null;
 };
 
-export { DEMO_DEVICE_IDS };
+export { DEMO_DEVICE_IDS, ALERT_TYPES };
 export default DemoController;

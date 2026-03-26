@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useMediaQuery, useTheme } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -9,15 +9,26 @@ import { useHudTheme } from '../common/util/ThemeContext';
 import LogoImage from '../login/LogoImage';
 import DeviceRow from './DeviceRow';
 
+const STAT_DEFS = [
+  { label: 'Total',    key: null,       color: null },
+  { label: 'Online',   key: 'online',   color: '#22c55e' },
+  { label: 'Offline',  key: 'offline',  color: '#f59e0b' },
+  { label: 'Movendo',  key: 'moving',   color: null },   // accent
+  { label: 'Parados',  key: 'stopped',  color: null },   // textSecondary
+  { label: 'Sem Sinal',key: 'nosignal', color: '#ef4444' },
+];
+
 const DashboardPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const themeMui = useTheme();
   const { theme } = useHudTheme();
   const desktop = useMediaQuery(themeMui.breakpoints.up('md'));
+  const { fleetFilter, setFleetFilter } = useOutletContext() || {};
 
   const user = useSelector((state) => state.session.user);
   const devices = useSelector((state) => state.devices.items);
+  const positions = useSelector((state) => state.session.positions);
 
   const [search, setSearch] = useState('');
   const [anchorOpenId, setAnchorOpenId] = useState(null);
@@ -29,9 +40,30 @@ const DashboardPage = () => {
     }
   }, [desktop, navigate]);
 
-  const filteredDevices = Object.values(devices).filter((d) =>
-    d.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const deviceList = Object.values(devices);
+  const positionList = Object.values(positions);
+
+  const statValues = {
+    null: deviceList.length,
+    online: deviceList.filter(d => d.status === 'online').length,
+    offline: deviceList.filter(d => d.status === 'offline').length,
+    moving: positionList.filter(p => p.speed > 0).length,
+    stopped: positionList.filter(p => p.speed === 0).length,
+    nosignal: deviceList.filter(d => d.status === 'unknown').length,
+  };
+
+  const handleStatClick = (key) => {
+    if (!setFleetFilter) return;
+    setFleetFilter(prev => (prev === key || key === null) ? null : key);
+  };
+
+  let filteredDevices = deviceList;
+  if (fleetFilter === 'online') filteredDevices = filteredDevices.filter(d => d.status === 'online');
+  else if (fleetFilter === 'offline') filteredDevices = filteredDevices.filter(d => d.status === 'offline');
+  else if (fleetFilter === 'nosignal') filteredDevices = filteredDevices.filter(d => d.status === 'unknown');
+  else if (fleetFilter === 'moving') filteredDevices = filteredDevices.filter(d => (positions[d.id]?.speed ?? 0) > 0);
+  else if (fleetFilter === 'stopped') filteredDevices = filteredDevices.filter(d => (positions[d.id]?.speed ?? 0) === 0);
+  filteredDevices = filteredDevices.filter(d => d.name.toLowerCase().includes(search.toLowerCase()));
 
   // Arrow click → select device and open map
   const handleOpenPanel = (deviceId) => {
@@ -71,6 +103,32 @@ const DashboardPage = () => {
               {Object.keys(devices).length}
             </span>
           </div>
+        </div>
+
+        {/* Stats bar */}
+        <div
+          className="flex items-center gap-0 rounded-2xl border overflow-hidden mb-3"
+          style={{ background: theme.bgSecondary, borderColor: theme.borderCard }}
+        >
+          {STAT_DEFS.map((s, i) => {
+            const color = s.color || (s.key === 'moving' ? theme.accent : theme.textSecondary) || theme.textPrimary;
+            const isActive = fleetFilter === s.key && s.key !== null;
+            return (
+              <button
+                key={s.label}
+                type="button"
+                onClick={() => handleStatClick(s.key)}
+                className="flex-1 flex flex-col items-center py-2 transition-all active:scale-95"
+                style={{
+                  borderLeft: i > 0 ? `1px solid ${theme.borderCard}` : 'none',
+                  background: isActive ? `${color}18` : 'transparent',
+                }}
+              >
+                <span className="text-[15px] font-black leading-none" style={{ color }}>{statValues[s.key]}</span>
+                <span className="text-[7px] font-bold uppercase tracking-wider mt-0.5" style={{ color: isActive ? color : theme.textMuted }}>{s.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Search */}

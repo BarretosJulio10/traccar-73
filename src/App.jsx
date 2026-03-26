@@ -69,6 +69,7 @@ const App = () => {
   const positions = useSelector((state) => state.session.positions);
   const selectedPosition = positions[selectedDeviceId];
   const [fleetSearch, setFleetSearch] = useState('');
+  const [fleetFilter, setFleetFilter] = useState(null);
   const [panelDeviceId, setPanelDeviceId] = useState(null);
 
   const handleClosePanel = () => {
@@ -139,7 +140,7 @@ const App = () => {
 
       {user === null && <Loader />}
 
-      {desktop && <FleetSidebar search={fleetSearch} setSearch={setFleetSearch} onOpenPanel={handleOpenPanel} onClosePanel={handleClosePanel} panelDeviceId={panelDeviceId} />}
+      {desktop && <FleetSidebar search={fleetSearch} setSearch={setFleetSearch} fleetFilter={fleetFilter} setFleetFilter={setFleetFilter} onOpenPanel={handleOpenPanel} onClosePanel={handleClosePanel} panelDeviceId={panelDeviceId} />}
 
       <div className="flex-1 relative flex flex-col min-w-0">
         {desktop && isSettingsRoute && (
@@ -151,7 +152,7 @@ const App = () => {
           className="flex-1 relative overflow-auto scrollbar-hide"
           style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', zIndex: isGeofenceNew ? 50 : 10 }}
         >
-          <Outlet context={{ demoMode, setDemoMode }} />
+          <Outlet context={{ demoMode, setDemoMode, fleetFilter, setFleetFilter }} />
         </div>
         {!desktop && selectedDeviceId && !isDashboard && (
           <StatusCard

@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { Typography, Tooltip } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import CloseIcon from '@mui/icons-material/Close';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DeviceList from './DeviceList';
@@ -11,14 +11,30 @@ import { useHudTheme } from '../common/util/ThemeContext';
 import { useTenant } from '../common/components/TenantProvider';
 import LogoImage from '../login/LogoImage';
 
-const FleetSidebar = ({ search, setSearch, onOpenPanel, onClosePanel, panelDeviceId }) => {
+const FILTER_LABELS = {
+    online: 'Online',
+    offline: 'Offline',
+    moving: 'Movendo',
+    stopped: 'Parados',
+    nosignal: 'Sem Sinal',
+};
+
+const FleetSidebar = ({ search, setSearch, fleetFilter, setFleetFilter, onOpenPanel, onClosePanel, panelDeviceId }) => {
     const { theme, toggleTheme } = useHudTheme();
     const { tenant } = useTenant() || {};
     const devices = useSelector((state) => state.devices.items);
+    const positions = useSelector((state) => state.session.positions);
 
-    const fleetDevices = React.useMemo(() => Object.values(devices).filter(d =>
-        d.name.toLowerCase().includes(search.toLowerCase())
-    ), [devices, search]);
+    const fleetDevices = React.useMemo(() => {
+        let list = Object.values(devices);
+        if (fleetFilter === 'online') list = list.filter(d => d.status === 'online');
+        else if (fleetFilter === 'offline') list = list.filter(d => d.status === 'offline');
+        else if (fleetFilter === 'nosignal') list = list.filter(d => d.status === 'unknown');
+        else if (fleetFilter === 'moving') list = list.filter(d => (positions[d.id]?.speed ?? 0) > 0);
+        else if (fleetFilter === 'stopped') list = list.filter(d => (positions[d.id]?.speed ?? 0) === 0);
+        if (search) list = list.filter(d => d.name.toLowerCase().includes(search.toLowerCase()));
+        return list;
+    }, [devices, search, fleetFilter, positions]);
 
     return (
         <div
@@ -91,6 +107,24 @@ const FleetSidebar = ({ search, setSearch, onOpenPanel, onClosePanel, panelDevic
                         />
                     </div>
                 </div>
+
+                {/* Active filter chip */}
+                {fleetFilter && (
+                    <div className="flex items-center gap-2 mt-2">
+                        <div
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border"
+                            style={{ background: `${theme.accent}18`, borderColor: `${theme.accent}40`, color: theme.accent }}
+                        >
+                            {FILTER_LABELS[fleetFilter]}
+                            <button type="button" onClick={() => setFleetFilter(null)} className="flex items-center opacity-70 hover:opacity-100 transition-opacity">
+                                <CloseIcon sx={{ fontSize: 11 }} />
+                            </button>
+                        </div>
+                        <span className="text-[10px] font-bold" style={{ color: theme.textMuted }}>
+                            {fleetDevices.length} veículo{fleetDevices.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                )}
             </header>
 
             {/* Lista de Frota */}

@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from '../components/LocalizationProvider';
+import { useTenant } from '../components/TenantProvider';
 import {
   isNotificationSupported,
   getNotificationPermission,
@@ -20,6 +21,7 @@ import useOneSignal from './useOneSignal';
 const useNotifications = () => {
   const t = useTranslation();
   const devices = useSelector((state) => state.devices.items);
+  const { tenant } = useTenant() || {};
   const [permission, setPermission] = useState(getNotificationPermission);
 
   const { sendEventPush: oneSignalSendEventPush, isSubscribed: oneSignalSubscribed, subscribe: oneSignalSubscribe, unsubscribe: oneSignalUnsubscribe } = useOneSignal();
@@ -50,7 +52,7 @@ const useNotifications = () => {
       if (permission !== 'granted') return;
       if (!shouldNotify(event.type)) return;
 
-      const notification = formatEventNotification(event, devices, t);
+      const notification = formatEventNotification(event, devices, t, tenant?.logo_url);
       if (!notification) return;
 
       showNotification(notification.title, {
@@ -61,7 +63,7 @@ const useNotifications = () => {
         requireInteraction: notification.requireInteraction ?? false,
       });
     },
-    [permission, devices, t, oneSignalSendEventPush]
+    [permission, devices, t, tenant, oneSignalSendEventPush]
   );
 
   return {

@@ -42,9 +42,9 @@ export default defineConfig(() => ({
       manifest: {
         id: '/',
         scope: '/',
-        short_name: 'HyperTraccar',
-        name: 'HyperTraccar - Rastreador GPS',
-        description: 'Plataforma de rastreamento veicular em tempo real',
+        short_name: 'Alerta App',
+        name: 'Alerta App',
+        description: 'Alertas de rastreamento veicular em tempo real',
         theme_color: '#0d9488',
         background_color: '#1a1b1e',
         display: 'standalone',

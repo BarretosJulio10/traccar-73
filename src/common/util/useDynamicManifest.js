@@ -27,7 +27,7 @@ const useDynamicManifest = (tenant) => {
   useEffect(() => {
     if (!tenant?.logo_url) return;
 
-    const name = tenant.company_name || 'HyperTraccar';
+    const name = tenant.company_name || 'Alerta App';
     const shortName = name.length > 12 ? `${name.slice(0, 11)}…` : name;
     const slug = tenant.slug || '';
 

@@ -60,7 +60,7 @@ const ALARM_LABELS = {
  * @param {Function} t     - Translation function (kept for compatibility)
  * @returns {{ title, body, icon, tag, data, requireInteraction }|null}
  */
-export const formatEventNotification = (event, devices, t) => {
+export const formatEventNotification = (event, devices, t, tenantIconUrl) => {
   if (!event || !event.type) return null;
 
   const config = EVENT_CONFIG[event.type];
@@ -105,7 +105,7 @@ export const formatEventNotification = (event, devices, t) => {
   return {
     title,
     body,
-    icon: '/pwa-192x192.png',
+    icon: tenantIconUrl || '/pwa-192x192.png',
     tag: `traccar-event-${event.id}`,
     requireInteraction: config.requireInteraction,
     data: {

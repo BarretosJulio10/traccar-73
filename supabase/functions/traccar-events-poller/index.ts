@@ -66,9 +66,13 @@ function formatEvent(event: any, deviceName: string): { title: string; body: str
 }
 
 serve(async (req) => {
-  // Valida segredo do cron
-  const secret = req.headers.get('x-cron-secret');
-  if (!secret || secret !== CRON_SECRET) {
+  // Aceita x-cron-secret OU Authorization: Bearer <SERVICE_ROLE_KEY>
+  const cronSecret = req.headers.get('x-cron-secret');
+  const authHeader = req.headers.get('authorization') ?? '';
+  const isServiceRole = authHeader === `Bearer ${SERVICE_ROLE_KEY}`;
+  const isCron = CRON_SECRET && cronSecret === CRON_SECRET;
+
+  if (!isServiceRole && !isCron) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -162,7 +166,7 @@ serve(async (req) => {
         const deviceName = deviceMap[event.deviceId] ?? `ID ${event.deviceId}`;
         const { title, body } = formatEvent(event, deviceName);
 
-        const pushRes = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+        const pushRes = await fetch(`${SUPABASE_URL}/functions/v1/onesignal-notify`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -170,12 +174,13 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             tenant_id: tenant.slug,
+            event_id: String(event.id),
             title,
             body,
             icon: '/pwa-192x192.png',
-            tag: `traccar-event-${event.id}`,
-            url: '/app',
+            url: `${Deno.env.get('APP_URL') ?? ''}/app`,
             data: { eventId: event.id, deviceId: event.deviceId, type: event.type },
+            require_interaction: ['alarm', 'deviceOverspeed', 'geofenceExit', 'deviceMoving'].includes(event.type),
           }),
         });
 

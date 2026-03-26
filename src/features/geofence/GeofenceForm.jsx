@@ -94,7 +94,7 @@ const GeofenceForm = ({
       </div>
 
       {/* ── Scrollable body ────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-5 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-5">
 
         {/* Existing geofences */}
         <div>
@@ -252,6 +252,21 @@ const GeofenceForm = ({
               />
             </div>
 
+            {/* Vehicle selector */}
+            {showVehicles && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <DirectionsCarIcon sx={{ fontSize: 14, color: theme.accent }} />
+                  <Label theme={theme}>Vincular Veículos</Label>
+                </div>
+                <VehicleSelector
+                  selectedIds={selectedDeviceIds}
+                  onToggle={onToggleDevice}
+                  onSelectAll={onSelectAllDevices}
+                />
+              </div>
+            )}
+
             {/* Description */}
             <div>
               <Label theme={theme}>Descrição (opcional)</Label>
@@ -267,21 +282,6 @@ const GeofenceForm = ({
                 }}
               />
             </div>
-
-            {/* Vehicle selector */}
-            {showVehicles && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <DirectionsCarIcon sx={{ fontSize: 14, color: theme.accent }} />
-                  <Label theme={theme}>Vincular Veículos</Label>
-                </div>
-                <VehicleSelector
-                  selectedIds={selectedDeviceIds}
-                  onToggle={onToggleDevice}
-                  onSelectAll={onSelectAllDevices}
-                />
-              </div>
-            )}
           </>
         )}
       </div>

@@ -335,6 +335,18 @@ const GeofenceScreen = () => {
                     />
                   </div>
 
+                  {/* Vehicles */}
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: theme.textMuted }}>
+                      Vincular Veículos
+                    </p>
+                    <VehicleSelector
+                      selectedIds={geo.selectedDeviceIds}
+                      onToggle={geo.toggleDevice}
+                      onSelectAll={geo.setAllDevices}
+                    />
+                  </div>
+
                   {/* Description */}
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-wider mb-1.5" style={{ color: theme.textMuted }}>
@@ -346,18 +358,6 @@ const GeofenceScreen = () => {
                       placeholder="Observações…"
                       className="w-full px-4 py-3 rounded-2xl border text-sm outline-none"
                       style={{ background: theme.bgCard, borderColor: theme.borderCard, color: theme.textPrimary }}
-                    />
-                  </div>
-
-                  {/* Vehicles */}
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: theme.textMuted }}>
-                      Vincular Veículos
-                    </p>
-                    <VehicleSelector
-                      selectedIds={geo.selectedDeviceIds}
-                      onToggle={geo.toggleDevice}
-                      onSelectAll={geo.setAllDevices}
                     />
                   </div>
 

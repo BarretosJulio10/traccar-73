@@ -42,6 +42,7 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
   // ── Core hooks — toda lógica de negócio vive aqui ─────────────────────────
   const cmd    = useDeviceCommands(item.id);
   const anchor = useAnchorGeofence(item.id);
+  const [pendingLock, setPendingLock] = useState(false);
 
   // Mapeia status do hook para os labels do botão de âncora
   const anchorBtnLabel = {
@@ -253,19 +254,50 @@ const DeviceRow = ({ index, style, ariaAttributes, ...rowProps }) => {
                 </button>
               )}
 
-              {/* Lock button */}
-              <button
-                onClick={(e) => { e.stopPropagation(); cmd.isBlocked ? cmd.unlock() : cmd.lock(); }}
-                disabled={cmd.isPending}
-                className="h-11 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase tracking-[1px] text-[10px] transition-all duration-300 border active:scale-95"
-                style={{ background: lockBg, borderColor: lockBorder, color: lockColor, opacity: cmd.isPending ? 0.6 : 1 }}
-              >
-                {cmd.isPending
-                  ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  : cmd.isBlocked ? <LockOpenIcon sx={{ fontSize: 17 }} /> : <LockIcon sx={{ fontSize: 17 }} />
-                }
-                <span>{cmd.isBlocked ? 'Liberar Veículo' : 'Bloquear Veículo'}</span>
-              </button>
+              {/* Lock button — with inline confirmation */}
+              {pendingLock ? (
+                <div
+                  className="flex flex-col gap-2 p-3 rounded-2xl border"
+                  style={{ background: lockBg, borderColor: lockBorder }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center gap-2">
+                    {cmd.isBlocked ? <LockOpenIcon sx={{ fontSize: 14, color: lockColor }} /> : <LockIcon sx={{ fontSize: 14, color: lockColor }} />}
+                    <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: lockColor }}>
+                      Confirmar {cmd.isBlocked ? 'Liberar' : 'Bloquear'} veículo?
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPendingLock(false); }}
+                      className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all active:scale-95"
+                      style={{ background: theme.bgCard, borderColor: theme.borderCard, color: theme.textMuted }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPendingLock(false); cmd.isBlocked ? cmd.unlock() : cmd.lock(); }}
+                      className="flex-1 h-9 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all active:scale-95"
+                      style={{ background: theme.bgCard, borderColor: lockBorder, color: lockColor }}
+                    >
+                      Confirmar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setPendingLock(true); }}
+                  disabled={cmd.isPending}
+                  className="h-11 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase tracking-[1px] text-[10px] transition-all duration-300 border active:scale-95"
+                  style={{ background: lockBg, borderColor: lockBorder, color: lockColor, opacity: cmd.isPending ? 0.6 : 1 }}
+                >
+                  {cmd.isPending
+                    ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    : cmd.isBlocked ? <LockOpenIcon sx={{ fontSize: 17 }} /> : <LockIcon sx={{ fontSize: 17 }} />
+                  }
+                  <span>{cmd.isBlocked ? 'Liberar Veículo' : 'Bloquear Veículo'}</span>
+                </button>
+              )}
             </div>
           ) : (
             /* ── Anchor Config Panel ── */

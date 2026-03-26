@@ -25,6 +25,11 @@ import {
   Card,
   CardActionArea,
   CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -131,6 +136,7 @@ const CommandCenterPage = () => {
   const [commandLog, setCommandLog] = useState([]);
   const [loadingLog, setLoadingLog] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [engineConfirmOpen, setEngineConfirmOpen] = useState(false);
 
   // Get protocol info from position
   const devicePosition = selectedDevice ? positions[selectedDevice.id] : null;
@@ -487,7 +493,13 @@ const CommandCenterPage = () => {
             type="button"
             color="primary"
             variant="contained"
-            onClick={handleSend}
+            onClick={() => {
+              if (selectedCommandType === 'engineStop' || selectedCommandType === 'engineResume') {
+                setEngineConfirmOpen(true);
+              } else {
+                handleSend();
+              }
+            }}
             disabled={!validate()}
             startIcon={<SendIcon />}
           >
@@ -564,6 +576,30 @@ const CommandCenterPage = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Engine block/unblock confirmation dialog */}
+      <Dialog open={engineConfirmOpen} onClose={() => setEngineConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1rem' }}>
+          {selectedCommandType === 'engineStop' ? t('commandConfirmBlock') : t('commandConfirmUnblock')}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {selectedCommandType === 'engineStop'
+              ? `Confirmar envio do comando de BLOQUEIO para "${selectedDevice?.name}"?`
+              : `Confirmar envio do comando de DESBLOQUEIO para "${selectedDevice?.name}"?`}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEngineConfirmOpen(false)}>{t('sharedCancel')}</Button>
+          <Button
+            variant="contained"
+            color={selectedCommandType === 'engineStop' ? 'error' : 'success'}
+            onClick={() => { setEngineConfirmOpen(false); handleSend(); }}
+          >
+            {t('sharedConfirm')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageLayout>
   );
 };

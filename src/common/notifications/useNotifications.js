@@ -1,7 +1,7 @@
 /**
  * useNotifications — Hook de notificações do HyperTraccar
  *
- * Combina Web Notifications API (foreground) + Web Push API (background/fechado).
+ * Combina Web Notifications API (foreground) + OneSignal (background/fechado).
  * A permissão NÃO é solicitada automaticamente — requer ação explícita do usuário.
  */
 
@@ -15,18 +15,14 @@ import {
   showNotification,
 } from './notificationManager';
 import { formatEventNotification, shouldNotify } from './notificationEvents';
-import usePushSubscription from './usePushSubscription';
 import useOneSignal from './useOneSignal';
-import { supabase } from '../../integrations/supabase/client';
-import { DEFAULT_TENANT_SLUG } from '../util/constants';
 
 const useNotifications = () => {
   const t = useTranslation();
   const devices = useSelector((state) => state.devices.items);
   const [permission, setPermission] = useState(getNotificationPermission);
 
-  const pushSubscription = usePushSubscription();
-  const { sendEventPush: oneSignalSendEventPush } = useOneSignal();
+  const { sendEventPush: oneSignalSendEventPush, isSubscribed: oneSignalSubscribed, subscribe: oneSignalSubscribe, unsubscribe: oneSignalUnsubscribe } = useOneSignal();
 
   // Sincroniza o estado de permissão com mudanças externas (ex: usuário revoga no sistema)
   useEffect(() => {
@@ -37,22 +33,11 @@ const useNotifications = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Após conceder permissão, inscreve automaticamente no Web Push (se suportado)
-  useEffect(() => {
-    if (permission === 'granted' && pushSubscription.isSupported && !pushSubscription.isSubscribed) {
-      pushSubscription.subscribe();
-    }
-  }, [permission, pushSubscription.isSupported, pushSubscription.isSubscribed]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const requestPermission = useCallback(async () => {
     const result = await requestNotificationPermission();
     setPermission(result);
-    // Se concedida, inscreve no push automaticamente
-    if (result === 'granted' && pushSubscription.isSupported) {
-      await pushSubscription.subscribe();
-    }
     return result;
-  }, [pushSubscription]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const sendEventNotification = useCallback(
     (event) => {
@@ -61,14 +46,13 @@ const useNotifications = () => {
       // NÃO deve depender da permissão do browser do device que está fazendo polling.
       oneSignalSendEventPush(event);
 
-      // ── Notificações locais: apenas se este device tem permissão ────────────
+      // ── Notificação local: apenas se este device tem permissão ────────────
       if (permission !== 'granted') return;
       if (!shouldNotify(event.type)) return;
 
       const notification = formatEventNotification(event, devices, t);
       if (!notification) return;
 
-      // 1. Notificação local (funciona com app aberto — PC e mobile)
       showNotification(notification.title, {
         body: notification.body,
         icon: notification.icon,
@@ -76,21 +60,6 @@ const useNotifications = () => {
         data: notification.data,
         requireInteraction: notification.requireInteraction ?? false,
       });
-
-      // 2. Push VAPID legado (mantido em paralelo durante migração)
-      const tenantId = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
-      supabase.functions.invoke('send-push', {
-        body: {
-          tenant_id: tenantId,
-          title: notification.title,
-          body: notification.body,
-          icon: notification.icon,
-          tag: notification.tag,
-          url: '/app',
-          data: notification.data,
-          requireInteraction: notification.requireInteraction ?? false,
-        },
-      }).catch(() => {});
     },
     [permission, devices, t, oneSignalSendEventPush]
   );
@@ -100,7 +69,9 @@ const useNotifications = () => {
     permission,
     requestPermission,
     sendEventNotification,
-    pushSubscription,
+    oneSignalSubscribed,
+    oneSignalSubscribe,
+    oneSignalUnsubscribe,
   };
 };
 

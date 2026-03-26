@@ -1,8 +1,6 @@
 /**
  * useOneSignal — Sistema de push via OneSignal (migração paralela)
  *
- * Roda em PARALELO com o sistema VAPID existente.
- * Não substitui, não quebra. Quando validado, basta desativar o send-push antigo.
  *
  * Requisitos para ativar:
  *   .env:  VITE_ONESIGNAL_APP_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -177,7 +175,6 @@ const useOneSignal = () => {
   }, []);
 
   // ── Enviar notificação de evento via Edge Function ─────────────────────────
-  // Chamado pelo useNotifications em paralelo ao sistema VAPID existente.
   // Usa idempotency_key (tenant_id + event_id) para evitar duplicatas quando
   // múltiplos usuários estão online e acionam a Edge Function simultaneamente.
   const sendEventPush = useCallback((event) => {

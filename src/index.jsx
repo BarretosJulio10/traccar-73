@@ -26,7 +26,6 @@ registerSW({
     console.log('[PWA] App pronto para uso offline.');
   },
   onRegistered(swRegistration) {
-    // Disponibiliza o SW registration globalmente para o usePushSubscription
     if (swRegistration) {
       window.__swRegistration = swRegistration;
       console.log('[PWA] Service Worker registrado com sucesso.');

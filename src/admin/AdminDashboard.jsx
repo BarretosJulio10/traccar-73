@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { supabase } from '../integrations/supabase/client';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import WhatsAppTab from './whatsapp/WhatsAppTab';
 
 const AdminDashboard = () => {
   const t = useTranslation();
@@ -105,8 +104,6 @@ const AdminDashboard = () => {
           company_name: tenant.company_name,
           color_primary: tenant.color_primary,
           color_secondary: tenant.color_secondary,
-          whatsapp_number: tenant.whatsapp_number,
-          whatsapp_message: tenant.whatsapp_message,
           logo_url: tenant.logo_url,
           custom_domain: tenant.custom_domain,
           traccar_url: tenant.traccar_url,
@@ -285,7 +282,6 @@ const AdminDashboard = () => {
     { id: 'pwa', label: `🎨 ${t('adminCustomize')}` },
     { id: 'interface', label: '🖥️ Interface' },
     { id: 'link', label: `🔗 ${t('adminAppLink')}` },
-    { id: 'whatsapp', label: t('whatsappTab') },
     { id: 'plan', label: `📋 ${t('adminPlan')}` },
     { id: 'stats', label: `📊 ${t('adminStatistics')}` },
   ];
@@ -541,42 +537,6 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                {/* WhatsApp */}
-                <div style={cardStyle}>
-                  <h3
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 700,
-                      color: '#fff',
-                      margin: '0 0 20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    💬 WhatsApp
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div>
-                      <label style={labelStyle}>{t('adminWhatsappNumber')}</label>
-                      <input
-                        value={tenant?.whatsapp_number || ''}
-                        onChange={(e) => updateField('whatsapp_number', e.target.value)}
-                        placeholder="5511999999999"
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>{t('adminDefaultMessage')}</label>
-                      <input
-                        value={tenant?.whatsapp_message || ''}
-                        onChange={(e) => updateField('whatsapp_message', e.target.value)}
-                        placeholder={t('adminWhatsappPlaceholder')}
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Right Column */}
@@ -1462,9 +1422,6 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
-
-        {/* WhatsApp Tab */}
-        {activeTab === 'whatsapp' && <WhatsAppTab t={t} />}
 
         {/* Stats Tab */}
         {activeTab === 'stats' && (

@@ -173,7 +173,7 @@ const App = () => {
           </div>
         )}
         {desktop && (
-          <div className="fixed bottom-6 z-[100] -translate-x-1/2" style={{ left: 'calc(360px + (100vw - 360px) / 2)' }}>
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100]">
             <BottomMenu />
           </div>
         )}

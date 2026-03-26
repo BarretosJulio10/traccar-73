@@ -14,23 +14,18 @@ import DirectionsCarOutlinedIcon from '@mui/icons-material/DirectionsCarOutlined
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import PaymentOutlinedIcon from '@mui/icons-material/PaymentOutlined';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import DataObjectOutlinedIcon from '@mui/icons-material/DataObjectOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
-import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import MenuItem from '../../common/components/MenuItem';
-import WhatsAppAlertsDialog from '../WhatsAppAlertsDialog';
 
 const SettingsMenu = () => {
   const t = useTranslation();
   const location = useLocation();
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
-
   const readonly = useRestriction('readonly');
   const admin = useAdministrator();
   const manager = useManager();
@@ -163,11 +158,6 @@ const SettingsMenu = () => {
                   icon={<AdminPanelSettingsOutlinedIcon />}
                   selected={location.pathname === '/app/settings/server'}
                 />
-                <MenuItem
-                  title={t('whatsappSettings')}
-                  icon={<WhatsAppIcon />}
-                  onClick={() => setWhatsappOpen(true)}
-                />
               </>
             )}
             <MenuItem
@@ -182,7 +172,6 @@ const SettingsMenu = () => {
           </List>
         </>
       )}
-      <WhatsAppAlertsDialog open={whatsappOpen} onClose={() => setWhatsappOpen(false)} />
     </>
   );
 };

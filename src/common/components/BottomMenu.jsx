@@ -24,7 +24,7 @@ const NavItem = ({ icon, active, onClick, color }) => (
       : 'hover:bg-black/10'
       }`}
   >
-    <div className={`transition-all duration-300 ${active ? 'text-[var(--hud-accent)] drop-shadow-[0_0_8px_rgba(var(--hud-accent-rgb),0.5)] scale-110' : 'text-[var(--hud-text2)]'}`}>
+    <div className={`transition-all duration-300 ${active ? 'text-[var(--hud-accent)] scale-110' : 'text-[var(--hud-text2)]'}`}>
       {icon}
     </div>
   </button>

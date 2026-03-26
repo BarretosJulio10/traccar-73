@@ -18,7 +18,9 @@ import {
   TextField,
   createFilterOptions,
   Collapse,
+  Snackbar,
 } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CachedIcon from '@mui/icons-material/Cached';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -69,6 +71,7 @@ const PreferencesPage = () => {
   const versionServer = useSelector((state) => state.session.server.version);
   const socket = useSelector((state) => state.session.socket);
 
+  const [saved, setSaved] = useState(false);
   const [token, setToken] = useState(null);
   const [tokenExpiration, setTokenExpiration] = useState(
     dayjs().add(1, 'week').locale('en').format('YYYY-MM-DD'),
@@ -100,7 +103,7 @@ const PreferencesPage = () => {
       body: JSON.stringify({ ...user, attributes }),
     });
     dispatch(sessionActions.updateUser(await response.json()));
-    navigate(-1);
+    setSaved(true);
   });
 
   const handleReboot = useCatch(async () => {
@@ -144,15 +147,15 @@ const PreferencesPage = () => {
     <button
       onClick={handleSave}
       className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md border active:scale-95 transition-all duration-300"
-      style={{ background: theme.bgSecondary, borderColor: theme.border, color: theme.accent }}
+      style={{ background: saved ? theme.accent : theme.bgSecondary, borderColor: theme.border, color: saved ? (theme.isDark ? '#000' : '#fff') : theme.accent }}
     >
-      <SaveIcon sx={{ fontSize: 20 }} />
+      {saved ? <CheckIcon sx={{ fontSize: 20 }} /> : <SaveIcon sx={{ fontSize: 20 }} />}
     </button>
   );
 
   return (
     <PwaPageLayout title={t('sharedPreferences')} actions={headerActions}>
-      <div className="flex flex-col pb-32">
+      <div className="flex flex-col pb-8">
         {!readonly && (
           <>
             <NeumorphicSection title={t('mapTitle')} icon={MapIcon} defaultOpen>
@@ -392,26 +395,20 @@ const PreferencesPage = () => {
           </div>
         </NeumorphicSection>
 
-        {/* Action Buttons */}
-        <div className="fixed left-4 right-4 z-40 flex gap-4 pointer-events-none" style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 1rem)' }}>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="pointer-events-auto flex-1 h-14 rounded-[20px] border shadow-lg text-xs font-bold uppercase tracking-widest active:scale-95 transition-all"
-            style={{ background: theme.bgSecondary, borderColor: theme.border, color: theme.textMuted }}
-          >
-            {t('sharedCancel')}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="pointer-events-auto flex-1 h-14 rounded-[20px] shadow-lg font-black uppercase tracking-[2px] text-xs active:scale-95 transition-all"
-            style={{ background: theme.accent, color: theme.isDark ? 'black' : 'white' }}
-          >
-            {t('sharedSave')}
-          </button>
-        </div>
       </div>
+      <Snackbar
+        open={saved}
+        autoHideDuration={2500}
+        onClose={() => setSaved(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        message={
+          <div className="flex items-center gap-2">
+            <CheckIcon sx={{ fontSize: 16, color: theme.accent }} />
+            <span className="text-[12px] font-bold uppercase tracking-widest">Preferências salvas</span>
+          </div>
+        }
+        ContentProps={{ style: { background: theme.bgSecondary, color: theme.textPrimary, borderRadius: 16, border: `1px solid ${theme.border}` } }}
+      />
     </PwaPageLayout>
   );
 };

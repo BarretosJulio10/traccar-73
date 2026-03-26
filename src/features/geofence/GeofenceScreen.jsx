@@ -16,6 +16,8 @@ import { errorsActions, geofencesActions } from '../../store';
 import MapView from '../../map/core/MapView';
 import MapScale from '../../map/MapScale';
 import GeofenceMap from './GeofenceMap';
+import MapGeofence from '../../map/MapGeofence';
+import GeofenceListCrud from './GeofenceListCrud';
 import GeofenceForm from './GeofenceForm';
 import VehicleSelector from './VehicleSelector';
 import useGeofence from './useGeofence';
@@ -120,6 +122,7 @@ const GeofenceScreen = () => {
       {/* ── Map (always full-screen behind panels) ──────────────────────── */}
       <div className="absolute inset-0 z-0">
         <MapView>
+          <MapGeofence />
           <GeofenceMap {...mapProps} onClosePolygon={geo.closePolygon} />
         </MapView>
       </div>
@@ -196,6 +199,14 @@ const GeofenceScreen = () => {
               {/* ── Compact panel (not yet done drawing) ──────────────── */}
               {!geo.isDrawingDone && (
                 <div className="px-5 pb-6 flex flex-col gap-3">
+                  {/* Existing geofences list with CRUD */}
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest mb-1.5" style={{ color: theme.textMuted }}>
+                      Cercas Criadas
+                    </p>
+                    <GeofenceListCrud maxHeight={180} />
+                  </div>
+                  <div className="h-px" style={{ background: theme.border }} />
                   {/* Type tabs */}
                   <div className="grid grid-cols-2 gap-2">
                     {[

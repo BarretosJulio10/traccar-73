@@ -33,6 +33,7 @@ import { useTenant } from '../common/components/TenantProvider';
 import usePwaInstallPrompt from '../common/util/usePwaInstallPrompt';
 import useDevicePermissions from '../common/util/useDevicePermissions';
 import useNotifications from '../common/notifications/useNotifications';
+import useOneSignal from '../common/notifications/useOneSignal';
 
 // ─── Status Chip ─────────────────────────────────────────────────────────────
 const StatusChip = ({ status }) => {
@@ -132,6 +133,7 @@ const InstallPage = () => {
   const { canInstall, isInstalled, promptInstall, isIos, isAndroid, isSamsungBrowser } = usePwaInstallPrompt();
   const { permissions, requestPermission, requestAllPermissions, PERMISSION_TYPES } = useDevicePermissions();
   const { permission: notifPermission, requestPermission: requestNotifPermission, pushSubscription } = useNotifications();
+  const { isSubscribed: oneSignalSubscribed, subscribe: oneSignalSubscribe } = useOneSignal();
 
   const [installing, setInstalling] = useState(false);
   const [installError, setInstallError] = useState(false);
@@ -140,8 +142,9 @@ const InstallPage = () => {
   const allGranted = Object.values(permissions).every((s) => s === 'granted' || s === 'unsupported');
   const isDark = theme.palette.mode === 'dark';
 
-  // Progresso de setup: instalação + notificação + push
-  const steps = [isInstalled, notifPermission === 'granted', pushSubscription.isSubscribed];
+  // Progresso de setup: instalação + permissão + push (VAPID ou OneSignal)
+  const pushActive = pushSubscription.isSubscribed || oneSignalSubscribed;
+  const steps = [isInstalled, notifPermission === 'granted', pushActive];
   const progress = Math.round((steps.filter(Boolean).length / steps.length) * 100);
 
   const handleInstall = async () => {
@@ -160,7 +163,11 @@ const InstallPage = () => {
   const handleEnablePush = async () => {
     setRequestingPush(true);
     try {
+      // 1. Solicita permissão do browser + inscreve no sistema VAPID legado
       await requestNotifPermission();
+      // 2. Inscreve no OneSignal em paralelo (novo sistema primário)
+      const tenantSlug = tenant?.slug || localStorage.getItem('tenantSlug');
+      await oneSignalSubscribe(tenantSlug);
     } finally {
       setRequestingPush(false);
     }
@@ -323,15 +330,16 @@ const InstallPage = () => {
                           Notificações ativadas
                         </Typography>
                       </Box>
-                      {pushSubscription.isSubscribed && (
+                      {(pushSubscription.isSubscribed || oneSignalSubscribed) && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <PushIcon sx={{ color: 'success.main', fontSize: 20 }} />
                           <Typography variant="body2" color="success.main" fontWeight={600}>
                             Push em segundo plano ativo
+                            {oneSignalSubscribed ? ' (OneSignal ✓)' : ''}
                           </Typography>
                         </Box>
                       )}
-                      {!pushSubscription.isSubscribed && pushSubscription.isSupported && (
+                      {!pushSubscription.isSubscribed && !oneSignalSubscribed && pushSubscription.isSupported && (
                         <Typography variant="caption" color="text.secondary">
                           Inscrevendo no push em segundo plano...
                         </Typography>

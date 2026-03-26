@@ -18,6 +18,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PwaPageLayout from '../common/components/PwaPageLayout';
 import { useHudTheme } from '../common/util/ThemeContext';
+import { useTenant } from '../common/components/TenantProvider';
 
 const reports = [
     {
@@ -68,6 +69,8 @@ const ReportsHubPage = () => {
     const navigate = useNavigate();
     const t = useTranslation();
     const { theme } = useHudTheme();
+    const { tenant } = useTenant() || {};
+    const logoUrl = tenant?.logo_url;
     
     const devices = useSelector((state) => state.devices.items);
     const positions = useSelector((state) => state.session.positions);
@@ -135,7 +138,7 @@ const ReportsHubPage = () => {
                 <div className="px-1">
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Módulos de Análise</p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                         {reports.map((report) => (
                             <div
                                 key={report.id}
@@ -174,6 +177,13 @@ const ReportsHubPage = () => {
                         Dica: Use o Mapa de Calor para identificar áreas de maior ociosidade ou tráfego.
                     </p>
                 </div>
+
+                {/* Tenant Logo */}
+                {logoUrl && (
+                    <div className="flex justify-center pt-6" style={{ paddingBottom: 10 }}>
+                        <img src={logoUrl} alt="logo" style={{ maxHeight: 120, maxWidth: '80%', opacity: 0.85, objectFit: 'contain' }} />
+                    </div>
+                )}
             </div>
         </PwaPageLayout>
     );

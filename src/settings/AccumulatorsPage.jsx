@@ -9,6 +9,7 @@ import {
   Container,
   TextField,
   Button,
+  Snackbar,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -31,6 +32,7 @@ const AccumulatorsPage = () => {
   const position = useSelector((state) => state.session.positions[deviceId]);
 
   const [item, setItem] = useState();
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (position) {
@@ -48,7 +50,8 @@ const AccumulatorsPage = () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
     });
-    navigate(-1);
+    setSaved(true);
+    setTimeout(() => navigate(-1), 1200);
   });
 
   return (
@@ -91,6 +94,13 @@ const AccumulatorsPage = () => {
           </div>
         </Container>
       )}
+      <Snackbar
+        open={saved}
+        autoHideDuration={1200}
+        onClose={() => setSaved(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        message="✅ Salvo com sucesso"
+      />
     </PageLayout>
   );
 };

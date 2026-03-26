@@ -16,6 +16,7 @@ import {
 } from './notificationManager';
 import { formatEventNotification, shouldNotify } from './notificationEvents';
 import usePushSubscription from './usePushSubscription';
+import useOneSignal from './useOneSignal';
 import { supabase } from '../../integrations/supabase/client';
 import { DEFAULT_TENANT_SLUG } from '../util/constants';
 
@@ -25,6 +26,7 @@ const useNotifications = () => {
   const [permission, setPermission] = useState(getNotificationPermission);
 
   const pushSubscription = usePushSubscription();
+  const { sendEventPush: oneSignalSendEventPush } = useOneSignal();
 
   // Sincroniza o estado de permissão com mudanças externas (ex: usuário revoga no sistema)
   useEffect(() => {
@@ -71,6 +73,7 @@ const useNotifications = () => {
 
       // 2. Push servidor (entrega para devices com app FECHADO do mesmo tenant)
       const tenantId = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
+      // Sistema legado VAPID (mantido em paralelo durante migração)
       supabase.functions.invoke('send-push', {
         body: {
           tenant_id: tenantId,
@@ -82,9 +85,12 @@ const useNotifications = () => {
           data: notification.data,
           requireInteraction: notification.requireInteraction ?? false,
         },
-      }).catch(() => {}); // não-crítico: notificação local já foi exibida
+      }).catch(() => {});
+
+      // 3. OneSignal push (sistema primário — maior confiabilidade)
+      oneSignalSendEventPush(event);
     },
-    [permission, devices, t]
+    [permission, devices, t, oneSignalSendEventPush]
   );
 
   return {

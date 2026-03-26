@@ -15,8 +15,6 @@ const FleetSidebar = ({ search, setSearch, onOpenPanel, onClosePanel, panelDevic
     const { theme, toggleTheme } = useHudTheme();
     const { tenant } = useTenant() || {};
     const devices = useSelector((state) => state.devices.items);
-    const onlineCount = Object.values(devices).filter(d => d.status === 'online').length;
-    const totalCount = Object.keys(devices).length;
 
     const fleetDevices = React.useMemo(() => Object.values(devices).filter(d =>
         d.name.toLowerCase().includes(search.toLowerCase())
@@ -38,16 +36,6 @@ const FleetSidebar = ({ search, setSearch, onOpenPanel, onClosePanel, panelDevic
                     className="absolute flex flex-col items-center gap-1"
                     style={{ top: 2, right: 2 }}
                 >
-                    {/* Badge online/total */}
-                    <div
-                        className="rounded-lg px-2 py-1 border"
-                        style={{ background: theme.bg, borderColor: theme.border }}
-                    >
-                        <span className="text-[11px] font-black" style={{ color: theme.accent }}>
-                            {onlineCount}/{totalCount}
-                        </span>
-                    </div>
-
                     {/* Botão Modo Claro/Escuro */}
                     <Tooltip title={theme.isDark ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'} arrow placement="left">
                         <button

@@ -1,4 +1,3 @@
-import { useSelector } from 'react-redux';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FenceIcon from '@mui/icons-material/Fence';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
@@ -11,8 +10,8 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import CloseIcon from '@mui/icons-material/Close';
 import { CircularProgress } from '@mui/material';
 import { useHudTheme } from '../../common/util/ThemeContext';
-import { getGeofenceTheme } from '../../common/util/geofenceTypes';
 import VehicleSelector from './VehicleSelector';
+import GeofenceListCrud from './GeofenceListCrud';
 
 const Label = ({ children, theme }) => (
   <p className="text-[10px] font-black uppercase tracking-wider mb-1.5" style={{ color: theme.textMuted }}>
@@ -33,51 +32,6 @@ const POLY_INSTRUCTIONS = {
   done: 'Polígono definido com sucesso',
 };
 
-const GeofenceList = ({ theme }) => {
-  const items = useSelector((state) => state.geofences.items);
-  const geofences = Object.values(items);
-
-  if (geofences.length === 0) {
-    return (
-      <p className="text-xs py-3 text-center" style={{ color: theme.textMuted }}>
-        Nenhuma cerca criada ainda
-      </p>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto scrollbar-hide">
-      {geofences.map((g) => {
-        const isCircle = typeof g.area === 'string' && g.area.startsWith('CIRCLE');
-        const geoType = g.attributes?.type || 'custom';
-        const { icon: IconComponent, color } = getGeofenceTheme(geoType);
-        return (
-          <div
-            key={g.id}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl border"
-            style={{ background: theme.bgCard, borderColor: theme.borderCard }}
-          >
-            <span
-              className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: `${color}18` }}
-            >
-              <IconComponent sx={{ fontSize: 14, color }} />
-            </span>
-            <span className="flex-1 min-w-0 text-xs font-semibold truncate" style={{ color: theme.textPrimary }}>
-              {g.name}
-            </span>
-            <span
-              className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-lg flex-shrink-0"
-              style={{ background: `${theme.accent}15`, color: theme.accent }}
-            >
-              {isCircle ? 'Circular' : 'Polígono'}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
 
 const GeofenceForm = ({
   onBack,
@@ -145,7 +99,7 @@ const GeofenceForm = ({
         {/* Existing geofences */}
         <div>
           <Label theme={theme}>Cercas Criadas</Label>
-          <GeofenceList theme={theme} />
+          <GeofenceListCrud />
         </div>
 
         {/* Divider */}

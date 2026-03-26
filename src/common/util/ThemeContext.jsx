@@ -12,7 +12,7 @@ export const THEMES = {
         borderCard: 'rgba(255,255,255,0.06)',
         textPrimary: '#ffffff',
         textSecondary: '#a1a1aa',
-        textMuted: '#52525b',
+        textMuted: '#94a3b8',
         accent: '#39ff14', // Neon Green
         accentSecondary: '#00e5ff', // Cyber Blue
         accentRgb: '57, 255, 20',

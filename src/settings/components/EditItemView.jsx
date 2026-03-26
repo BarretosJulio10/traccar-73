@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import SaveIcon from '@mui/icons-material/Save';
+import CheckIcon from '@mui/icons-material/Check';
+import { Snackbar } from '@mui/material';
 import { useCatch, useEffectAsync } from '../../reactHelper';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import PwaPageLayout from '../../common/components/PwaPageLayout';
@@ -24,6 +26,7 @@ const EditItemView = ({
   const { theme } = useHudTheme();
   const tenantCtx = useTenant();
   const logoUrl = tenantCtx?.tenant?.logo_url;
+  const [saved, setSaved] = useState(false);
 
   useEffectAsync(async () => {
     if (!item) {
@@ -51,28 +54,31 @@ const EditItemView = ({
     if (onItemSaved) {
       onItemSaved(await response.json());
     }
-    navigate(-1);
+    setSaved(true);
+    setTimeout(() => navigate(-1), 1200);
   });
+
+  const isDisabled = !item || (validate && !validate());
 
   const headerActions = (
     <button
       onClick={handleSave}
-      disabled={!item || (validate && !validate())}
-      className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all duration-300 ${!item || (validate && !validate()) ? 'opacity-20' : 'opacity-100'}`}
-      style={{ 
-        background: theme.bgSecondary, 
+      disabled={isDisabled}
+      className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all duration-300 ${isDisabled ? 'opacity-20' : 'opacity-100'}`}
+      style={{
+        background: saved ? theme.accent : theme.bgSecondary,
         borderColor: theme.border,
-        color: theme.accent,
-        boxShadow: `0 4px 12px ${theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)'}`
+        color: saved ? (theme.isDark ? '#000' : '#fff') : theme.accent,
+        boxShadow: `0 4px 12px ${theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)'}`,
       }}
     >
-      <SaveIcon sx={{ fontSize: 20 }} />
+      {saved ? <CheckIcon sx={{ fontSize: 20 }} /> : <SaveIcon sx={{ fontSize: 20 }} />}
     </button>
   );
 
   return (
     <PwaPageLayout title={title || t('sharedEdit')} actions={headerActions}>
-      <div className="flex flex-col pb-8">
+      <div className="flex flex-col min-h-full pb-8">
         {item ? (
           children
         ) : (
@@ -84,11 +90,25 @@ const EditItemView = ({
         )}
 
         {logoUrl && (
-          <div className="flex justify-center pt-10 pb-4">
-            <img src={logoUrl} alt="logo" style={{ maxHeight: 48, maxWidth: '60%', opacity: 0.5, objectFit: 'contain' }} />
+          <div className="mt-auto flex justify-center pt-6" style={{ paddingBottom: 10 }}>
+            <img src={logoUrl} alt="logo" style={{ maxHeight: 120, maxWidth: '80%', opacity: 0.85, objectFit: 'contain' }} />
           </div>
         )}
       </div>
+
+      <Snackbar
+        open={saved}
+        autoHideDuration={1200}
+        onClose={() => setSaved(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        message={
+          <div className="flex items-center gap-2">
+            <CheckIcon sx={{ fontSize: 16, color: theme.accent }} />
+            <span className="text-[12px] font-bold uppercase tracking-widest">Salvo com sucesso</span>
+          </div>
+        }
+        ContentProps={{ style: { background: theme.bgSecondary, color: theme.textPrimary, borderRadius: 16, border: `1px solid ${theme.border}` } }}
+      />
     </PwaPageLayout>
   );
 };

@@ -14,6 +14,7 @@ import {
   Select,
   MenuItem,
   FormGroup,
+  Snackbar,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useNavigate } from 'react-router-dom';
@@ -47,6 +48,7 @@ const ServerPage = () => {
 
   const original = useSelector((state) => state.session.server);
   const [item, setItem] = useState({ ...original });
+  const [saved, setSaved] = useState(false);
 
   const handleFileChange = useCatch(async (newFile) => {
     if (newFile) {
@@ -64,7 +66,8 @@ const ServerPage = () => {
       body: JSON.stringify(item),
     });
     dispatch(sessionActions.updateServer(await response.json()));
-    navigate(-1);
+    setSaved(true);
+    setTimeout(() => navigate(-1), 1200);
   });
 
   return (
@@ -363,6 +366,13 @@ const ServerPage = () => {
           </Button>
         </div>
       </Container>
+      <Snackbar
+        open={saved}
+        autoHideDuration={1200}
+        onClose={() => setSaved(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        message="✅ Salvo com sucesso"
+      />
     </PageLayout>
   );
 };

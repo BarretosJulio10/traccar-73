@@ -36,6 +36,8 @@ export default defineConfig(() => ({
       injectManifest: {
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,woff,woff2,mp3}'],
+        // OneSignal SW deve ser servido como arquivo estático, não precacheado
+        globIgnores: ['**/OneSignalSDKWorker.js'],
       },
       manifest: {
         id: '/',

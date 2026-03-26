@@ -17,10 +17,8 @@ import MapPositions from '../map/MapPositions';
 import MapOverlay from '../map/overlay/MapOverlay';
 import MapScale from '../map/MapScale';
 import MapNotification from '../map/notification/MapNotification';
-import MapWhatsApp from '../map/MapWhatsApp';
 import MapHoverPopup from '../map/MapHoverPopup';
 import useFeatures from '../common/util/useFeatures';
-import { useTenant } from '../common/components/TenantProvider';
 import MapLiveTrailToggle from '../map/main/MapLiveTrailToggle';
 import MapAnchorZones from '../map/main/MapAnchorZones';
 
@@ -34,10 +32,6 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
 
   const features = useFeatures();
 
-  const tenantCtx = useTenant();
-  const whatsappNumber = tenantCtx?.tenant?.whatsapp_number;
-  const whatsappMessage = tenantCtx?.tenant?.whatsapp_message;
-
   const [positionSourceIds, setPositionSourceIds] = useState(null);
 
   const onMarkerClick = useCallback(
@@ -46,13 +40,6 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
     },
     [dispatch],
   );
-
-  const handleWhatsAppClick = useCallback(() => {
-    if (!whatsappNumber) return;
-    const digits = whatsappNumber.replace(/\D/g, '');
-    const msg = whatsappMessage || 'Olá! Preciso de suporte.';
-    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
-  }, [whatsappNumber, whatsappMessage]);
 
   const handleSourceReady = useCallback((sourceIds) => {
     setPositionSourceIds(sourceIds);
@@ -85,7 +72,6 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
       {!features.disableEvents && (
         <MapNotification enabled={eventsAvailable} onClick={onEventsClick} />
       )}
-      <MapWhatsApp onClick={handleWhatsAppClick} />
       {desktop && (
         <MapPadding
           top={8}

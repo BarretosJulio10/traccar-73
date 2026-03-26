@@ -56,6 +56,12 @@ const useNotifications = () => {
 
   const sendEventNotification = useCallback(
     (event) => {
+      // ── OneSignal: SEMPRE dispara, independente da permissão local ──────────
+      // O objetivo do OneSignal é entregar para outros devices (PWA fechado).
+      // NÃO deve depender da permissão do browser do device que está fazendo polling.
+      oneSignalSendEventPush(event);
+
+      // ── Notificações locais: apenas se este device tem permissão ────────────
       if (permission !== 'granted') return;
       if (!shouldNotify(event.type)) return;
 
@@ -71,9 +77,8 @@ const useNotifications = () => {
         requireInteraction: notification.requireInteraction ?? false,
       });
 
-      // 2. Push servidor (entrega para devices com app FECHADO do mesmo tenant)
+      // 2. Push VAPID legado (mantido em paralelo durante migração)
       const tenantId = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
-      // Sistema legado VAPID (mantido em paralelo durante migração)
       supabase.functions.invoke('send-push', {
         body: {
           tenant_id: tenantId,
@@ -86,9 +91,6 @@ const useNotifications = () => {
           requireInteraction: notification.requireInteraction ?? false,
         },
       }).catch(() => {});
-
-      // 3. OneSignal push (sistema primário — maior confiabilidade)
-      oneSignalSendEventPush(event);
     },
     [permission, devices, t, oneSignalSendEventPush]
   );

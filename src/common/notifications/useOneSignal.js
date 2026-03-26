@@ -101,6 +101,21 @@ const useOneSignal = () => {
     });
   }, [appId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Auto-inscrição: se permissão já concedida, inscreve sem precisar clicar ─
+  // Resolve o caso de usuários que já tinham permissão antes do OneSignal ser adicionado.
+  useEffect(() => {
+    if (!osRef.current || !isInitialized) return;
+    if (typeof Notification === 'undefined') return;
+    if (Notification.permission !== 'granted') return;
+    if (osRef.current.User?.PushSubscription?.optedIn) return; // já inscrito
+
+    const tenantSlug = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
+    osRef.current.User.PushSubscription.optIn()
+      .then(() => osRef.current.User.addTag('tenant_id', tenantSlug))
+      .then(() => setIsSubscribed(true))
+      .catch(() => {}); // silencioso — não bloqueia o app
+  }, [isInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Sincronização de tags após autenticação ────────────────────────────────
   // Garante que o usuário tem tenant_id e user_id para filtragem de notificações
   useEffect(() => {

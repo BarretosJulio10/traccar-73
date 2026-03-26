@@ -20,6 +20,13 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
+// Gera UUID determinístico a partir de uma string — OneSignal exige UUID válido
+async function toUUID(input: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  const h = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-${(8+(parseInt(h[16],16)&3)).toString(16)}${h.slice(17,20)}-${h.slice(20,32)}`;
+}
+
 const ONESIGNAL_APP_ID = Deno.env.get('ONESIGNAL_APP_ID') ?? '';
 const ONESIGNAL_REST_API_KEY = Deno.env.get('ONESIGNAL_REST_API_KEY') ?? '';
 const ONESIGNAL_API = 'https://onesignal.com/api/v1/notifications';
@@ -107,8 +114,9 @@ serve(async (req: Request) => {
     }
 
     // Idempotency key: evita duplicatas por 10 minutos
+    // OneSignal exige UUID válido — geramos determinístico a partir de tenant+event
     if (event_id) {
-      payload.idempotency_key = `${tenant_id}-${event_id}`;
+      payload.idempotency_key = await toUUID(`${tenant_id}-${event_id}`);
     }
 
     // ── Chama OneSignal REST API ──────────────────────────────────────────

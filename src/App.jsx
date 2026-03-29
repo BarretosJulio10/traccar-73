@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useMediaQuery, useTheme, SwipeableDrawer } from '@mui/material';
+import { useMediaQuery, useTheme } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useHudTheme } from './common/util/ThemeContext';
 import BottomMenu from './common/components/BottomMenu';
@@ -18,7 +18,6 @@ import fetchOrThrow from './common/util/fetchOrThrow';
 import { apiUrl } from './common/util/apiUrl';
 import MainMap from './main/MainMap';
 import FleetSidebar from './main/FleetSidebar';
-import MapSideMenu from './main/MapSideMenu';
 import VehicleDetailsPanel from './main/VehicleDetailsPanel';
 import StatusCard from './common/components/StatusCard';
 import { devicesActions } from './store';
@@ -46,8 +45,7 @@ const App = () => {
   const { theme: hudTheme } = useHudTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { pathname, search } = location;
+  const { pathname, search } = useLocation();
   const { tenant } = useTenant();
   usePwaInstallTracker(tenant?.id);
 
@@ -55,6 +53,7 @@ const App = () => {
   const isSettingsRoute = pathname.startsWith('/app/settings');
   const isGeofenceNew = pathname.startsWith('/app/geofence/new');
   const isDashboard = pathname === '/app' || pathname === '/app/' || pathname.startsWith('/app/geofence');
+  
   const [demoMode, setDemoModeState] = useState(() => demoService.isActive());
 
   const setDemoMode = useCallback((value) => {
@@ -63,24 +62,25 @@ const App = () => {
     else demoService.disable();
   }, []);
 
-  const newServer = useSelector((state) => state.session.server.newServer);
-  const termsUrl = useSelector((state) => state.session.server.attributes.termsUrl);
+  const server = useSelector((state) => state.session.server);
   const user = useSelector((state) => state.session.user);
+  const attributes = useSelector((state) => state.session.attributes);
+  
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const positions = useSelector((state) => state.session.positions);
   const selectedPosition = positions[selectedDeviceId];
+  
   const [fleetSearch, setFleetSearch] = useState('');
   const [fleetFilter, setFleetFilter] = useState(null);
   const [panelDeviceId, setPanelDeviceId] = useState(null);
 
-  const handleClosePanel = () => {
-    setPanelDeviceId(null);
-  };
-  const handleOpenPanel = (id) => {
-    setPanelDeviceId(id);
-  };
+  const initialized = useMemo(() => {
+    return user !== null && (demoMode || (server !== null && attributes !== null));
+  }, [user, server, attributes, demoMode]);
 
-  // Close VehicleDetailsPanel when the map center-all button is clicked
+  const handleClosePanel = () => setPanelDeviceId(null);
+  const handleOpenPanel = (id) => setPanelDeviceId(id);
+
   useEffect(() => {
     const handler = () => setPanelDeviceId(null);
     window.addEventListener('center-all', handler);
@@ -96,57 +96,55 @@ const App = () => {
     dispatch(sessionActions.updateUser(await response.json()));
   });
 
-  // Health check log while loading
-  useEffect(() => {
-    let interval;
-    if (user === null) {
-      interval = setInterval(() => {
-        console.info('[App] Still initializing... Check if the tracking server is reachable.');
-      }, 5000);
-    }
-    return () => clearInterval(interval);
-  }, [user]);
-
+  // Comprehensive initialization logic
   useEffectAsync(async () => {
-    if (!user && !demoMode) {
-      const tenantSlug = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
-      console.info(`[App] Checking session for tenant: ${tenantSlug}...`);
+    if (!server) return;
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-      try {
+    try {
+      // 1. Session Restoration
+      let currentUser = user;
+      if (!currentUser && !demoMode) {
+        console.info('[App] Checking session...');
         const response = await fetch(apiUrl('/api/session'), {
           headers: {
-            'x-tenant-slug': tenantSlug,
+            'x-tenant-slug': localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG,
             'x-traccar-email': sessionStorage.getItem('traccarEmail') || localStorage.getItem('traccarEmail') || '',
           },
-          signal: controller.signal,
         });
-        clearTimeout(timeoutId);
-
+        
         if (response.ok) {
-          const userData = await response.json();
-          console.info(`[App] Session RESTORED for user: ${userData.email}`);
-          dispatch(sessionActions.updateUser(userData));
+          currentUser = await response.json();
+          console.info(`[App] Session RESTORED for user: ${currentUser.email}`);
+          dispatch(sessionActions.updateUser(currentUser));
         } else {
-          console.warn(`[App] No active session (Status: ${response.status}). Redirecting to auth.`);
-          // Only persist paths inside the app — prevents open redirect after login
+          console.info('[App] No session found. Redirecting to login.');
           const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
           window.sessionStorage.setItem('postLogin', safePath);
-          navigate(newServer ? '/register' : '/login', { replace: true });
+          navigate('/login', { replace: true });
+          return;
         }
-      } catch (err) {
-        clearTimeout(timeoutId);
-        console.error(`[App] CRITICAL Error check session:`, err.message);
-        // On timeout or connection error, return to login instead of hanging
-        const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
-        window.sessionStorage.setItem('postLogin', safePath);
+      }
+
+      // 2. Attributes Loading (only once session is established)
+      if (currentUser && !attributes) {
+        if (!demoMode) {
+          console.info('[App] Loading computed attributes...');
+          const response = await fetchOrThrow('/api/attributes/computed?all=true');
+          const data = await response.json();
+          console.info(`[App] ${data.length} attributes loaded.`);
+          dispatch(sessionActions.updateAttributes(data));
+        } else {
+          dispatch(sessionActions.updateAttributes([]));
+        }
+      }
+    } catch (e) {
+      console.error('[App] Initialization failed:', e);
+      // Fallback to login to avoid hang
+      if (pathname.startsWith('/app')) {
         navigate('/login', { replace: true });
       }
     }
-    return null;
-  }, [demoMode, dispatch, navigate, newServer, pathname, search]);
+  }, [server, user, attributes, demoMode]);
 
   useEffect(() => {
     if (demoMode && !user) {
@@ -154,26 +152,44 @@ const App = () => {
     }
   }, [demoMode, user, dispatch]);
 
-  if (user == null) {
+  // Loading state with clear indicators
+  if (!initialized) {
+    if (user && server && !attributes) {
+      console.info('[App] Waiting for attributes...');
+    } else if (!user) {
+      console.info('[App] Waiting for user session...');
+    }
     return <Loader />;
   }
-  if (termsUrl && !demoMode && !user.attributes.termsAccepted) {
+
+  if (server?.attributes?.termsUrl && !demoMode && !user.attributes.termsAccepted) {
     return <TermsDialog open onCancel={() => navigate('/login')} onAccept={() => acceptTerms()} />;
   }
+
   return (
     <div
       className={`w-screen overflow-hidden flex ${desktop ? 'flex-row' : 'flex-col'} transition-colors duration-500`}
       style={{ height: '100dvh', background: hudTheme.bg }}
     >
+      {/* Logic Controllers */}
       <SocketController demoMode={demoMode} />
       <CachingController demoMode={demoMode} />
       <UpdateController />
       <MotionController demoMode={demoMode} />
       <DemoController active={demoMode} />
 
-      {user === null && <Loader />}
-
-      {desktop && <FleetSidebar search={fleetSearch} setSearch={setFleetSearch} fleetFilter={fleetFilter} setFleetFilter={setFleetFilter} onOpenPanel={handleOpenPanel} onClosePanel={handleClosePanel} panelDeviceId={panelDeviceId} />}
+      {/* Main UI Components */}
+      {desktop && (
+        <FleetSidebar 
+          search={fleetSearch} 
+          setSearch={setFleetSearch} 
+          fleetFilter={fleetFilter} 
+          setFleetFilter={setFleetFilter} 
+          onOpenPanel={handleOpenPanel} 
+          onClosePanel={handleClosePanel} 
+          panelDeviceId={panelDeviceId} 
+        />
+      )}
 
       <div className="flex-1 relative flex flex-col min-w-0">
         {desktop && isSettingsRoute && (
@@ -183,10 +199,15 @@ const App = () => {
         )}
         <div
           className="flex-1 relative overflow-auto scrollbar-hide"
-          style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', zIndex: isGeofenceNew ? 50 : 10 }}
+          style={{ 
+            WebkitOverflowScrolling: 'touch', 
+            overscrollBehaviorY: 'contain', 
+            zIndex: isGeofenceNew ? 50 : 10 
+          }}
         >
           <Outlet context={{ demoMode, setDemoMode, fleetFilter, setFleetFilter }} />
         </div>
+        
         {!desktop && selectedDeviceId && !isDashboard && (
           <StatusCard
             deviceId={selectedDeviceId}
@@ -195,6 +216,7 @@ const App = () => {
             desktopPadding={theme.dimensions.drawerWidthDesktop}
           />
         )}
+        
         {!desktop && (
           <div
             className="px-4 pt-2"
@@ -206,6 +228,7 @@ const App = () => {
             <BottomMenu />
           </div>
         )}
+        
         {desktop && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100]">
             <BottomMenu />
@@ -213,6 +236,7 @@ const App = () => {
         )}
       </div>
 
+      {/* Details Panel (Desktop) */}
       {desktop && panelDeviceId && !isGeofenceNew && (
         <div
           className="w-[420px] h-full backdrop-blur-xl z-20 flex flex-col transition-colors duration-500 overflow-hidden"

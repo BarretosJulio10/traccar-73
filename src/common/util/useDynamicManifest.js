@@ -37,13 +37,17 @@ const useDynamicManifest = (tenant) => {
     updateFavicon(tenant.logo_url);
     updateAppleTouchIcon(tenant.logo_url);
 
+    const origin = window.location.origin;
+
     const manifest = {
       ...BASE_MANIFEST,
+      id: origin + '/',
+      scope: origin + '/',
       name,
       short_name: shortName,
       description: `Rastreamento veicular - ${name}`,
-      // start_url com tenant garante que o PWA abre direto no tenant correto
-      start_url: slug ? `/?source=pwa&tenant=${encodeURIComponent(slug)}` : '/?source=pwa',
+      // start_url com origin absoluto para funcionar em blob-manifests
+      start_url: slug ? `${origin}/?source=pwa&tenant=${encodeURIComponent(slug)}` : `${origin}/?source=pwa`,
       icons: [
         { src: tenant.logo_url, sizes: '192x192', type: 'image/png', purpose: 'any' },
         { src: tenant.logo_url, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },

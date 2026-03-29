@@ -30,4 +30,37 @@ const getSpeedColor = (speed, minSpeed, maxSpeed) => {
   return `rgb(${r}, ${g}, ${b})`;
 };
 
+export const hexToRgb = (hex) => {
+  if (!hex) return null;
+  const h = hex.replace('#', '');
+  if (h.length === 3) {
+    return [
+      parseInt(h[0] + h[0], 16),
+      parseInt(h[1] + h[1], 16),
+      parseInt(h[2] + h[2], 16),
+    ];
+  }
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ];
+};
+
+/**
+ * Returns the best contrast color (Black or White) for a given background,
+ * unless a manual override color is provided.
+ */
+export const getContrastColor = (backgroundHex, manualColor) => {
+  if (manualColor) return manualColor;
+  if (!backgroundHex) return '#0f172a'; // Default dark color if no background
+
+  const rgb = hexToRgb(backgroundHex);
+  if (!rgb) return '#0f172a';
+
+  // YIQ formula for contrast detection
+  const yiq = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+  return yiq >= 128 ? '#0f172a' : '#ffffff';
+};
+
 export default getSpeedColor;

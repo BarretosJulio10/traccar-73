@@ -72,12 +72,13 @@ const LoginLayout = ({ children }) => {
   const bgImage = tenant?.login_bg_image || tenant?.bgImage || tenant?.bg_image;
   const bgColor = tenant?.login_bg_color || tenant?.bgColor || tenant?.bg_color;
   const sidebarColor = tenant?.login_sidebar_color;
+  const manualTextColor = tenant?.login_text_color;
 
   const sidebarBg = sidebarColor || `linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)`;
   const logoColor = theme.palette.primary.main;
 
-  // Determine if sidebar color is dark to adjust text color
-  const isDarkSidebar = sidebarColor && !['#ffffff', '#fff', 'white', '#f8fafc'].includes(sidebarColor.toLowerCase());
+  // Standardize text color for both PC and PWA using robust contrast logic
+  const textColor = getContrastColor(sidebarColor, manualTextColor);
 
   const contentStyle = {};
   if (bgImage) {
@@ -101,7 +102,8 @@ const LoginLayout = ({ children }) => {
           <LogoImage color={logoColor} />
           <Typography
             sx={{
-              color: isDarkSidebar ? 'rgba(255,255,255,0.8)' : 'text.secondary',
+              color: textColor,
+              opacity: 0.8,
               mt: 1,
               fontWeight: 600,
               fontSize: '0.9rem',

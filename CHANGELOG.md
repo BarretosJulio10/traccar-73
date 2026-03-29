@@ -14,7 +14,9 @@ Formato: [Semantic Versioning](https://semver.org/)
 - **UI: Correção de Cores da Tela de Login (Branding)**
   - **Contexto:** Cores configuradas no painel (Azul/Verde) não apareciam no PWA.
   - **Correção:** Mapeamento correto dos campos `login_bg_color`, `login_bg_image` e `login_sidebar_color` no `LoginLayout.jsx`.
-  - **UX:** Adicionado ajuste automático de contraste para o texto da sidebar caso a cor de fundo seja escura.
+  - **Contraste Automático:** Implementado algoritmo YIQ para garantir que o texto seja sempre legível (Branco no Escuro / Slate no Claro), eliminando a diferença entre PC e PWA.
+  - **Configuração no DB:** Adicionada coluna `login_text_color` na tabela `tenants` para permitir personalização manual futura.
+  - **Padronização:** Aplicado em Login, Registro e Redefinição de Senha.
 - **Core: Timeouts Globais no `fetchOrThrow.js`**
   - **Melhoria:** Adicionado timeout padrão de 30 segundos para todas as requisições da API para evitar esperas indefinidas em redes instáveis.
   - **Tradução:** Mensagens de erro de timeout aprimoradas para o português.

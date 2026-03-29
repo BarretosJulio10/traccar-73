@@ -11,6 +11,8 @@ import { sessionActions } from '../store';
 import BackIcon from '../common/components/BackIcon';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { lightInputSx } from './loginStyles';
+import { useTenant } from '../common/components/TenantProvider';
+import { getContrastColor } from '../common/util/colors';
 
 const useStyles = makeStyles()((theme) => ({
   container: {
@@ -38,6 +40,12 @@ const RegisterPage = () => {
 
   const server = useSelector((state) => state.session.server);
   const totpForce = useSelector((state) => state.session.server.attributes.totpForce);
+
+  const tenantCtx = useTenant();
+  const tenant = tenantCtx?.tenant;
+  const sidebarColor = tenant?.login_sidebar_color;
+  const manualTextColor = tenant?.login_text_color;
+  const textColor = getContrastColor(sidebarColor, manualTextColor);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -67,11 +75,11 @@ const RegisterPage = () => {
       <div className={classes.container}>
         <div className={classes.header}>
           {!server.newServer && (
-            <IconButton color="primary" onClick={() => navigate('/login')} sx={{ color: '#fff' }}>
+            <IconButton onClick={() => navigate('/login')} sx={{ color: textColor }}>
               <BackIcon />
             </IconButton>
           )}
-          <Typography className={classes.title} sx={{ color: '#fff' }}>
+          <Typography className={classes.title} sx={{ color: textColor }}>
             {t('loginRegister')}
           </Typography>
         </div>
@@ -128,15 +136,15 @@ const RegisterPage = () => {
           disabled={!name || !password || !(server.newServer || /(.+)@(.+)\.(.{2,})/.test(email))}
           fullWidth
           sx={{
-            bgcolor: '#fff',
-            color: '#1e293b',
+            bgcolor: textColor === '#ffffff' ? '#ffffff' : 'primary.main',
+            color: textColor === '#ffffff' ? '#1e293b' : '#ffffff',
             py: 1.2,
             fontSize: '0.875rem',
             fontWeight: 700,
             borderRadius: '12px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
             '&:hover': {
-              bgcolor: '#f1f5f9',
+              bgcolor: textColor === '#ffffff' ? '#f1f5f9' : 'primary.dark',
             },
             '&.Mui-disabled': {
               color: '#94a3b8',

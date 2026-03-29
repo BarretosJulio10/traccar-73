@@ -46,6 +46,8 @@ import useDevicePermissions from '../common/util/useDevicePermissions';
 import { auditLog } from '../common/util/audit';
 import { demoService } from '../core/services';
 import { useHudTheme } from '../common/util/ThemeContext';
+import { getContrastColor } from '../common/util/colors';
+import { useTenant } from '../common/components/TenantProvider';
 
 const useStyles = makeStyles()((theme) => ({
   options: {
@@ -101,6 +103,12 @@ const LoginPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { canInstall, isInstalled, promptInstall } = usePwaInstallPrompt();
   const { requestAllPermissions } = useDevicePermissions();
+  const tenantCtx = useTenant();
+  const tenant = tenantCtx?.tenant;
+
+  const sidebarColor = tenant?.login_sidebar_color;
+  const manualTextColor = tenant?.login_text_color;
+  const textColor = getContrastColor(sidebarColor, manualTextColor);
 
   const { languages, language, setLocalLanguage } = useLocalization();
   const languageList = Object.entries(languages).map((values) => ({
@@ -288,7 +296,7 @@ const LoginPage = () => {
       <div className={classes.options}>
         {nativeEnvironment && changeEnabled && (
           <IconButton
-            sx={{ color: 'text.secondary' }}
+            sx={{ color: textColor, opacity: 0.7 }}
             onClick={() => navigate('/change-server')}
           >
             <Tooltip
@@ -301,7 +309,7 @@ const LoginPage = () => {
           </IconButton>
         )}
         {!nativeEnvironment && (
-          <IconButton sx={{ color: 'text.secondary' }} onClick={() => setShowQr(true)}>
+          <IconButton sx={{ color: textColor, opacity: 0.7 }} onClick={() => setShowQr(true)}>
             <QrCode2Icon />
           </IconButton>
         )}
@@ -311,15 +319,15 @@ const LoginPage = () => {
               value={language}
               onChange={(e) => setLocalLanguage(e.target.value)}
               sx={{
-                color: 'text.primary',
-                bgcolor: 'rgba(0,0,0,0.03)',
+                color: textColor,
+                bgcolor: textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.03)',
                 borderRadius: '12px',
                 fontWeight: 600,
-                '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0,0,0,0.08)' },
+                '.MuiOutlinedInput-notchedOutline': { borderColor: textColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)' },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
                   borderColor: 'primary.main',
                 },
-                '.MuiSvgIcon-root': { color: 'text.secondary' },
+                '.MuiSvgIcon-root': { color: textColor, opacity: 0.6 },
               }}
             >
               {languageList.map((it) => (
@@ -336,10 +344,10 @@ const LoginPage = () => {
       </div>
       <div className={classes.container}>
         <Box sx={{ mb: 2 }}>
-          <Typography sx={{ fontWeight: 900, fontSize: '1.75rem', color: 'text.primary', letterSpacing: '-0.02em', mb: 0.5 }}>
+          <Typography sx={{ fontWeight: 900, fontSize: '1.75rem', color: textColor, letterSpacing: '-0.02em', mb: 0.5 }}>
             {t('loginLogin')}
           </Typography>
-          <Typography sx={{ color: 'text.secondary', fontWeight: 500, fontSize: '0.875rem' }}>
+          <Typography sx={{ color: textColor, opacity: 0.6, fontWeight: 500, fontSize: '0.875rem' }}>
             {t('loginCredentialsSubtitle')}
           </Typography>
         </Box>
@@ -432,9 +440,10 @@ const LoginPage = () => {
           type="button"
           sx={{
             py: 1,
-            color: 'text.secondary',
+            color: textColor,
+            opacity: 0.7,
             fontWeight: 700,
-            '&:hover': { color: 'primary.main' },
+            '&:hover': { color: 'primary.main', opacity: 1 },
           }}
         >
           {t('loginDemoButton')}
@@ -449,8 +458,9 @@ const LoginPage = () => {
                 variant="caption"
                 sx={{
                   fontWeight: 600,
-                  color: 'primary.main',
-                  '&:hover': { textDecoration: 'underline' },
+                  color: textColor,
+                  opacity: 0.8,
+                  '&:hover': { textDecoration: 'underline', opacity: 1 },
                 }}
               >
                 {t('loginRegister')}
@@ -464,8 +474,9 @@ const LoginPage = () => {
                 variant="caption"
                 sx={{
                   fontWeight: 600,
-                  color: 'text.secondary',
-                  '&:hover': { color: 'text.primary' },
+                  color: textColor,
+                  opacity: 0.6,
+                  '&:hover': { color: textColor, opacity: 1 },
                 }}
               >
                 {t('loginReset')}

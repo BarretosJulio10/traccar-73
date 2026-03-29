@@ -97,16 +97,22 @@ const App = () => {
     dispatch(sessionActions.updateUser(updatedUser));
   });
 
-  // Consolidate initialization logic
+  // Atomic initialization state to prevent re-entry/races
+  const initCompletedRef = useRef(false);
+
   useEffectAsync(async () => {
     if (!server || initializingRef.current) return;
     
-    // If URL has token, Navigation.jsx will handle it. Skip App restoration to avoid race.
+    // Safety: If already fully initialized and dependencies change, don't restart entire flow
+    const fullyInitialized = user !== null && (demoMode || attributes !== null);
+    if (fullyInitialized && initCompletedRef.current) return;
+
     const hasToken = new URLSearchParams(search).has('token');
     if (hasToken && !user) return;
 
     try {
       initializingRef.current = true;
+      console.info(`[App] Initializing. State: user=${user?.email || 'null'}, attributes=${attributes ? 'loaded' : 'null'}`);
       
       // 1. Session Restoration
       let currentUser = user;
@@ -117,6 +123,13 @@ const App = () => {
         if (response.ok) {
           currentUser = await response.json();
           console.info(`[App] Session RESTORED for user: ${currentUser.email}`);
+          
+          // CRITICAL: Ensure email is stored so subsequent fetchOrThrow calls have it
+          if (currentUser.email) {
+            sessionStorage.setItem('traccarEmail', currentUser.email);
+            localStorage.setItem('traccarEmail', currentUser.email);
+          }
+          
           dispatch(sessionActions.updateUser(currentUser));
         } else {
           console.info('[App] No session found. Redirecting to login.');
@@ -134,8 +147,8 @@ const App = () => {
           console.info('[App] Loading computed attributes...');
           try {
             const data = await traccarSessionAdapter.fetchComputedAttributes();
-            console.info(`[App] ${data.length} attributes loaded.`);
-            dispatch(sessionActions.updateAttributes(data));
+            console.info(`[App] ${data?.length || 0} attributes loaded.`);
+            dispatch(sessionActions.updateAttributes(data || []));
           } catch (e) {
             console.warn('[App] Attributes fetch failed, using empty array.');
             dispatch(sessionActions.updateAttributes([]));
@@ -144,9 +157,15 @@ const App = () => {
           dispatch(sessionActions.updateAttributes([]));
         }
       }
+
+      // Mark as completed if we reached this far with a user
+      if (currentUser) {
+        initCompletedRef.current = true;
+      }
     } catch (e) {
-      console.error('[App] Initialization error:', e);
-      if (pathname.startsWith('/app')) {
+      console.error('[App] Critical initialization error:', e);
+      // Only redirect on actual auth/network failure, not attribute failure
+      if (pathname.startsWith('/app') && !user) {
         navigate('/login', { replace: true });
       }
     } finally {

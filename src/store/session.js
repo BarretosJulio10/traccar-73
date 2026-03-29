@@ -6,6 +6,7 @@ const { reducer, actions } = createSlice({
     server: { attributes: {} },
 
     user: null,
+    attributes: null,
     socket: null,
     includeLogs: false,
     logs: [],
@@ -18,6 +19,9 @@ const { reducer, actions } = createSlice({
     },
     updateUser(state, action) {
       state.user = action.payload;
+    },
+    updateAttributes(state, action) {
+      state.attributes = action.payload;
     },
     updateSocket(state, action) {
       state.socket = action.payload;

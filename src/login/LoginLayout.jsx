@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import LogoImage from './LogoImage';
 import { useTenant } from '../common/components/TenantProvider';
 import { useTranslation } from '../common/components/LocalizationProvider';
+import { getContrastColor } from '../common/util/colors';
 
 const useStyles = makeStyles()((theme) => ({
   root: {

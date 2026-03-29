@@ -61,7 +61,8 @@ const App = () => {
     if (value) demoService.enable();
     else demoService.disable();
   }, []);
-
+  
+  const initializingRef = useRef(false);
   const server = useSelector((state) => state.session.server);
   const user = useSelector((state) => state.session.user);
   const attributes = useSelector((state) => state.session.attributes);
@@ -96,15 +97,21 @@ const App = () => {
     dispatch(sessionActions.updateUser(await response.json()));
   });
 
-  // Comprehensive initialization logic
+  // Consolidate initialization logic
   useEffectAsync(async () => {
-    if (!server) return;
+    if (!server || initializingRef.current) return;
+    
+    // If URL has token, Navigation.jsx will handle it. Skip App restoration to avoid race.
+    const hasToken = new URLSearchParams(search).has('token');
+    if (hasToken && !user) return;
 
     try {
+      initializingRef.current = true;
+      
       // 1. Session Restoration
       let currentUser = user;
       if (!currentUser && !demoMode) {
-        console.info('[App] Checking session...');
+        console.info('[App] Checking session status...');
         const response = await fetch(apiUrl('/api/session'), {
           headers: {
             'x-tenant-slug': localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG,
@@ -121,28 +128,35 @@ const App = () => {
           const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
           window.sessionStorage.setItem('postLogin', safePath);
           navigate('/login', { replace: true });
+          initializingRef.current = false;
           return;
         }
       }
 
-      // 2. Attributes Loading (only once session is established)
-      if (currentUser && !attributes) {
+      // 2. Attributes Loading
+      if (currentUser && attributes === null) {
         if (!demoMode) {
           console.info('[App] Loading computed attributes...');
-          const response = await fetchOrThrow('/api/attributes/computed?all=true');
-          const data = await response.json();
-          console.info(`[App] ${data.length} attributes loaded.`);
-          dispatch(sessionActions.updateAttributes(data));
+          try {
+            const response = await fetchOrThrow('/api/attributes/computed?all=true');
+            const data = await response.json();
+            console.info(`[App] ${data.length} attributes loaded.`);
+            dispatch(sessionActions.updateAttributes(data));
+          } catch (e) {
+            console.warn('[App] Attributes fetch failed, using empty array.');
+            dispatch(sessionActions.updateAttributes([]));
+          }
         } else {
           dispatch(sessionActions.updateAttributes([]));
         }
       }
     } catch (e) {
-      console.error('[App] Initialization failed:', e);
-      // Fallback to login to avoid hang
+      console.error('[App] Initialization error:', e);
       if (pathname.startsWith('/app')) {
         navigate('/login', { replace: true });
       }
+    } finally {
+      initializingRef.current = false;
     }
   }, [server, user, attributes, demoMode]);
 

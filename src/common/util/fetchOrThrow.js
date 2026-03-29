@@ -202,7 +202,7 @@ const fetchOrThrow = async (input, init) => {
     if (response.status === 401) {
       if (!isDemo) {
         const loginPath = '/login';
-        if (window.location.pathname !== loginPath) {
+        if (window.location.pathname !== loginPath && !window.location.pathname.includes('login')) {
           window.sessionStorage.setItem('sessionExpired', 'true');
           window.location.href = loginPath;
         }

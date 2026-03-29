@@ -69,11 +69,15 @@ const LoginLayout = ({ children }) => {
   const t = useTranslation();
   const tenantCtx = useTenant();
   const tenant = tenantCtx?.tenant;
-  const bgImage = tenant?.bgImage || tenant?.bg_image;
-  const bgColor = tenant?.bgColor || tenant?.bg_color;
+  const bgImage = tenant?.login_bg_image || tenant?.bgImage || tenant?.bg_image;
+  const bgColor = tenant?.login_bg_color || tenant?.bgColor || tenant?.bg_color;
+  const sidebarColor = tenant?.login_sidebar_color;
 
-  const sidebarBg = `linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)`;
+  const sidebarBg = sidebarColor || `linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)`;
   const logoColor = theme.palette.primary.main;
+
+  // Determine if sidebar color is dark to adjust text color
+  const isDarkSidebar = sidebarColor && !['#ffffff', '#fff', 'white', '#f8fafc'].includes(sidebarColor.toLowerCase());
 
   const contentStyle = {};
   if (bgImage) {
@@ -97,7 +101,7 @@ const LoginLayout = ({ children }) => {
           <LogoImage color={logoColor} />
           <Typography
             sx={{
-              color: 'text.secondary',
+              color: isDarkSidebar ? 'rgba(255,255,255,0.8)' : 'text.secondary',
               mt: 1,
               fontWeight: 600,
               fontSize: '0.9rem',

@@ -11,6 +11,10 @@ Formato: [Semantic Versioning](https://semver.org/)
   - **Contexto:** Relatos de que o carregamento ficava "infinito" após o login com contas reais.
   - **Correção:** Implementado sistema de **timeout** (15s) no `traccar-proxy` (Edge Function) e nos provedores frontend (`ServerProvider.jsx`, `App.jsx`).
   - **UX:** Caso o servidor de rastreamento demore a responder, o sistema agora exibe uma mensagem de erro clara em vez de travar na tela de carregamento.
+- **UI: Correção de Cores da Tela de Login (Branding)**
+  - **Contexto:** Cores configuradas no painel (Azul/Verde) não apareciam no PWA.
+  - **Correção:** Mapeamento correto dos campos `login_bg_color`, `login_bg_image` e `login_sidebar_color` no `LoginLayout.jsx`.
+  - **UX:** Adicionado ajuste automático de contraste para o texto da sidebar caso a cor de fundo seja escura.
 - **Core: Timeouts Globais no `fetchOrThrow.js`**
   - **Melhoria:** Adicionado timeout padrão de 30 segundos para todas as requisições da API para evitar esperas indefinidas em redes instáveis.
   - **Tradução:** Mensagens de erro de timeout aprimoradas para o português.

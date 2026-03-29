@@ -46,8 +46,9 @@ const App = () => {
   const { theme: hudTheme } = useHudTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { pathname, search } = useLocation();
-  const tenant = useTenant();
+  const location = useLocation();
+  const { pathname, search } = location;
+  const { tenant } = useTenant();
   usePwaInstallTracker(tenant?.id);
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -95,10 +96,21 @@ const App = () => {
     dispatch(sessionActions.updateUser(await response.json()));
   });
 
+  // Health check log while loading
+  useEffect(() => {
+    let interval;
+    if (user === null) {
+      interval = setInterval(() => {
+        console.info('[App] Still initializing... Check if the tracking server is reachable.');
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [user]);
+
   useEffectAsync(async () => {
     if (!user && !demoMode) {
       const tenantSlug = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
-      console.log(`[App] Checking session for tenant: ${tenantSlug}`);
+      console.info(`[App] Checking session for tenant: ${tenantSlug}...`);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
@@ -115,10 +127,10 @@ const App = () => {
 
         if (response.ok) {
           const userData = await response.json();
-          console.log(`[App] Session restored for user: ${userData.email}`);
+          console.info(`[App] Session RESTORED for user: ${userData.email}`);
           dispatch(sessionActions.updateUser(userData));
         } else {
-          console.log(`[App] No active session found. Redirecting to auth.`);
+          console.warn(`[App] No active session (Status: ${response.status}). Redirecting to auth.`);
           // Only persist paths inside the app — prevents open redirect after login
           const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
           window.sessionStorage.setItem('postLogin', safePath);
@@ -126,7 +138,7 @@ const App = () => {
         }
       } catch (err) {
         clearTimeout(timeoutId);
-        console.warn(`[App] Session check failed:`, err.message);
+        console.error(`[App] CRITICAL Error check session:`, err.message);
         // On timeout or connection error, return to login instead of hanging
         const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
         window.sessionStorage.setItem('postLogin', safePath);
@@ -134,7 +146,7 @@ const App = () => {
       }
     }
     return null;
-  }, [demoMode]);
+  }, [demoMode, dispatch, navigate, newServer, pathname, search]);
 
   useEffect(() => {
     if (demoMode && !user) {

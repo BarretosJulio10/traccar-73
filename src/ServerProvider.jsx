@@ -28,7 +28,7 @@ const ServerProvider = ({ children }) => {
   useEffectAsync(async () => {
     if (!error && !isPublicRoute && !demoMode) {
       const tenantSlug = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
-      console.log(`[ServerProvider] Initializing for tenant: ${tenantSlug}`);
+      console.info(`[ServerProvider] Initializing for tenant: ${tenantSlug}`);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
@@ -37,7 +37,7 @@ const ServerProvider = ({ children }) => {
         // Optimized: We no longer fetch tenant metadata here as it is handled by TenantProvider.
         // We proceed directly to fetch Traccar server info via the proxy.
 
-        console.log(`[ServerProvider] Fetching server config via proxy...`);
+        console.info(`[ServerProvider] Fetching server config via proxy...`);
         const response = await fetch(apiUrl('/api/server'), {
           headers: {
             'x-tenant-slug': tenantSlug,
@@ -53,7 +53,7 @@ const ServerProvider = ({ children }) => {
             throw Error('Resposta inválida do servidor (não JSON). Verifique o endereço do servidor Traccar.');
           }
           const serverInfo = await response.json();
-          console.log(`[ServerProvider] Server initialized: ${serverInfo.version || 'unknown'}`);
+          console.info(`[ServerProvider] Server initialized: ${serverInfo.version || 'unknown'}`);
           dispatch(sessionActions.updateServer(serverInfo));
         } else {
           let message;

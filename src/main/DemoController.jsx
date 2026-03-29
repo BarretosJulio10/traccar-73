@@ -359,12 +359,16 @@ const DemoController = ({ active }) => {
     dispatch(resetAll());
   }, [dispatch]);
 
+  const wasActiveRef = useRef(active);
+
   useEffect(() => {
     if (active) {
       injectDemoData();
       intervalRef.current = setInterval(updateMovement, 3000);
-    } else {
+      wasActiveRef.current = true;
+    } else if (wasActiveRef.current) {
       cleanupDemo();
+      wasActiveRef.current = false;
     }
 
     return () => {

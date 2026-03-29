@@ -143,6 +143,7 @@ const SocketController = ({ demoMode }) => {
       const devices = await devicesResponse.json();
       const positions = await positionsResponse.json();
 
+      console.info(`[SocketController] Polling success: ${devices.length} devices, ${positions.length} positions.`);
       dispatch(devicesActions.update(devices));
       dispatch(sessionActions.updatePositions(positions));
       dispatch(sessionActions.updateSocket(true));
@@ -150,6 +151,7 @@ const SocketController = ({ demoMode }) => {
       // Poll events alongside data
       pollEvents();
     } catch (error) {
+      console.warn('[SocketController] Polling failed:', error);
       dispatch(sessionActions.updateSocket(false));
     }
   }, [dispatch, navigate, pollEvents]);
@@ -164,11 +166,15 @@ const SocketController = ({ demoMode }) => {
     if (authenticated && !demoMode) {
       const initialFetch = async () => {
         try {
+          console.info('[SocketController] Running initial fetch...');
           const response = await fetchOrThrow('/api/devices');
-          dispatch(devicesActions.refresh(await response.json()));
+          const devices = await response.json();
+          console.info(`[SocketController] Initial fetch success: ${devices.length} devices.`);
+          dispatch(devicesActions.refresh(devices));
           nativePostMessage('authenticated');
           dispatch(sessionActions.updateSocket(true));
         } catch (error) {
+          console.warn('[SocketController] Initial fetch failed:', error);
           dispatch(sessionActions.updateSocket(false));
         }
       };

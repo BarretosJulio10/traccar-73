@@ -78,8 +78,10 @@ const MapView = ({ children }) => {
           map.once('styledata', () => {
             const waiting = () => {
               if (!map.loaded()) {
-                setTimeout(waiting, 33);
+                console.info('[MapView] Style loading... Still waiting for map.loaded()');
+                setTimeout(waiting, 1000); // Increased to 1s to avoid log spam
               } else {
+                console.info('[MapView] Style LOADED successfully.');
                 initMap();
                 updateReadyValue(true);
               }

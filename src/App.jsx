@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMediaQuery, useTheme } from '@mui/material';
@@ -43,7 +43,7 @@ const useStyles = makeStyles()(() => ({
 
 const App = () => {
   const { classes } = useStyles();
-  console.info('[App] Starting v1.0.1 (Decoupled & Fixed)');
+  console.info('[App] Starting v1.0.2 (Resilience Mode + Pillar 2.3)');
   const theme = useTheme();
   const { theme: hudTheme } = useHudTheme();
   const dispatch = useDispatch();
@@ -65,7 +65,7 @@ const App = () => {
     else demoService.disable();
   }, []);
   
-  const initializingRef = useRef(false);
+  const singletonInitRef = React.useRef(false);
   const server = useSelector((state) => state.session.server);
   const user = useSelector((state) => state.session.user);
   const attributes = useSelector((state) => state.session.attributes);
@@ -101,14 +101,14 @@ const App = () => {
 
   // Consolidate initialization logic
   useEffectAsync(async () => {
-    if (!server || initializingRef.current) return;
+    if (!server || singletonInitRef.current) return;
     
     // If URL has token, Navigation.jsx will handle it. Skip App restoration to avoid race.
     const hasToken = new URLSearchParams(search).has('token');
     if (hasToken && !user) return;
 
     try {
-      initializingRef.current = true;
+      singletonInitRef.current = true;
       
       // 1. Session Restoration
       let currentUser = user;
@@ -125,7 +125,7 @@ const App = () => {
           const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
           window.sessionStorage.setItem('postLogin', safePath);
           navigate('/login', { replace: true });
-          initializingRef.current = false;
+          singletonInitRef.current = false;
           return;
         }
       }
@@ -152,7 +152,7 @@ const App = () => {
         navigate('/login', { replace: true });
       }
     } finally {
-      initializingRef.current = false;
+      singletonInitRef.current = false;
     }
   }, [server, user, attributes, demoMode]);
 

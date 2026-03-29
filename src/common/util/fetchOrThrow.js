@@ -43,6 +43,7 @@ const friendlyMessages = {
   'Load failed': 'Falha ao carregar dados. Verifique sua conexão.',
   'Session expired': 'Sessão expirada. Faça login novamente.',
   'Unexpected server response': 'Resposta inesperada do servidor. Tente novamente.',
+  AbortError: 'A requisição demorou muito e foi cancelada. Tente novamente.',
 };
 
 /**
@@ -51,6 +52,11 @@ const friendlyMessages = {
 const translateError = (rawMessage) => {
   if (!rawMessage || typeof rawMessage !== 'string') {
     return 'Ocorreu um erro inesperado. Tente novamente.';
+  }
+
+  // Check for AbortError specifically
+  if (rawMessage === 'AbortError' || rawMessage.includes('aborted')) {
+    return friendlyMessages.AbortError;
   }
 
   // Check direct matches
@@ -175,15 +181,21 @@ const fetchOrThrow = async (input, init) => {
   }
 
   let response;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s default timeout
+  const signal = init?.signal || controller.signal;
+
   try {
-    response = await fetch(url, { ...init, headers });
+    response = await fetch(url, { ...init, headers, signal });
+    clearTimeout(timeoutId);
   } catch (networkError) {
+    clearTimeout(timeoutId);
     if (isDemo) {
       const isObjectEndpoint = url.includes('/api/session') || url.includes('/api/server');
       const mockResponse = (init?.method === 'GET' || !init?.method) && !isObjectEndpoint ? [] : { success: true };
       return new Response(JSON.stringify(mockResponse), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
-    throw new Error(translateError(networkError.message));
+    throw new Error(translateError(networkError.name === 'AbortError' ? 'AbortError' : networkError.message));
   }
 
   if (!response.ok) {

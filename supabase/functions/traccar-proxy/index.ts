@@ -128,36 +128,58 @@ Deno.serve(async (req: Request) => {
     // For login (POST /api/session), forward the body directly
     if (path === "/api/session" && req.method === "POST") {
       const body = await req.text();
-      const traccarResponse = await fetch(`${traccarUrl}${path}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body,
-        redirect: "follow",
-      });
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const setCookie = traccarResponse.headers.get("set-cookie");
-      const jsessionId = extractJSessionId(setCookie);
-      const responseBody = await traccarResponse.text();
+      try {
+        console.log(`[Proxy] Login attempt for tenant ${tenantSlug}, email ${email}`);
+        const traccarResponse = await fetch(`${traccarUrl}${path}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body,
+          redirect: "follow",
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
 
-      if (traccarResponse.ok && jsessionId && email) {
-        try {
-          const user = JSON.parse(responseBody);
-          await storeSession(tenant.id, email, jsessionId, user.id);
-        } catch {
-          await storeSession(tenant.id, email, jsessionId);
+        const setCookie = traccarResponse.headers.get("set-cookie");
+        const jsessionId = extractJSessionId(setCookie);
+        const responseBody = await traccarResponse.text();
+
+        if (traccarResponse.ok && jsessionId && email) {
+          try {
+            const user = JSON.parse(responseBody);
+            await storeSession(tenant.id, email, jsessionId, user.id);
+          } catch {
+            await storeSession(tenant.id, email, jsessionId);
+          }
         }
-      }
 
-      return new Response(responseBody, {
-        status: traccarResponse.status,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-          ...(jsessionId
-            ? { "x-traccar-session": jsessionId }
-            : {}),
-        },
-      });
+        return new Response(responseBody, {
+          status: traccarResponse.status,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            ...(jsessionId
+              ? { "x-traccar-session": jsessionId }
+              : {}),
+          },
+        });
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          console.error(`[Proxy] Login timeout for tenant ${tenantSlug}`);
+          return new Response(
+            JSON.stringify({ error: "Login timed out. Please check if the tracking server is responsive." }),
+            {
+              status: 504,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+        throw error;
+      }
     }
 
     // For logout (DELETE /api/session)
@@ -212,32 +234,54 @@ Deno.serve(async (req: Request) => {
       fetchOptions.body = await req.text();
     }
 
-    const traccarResponse = await fetch(targetUrl.toString(), fetchOptions);
+    // Add timeout to prevent hangs
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    fetchOptions.signal = controller.signal;
 
-    // If 401, the stored session expired — clean it up
-    if (traccarResponse.status === 401 && email) {
-      await deleteSession(tenant.id, email);
-    }
+    try {
+      console.log(`[Proxy] Fetching ${targetUrl.toString()} for tenant ${tenantSlug}`);
+      const traccarResponse = await fetch(targetUrl.toString(), fetchOptions);
+      clearTimeout(timeoutId);
 
-    // Null-body statuses (204, 304) cannot have a body
-    const nullBodyStatuses = [204, 304];
-    if (nullBodyStatuses.includes(traccarResponse.status)) {
-      return new Response(null, {
+      // If 401, the stored session expired — clean it up
+      if (traccarResponse.status === 401 && email) {
+        await deleteSession(tenant.id, email);
+      }
+
+      // Null-body statuses (204, 304) cannot have a body
+      const nullBodyStatuses = [204, 304];
+      if (nullBodyStatuses.includes(traccarResponse.status)) {
+        return new Response(null, {
+          status: traccarResponse.status,
+          headers: corsHeaders,
+        });
+      }
+
+      const responseBody = await traccarResponse.arrayBuffer();
+
+      return new Response(responseBody, {
         status: traccarResponse.status,
-        headers: corsHeaders,
+        headers: {
+          ...corsHeaders,
+          "Content-Type":
+            traccarResponse.headers.get("Content-Type") || "application/json",
+        },
       });
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.error(`[Proxy] Timeout fetching ${targetUrl.toString()}`);
+        return new Response(
+          JSON.stringify({ error: "Tracking server connection timed out. Please check if the server is responsive." }),
+          {
+            status: 504,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      throw error;
     }
-
-    const responseBody = await traccarResponse.arrayBuffer();
-
-    return new Response(responseBody, {
-      status: traccarResponse.status,
-      headers: {
-        ...corsHeaders,
-        "Content-Type":
-          traccarResponse.headers.get("Content-Type") || "application/json",
-      },
-    });
   } catch (error) {
     console.error("Traccar proxy error:", error);
     return new Response(

@@ -97,19 +97,33 @@ const App = () => {
 
   useEffectAsync(async () => {
     if (!user && !demoMode) {
-      const response = await fetch(apiUrl('/api/session'), {
-        headers: {
-          'x-tenant-slug': localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG,
-          'x-traccar-email': sessionStorage.getItem('traccarEmail') || localStorage.getItem('traccarEmail') || '',
-        },
-      });
-      if (response.ok) {
-        dispatch(sessionActions.updateUser(await response.json()));
-      } else {
-        // Only persist paths inside the app — prevents open redirect after login
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      try {
+        const response = await fetch(apiUrl('/api/session'), {
+          headers: {
+            'x-tenant-slug': localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG,
+            'x-traccar-email': sessionStorage.getItem('traccarEmail') || localStorage.getItem('traccarEmail') || '',
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          dispatch(sessionActions.updateUser(await response.json()));
+        } else {
+          // Only persist paths inside the app — prevents open redirect after login
+          const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
+          window.sessionStorage.setItem('postLogin', safePath);
+          navigate(newServer ? '/register' : '/login', { replace: true });
+        }
+      } catch (error) {
+        clearTimeout(timeoutId);
+        // On timeout or connection error, return to login instead of hanging
         const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
         window.sessionStorage.setItem('postLogin', safePath);
-        navigate(newServer ? '/register' : '/login', { replace: true });
+        navigate('/login', { replace: true });
       }
     }
     return null;

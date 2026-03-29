@@ -27,6 +27,9 @@ const ServerProvider = ({ children }) => {
 
   useEffectAsync(async () => {
     if (!error && !isPublicRoute && !demoMode) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       try {
         const tenantSlug = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
 
@@ -57,7 +60,10 @@ const ServerProvider = ({ children }) => {
             'x-tenant-slug': tenantSlug,
             'x-traccar-email': sessionStorage.getItem('traccarEmail') || localStorage.getItem('traccarEmail') || '',
           },
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
+
         if (response.ok) {
           const contentType = response.headers.get('content-type') || '';
           if (!contentType.includes('application/json')) {
@@ -65,11 +71,21 @@ const ServerProvider = ({ children }) => {
           }
           dispatch(sessionActions.updateServer(await response.json()));
         } else {
-          const message = await response.text();
-          throw Error(message || response.statusText);
+          try {
+            const data = await response.json();
+            throw Error(data.error || response.statusText);
+          } catch {
+            const message = await response.text();
+            throw Error(message || response.statusText);
+          }
         }
       } catch (error) {
-        setError(error.message);
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          setError('Tempo esgotado ao conectar com o servidor de rastreamento. Verifique sua conexão.');
+        } else {
+          setError(error.message);
+        }
       }
     }
   }, [error, isPublicRoute]);

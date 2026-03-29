@@ -4,6 +4,19 @@ Formato: [Semantic Versioning](https://semver.org/)
 
 ---
 
+## [0.15.1] — 2026-03-29
+
+### Fixed
+- **Stability: Prevenção de Travamento no Carregamento (Stuck on Loader)**
+  - **Contexto:** Relatos de que o carregamento ficava "infinito" após o login com contas reais.
+  - **Correção:** Implementado sistema de **timeout** (15s) no `traccar-proxy` (Edge Function) e nos provedores frontend (`ServerProvider.jsx`, `App.jsx`).
+  - **UX:** Caso o servidor de rastreamento demore a responder, o sistema agora exibe uma mensagem de erro clara em vez de travar na tela de carregamento.
+- **Core: Timeouts Globais no `fetchOrThrow.js`**
+  - **Melhoria:** Adicionado timeout padrão de 30 segundos para todas as requisições da API para evitar esperas indefinidas em redes instáveis.
+  - **Tradução:** Mensagens de erro de timeout aprimoradas para o português.
+
+---
+
 ## [0.15.0] — 2026-03-29
 
 ### Added

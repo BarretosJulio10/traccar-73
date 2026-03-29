@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMediaQuery, useTheme } from '@mui/material';
@@ -65,7 +65,7 @@ const App = () => {
     else demoService.disable();
   }, []);
   
-  const singletonInitRef = React.useRef(false);
+  const singletonInitRef = useRef(false);
   const server = useSelector((state) => state.session.server);
   const user = useSelector((state) => state.session.user);
   const attributes = useSelector((state) => state.session.attributes);

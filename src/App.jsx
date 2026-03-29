@@ -7,14 +7,13 @@ import { useHudTheme } from './common/util/ThemeContext';
 import BottomMenu from './common/components/BottomMenu';
 import SocketController from './SocketController';
 import CachingController from './CachingController';
-import { useEffectAsync } from './reactHelper';
+import { useEffectAsync, useCatch } from './reactHelper';
 import { sessionActions } from './store';
 import UpdateController from './UpdateController';
 import MotionController from './main/MotionController';
 import DemoController from './main/DemoController';
 import TermsDialog from './common/components/TermsDialog';
-import { useCatch } from './common/util/useCatch';
-import isDemo from './common/util/isDemo';
+
 import Loader from './common/components/Loader';
 import MainMap from './main/MainMap';
 import FleetSidebar from './main/FleetSidebar';

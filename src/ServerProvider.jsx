@@ -27,34 +27,17 @@ const ServerProvider = ({ children }) => {
 
   useEffectAsync(async () => {
     if (!error && !isPublicRoute && !demoMode) {
+      const tenantSlug = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
+      console.log(`[ServerProvider] Initializing for tenant: ${tenantSlug}`);
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
       try {
-        const tenantSlug = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
+        // Optimized: We no longer fetch tenant metadata here as it is handled by TenantProvider.
+        // We proceed directly to fetch Traccar server info via the proxy.
 
-        // Validate tenant has a real traccar_url before calling proxy
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        if (!supabaseUrl || !supabaseKey) {
-          throw Error('Configuração Supabase ausente. Verifique as variáveis de ambiente.');
-        }
-        const tenantRes = await fetch(
-          `${supabaseUrl}/rest/v1/tenants?slug=eq.${encodeURIComponent(tenantSlug)}&select=traccar_url&limit=1`,
-          { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } },
-        );
-        if (tenantRes.ok) {
-          const tenants = await tenantRes.json();
-          const traccarUrl = tenants?.[0]?.traccar_url;
-          if (
-            !traccarUrl ||
-            traccarUrl.includes('pending-setup') ||
-            traccarUrl.includes('example.com')
-          ) {
-            throw Error('Tracking server not configured yet. Please contact your administrator.');
-          }
-        }
-
+        console.log(`[ServerProvider] Fetching server config via proxy...`);
         const response = await fetch(apiUrl('/api/server'), {
           headers: {
             'x-tenant-slug': tenantSlug,
@@ -67,24 +50,29 @@ const ServerProvider = ({ children }) => {
         if (response.ok) {
           const contentType = response.headers.get('content-type') || '';
           if (!contentType.includes('application/json')) {
-            throw Error('Unexpected response from Traccar server. Please check configuration.');
+            throw Error('Resposta inválida do servidor (não JSON). Verifique o endereço do servidor Traccar.');
           }
-          dispatch(sessionActions.updateServer(await response.json()));
+          const serverInfo = await response.json();
+          console.log(`[ServerProvider] Server initialized: ${serverInfo.version || 'unknown'}`);
+          dispatch(sessionActions.updateServer(serverInfo));
         } else {
+          let message;
           try {
             const data = await response.json();
-            throw Error(data.error || response.statusText);
+            message = data.error || response.statusText;
           } catch {
-            const message = await response.text();
-            throw Error(message || response.statusText);
+            const text = await response.text();
+            message = text || response.statusText;
           }
+          throw Error(message);
         }
-      } catch (error) {
+      } catch (err) {
         clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-          setError('Tempo esgotado ao conectar com o servidor de rastreamento. Verifique sua conexão.');
+        console.error(`[ServerProvider] Initialization failed:`, err.message);
+        if (err.name === 'AbortError') {
+          setError('O servidor demora muito a responder. Verifique se o endereço IP do Traccar está correto e acessível.');
         } else {
-          setError(error.message);
+          setError(err.message);
         }
       }
     }

@@ -28,6 +28,9 @@ export const TenantProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchTenant = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -43,8 +46,11 @@ export const TenantProvider = ({ children }) => {
               apikey: supabaseKey,
               Authorization: `Bearer ${supabaseKey}`,
             },
+            signal: controller.signal,
           },
         );
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
@@ -61,8 +67,14 @@ export const TenantProvider = ({ children }) => {
             applyBranding(tenantData);
           }
         }
-      } catch {
-        // Silently fail — app will fall back to default tenant
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          console.warn(`[TenantProvider] Timeout fetching tenant for slug: ${tenantSlug}`);
+        } else {
+          console.error('[TenantProvider] Error fetching tenant:', error.message);
+        }
+        // Silently fail — app will fall back to default tenant or stay with null tenant
       } finally {
         setLoading(false);
       }

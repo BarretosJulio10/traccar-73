@@ -97,13 +97,16 @@ const App = () => {
 
   useEffectAsync(async () => {
     if (!user && !demoMode) {
+      const tenantSlug = localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG;
+      console.log(`[App] Checking session for tenant: ${tenantSlug}`);
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
       try {
         const response = await fetch(apiUrl('/api/session'), {
           headers: {
-            'x-tenant-slug': localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG,
+            'x-tenant-slug': tenantSlug,
             'x-traccar-email': sessionStorage.getItem('traccarEmail') || localStorage.getItem('traccarEmail') || '',
           },
           signal: controller.signal,
@@ -111,15 +114,19 @@ const App = () => {
         clearTimeout(timeoutId);
 
         if (response.ok) {
-          dispatch(sessionActions.updateUser(await response.json()));
+          const userData = await response.json();
+          console.log(`[App] Session restored for user: ${userData.email}`);
+          dispatch(sessionActions.updateUser(userData));
         } else {
+          console.log(`[App] No active session found. Redirecting to auth.`);
           // Only persist paths inside the app — prevents open redirect after login
           const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
           window.sessionStorage.setItem('postLogin', safePath);
           navigate(newServer ? '/register' : '/login', { replace: true });
         }
-      } catch (error) {
+      } catch (err) {
         clearTimeout(timeoutId);
+        console.warn(`[App] Session check failed:`, err.message);
         // On timeout or connection error, return to login instead of hanging
         const safePath = pathname.startsWith('/app') ? pathname + search : '/app';
         window.sessionStorage.setItem('postLogin', safePath);

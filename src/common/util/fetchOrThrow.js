@@ -182,7 +182,7 @@ const fetchOrThrow = async (input, init) => {
 
   let response;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s default timeout
+  const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s default timeout
   const signal = init?.signal || controller.signal;
 
   try {

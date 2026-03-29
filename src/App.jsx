@@ -43,6 +43,7 @@ const useStyles = makeStyles()(() => ({
 
 const App = () => {
   const { classes } = useStyles();
+  console.info('[App] Starting v1.0.1 (Decoupled & Fixed)');
   const theme = useTheme();
   const { theme: hudTheme } = useHudTheme();
   const dispatch = useDispatch();

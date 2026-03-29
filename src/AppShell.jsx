@@ -43,7 +43,7 @@ const useStyles = makeStyles()(() => ({
 
 const App = () => {
   const { classes } = useStyles();
-  console.info('[App] Starting v1.0.2 (Resilience Mode + Pillar 2.3)');
+  console.info('[App] Starting v1.0.3 (Cache Nuke - Pillar 2.3)');
   const theme = useTheme();
   const { theme: hudTheme } = useHudTheme();
   const dispatch = useDispatch();

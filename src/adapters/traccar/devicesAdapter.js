@@ -9,4 +9,8 @@ export const traccarDevicesAdapter = {
     const response = await fetchOrThrow('/api/devices');
     return response.json();
   },
+  fetchByUniqueId: async (uniqueId) => {
+    const response = await fetchOrThrow(`/api/devices?uniqueId=${uniqueId}`);
+    return response.json();
+  },
 };

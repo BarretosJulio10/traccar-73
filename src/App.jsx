@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMediaQuery, useTheme } from '@mui/material';
@@ -7,15 +7,15 @@ import { useHudTheme } from './common/util/ThemeContext';
 import BottomMenu from './common/components/BottomMenu';
 import SocketController from './SocketController';
 import CachingController from './CachingController';
-import { useCatch, useEffectAsync } from './reactHelper';
+import { useEffectAsync } from './reactHelper';
 import { sessionActions } from './store';
 import UpdateController from './UpdateController';
 import MotionController from './main/MotionController';
 import DemoController from './main/DemoController';
 import TermsDialog from './common/components/TermsDialog';
+import { useCatch } from './common/util/useCatch';
+import isDemo from './common/util/isDemo';
 import Loader from './common/components/Loader';
-import fetchOrThrow from './common/util/fetchOrThrow';
-import { apiUrl } from './common/util/apiUrl';
 import MainMap from './main/MainMap';
 import FleetSidebar from './main/FleetSidebar';
 import VehicleDetailsPanel from './main/VehicleDetailsPanel';
@@ -25,6 +25,8 @@ import usePwaInstallTracker from './common/util/usePwaInstallTracker';
 import { useTenant } from './common/components/TenantProvider';
 import { DEFAULT_TENANT_SLUG, DEMO_USER } from './common/util/constants';
 import { demoService } from './core/services';
+import { traccarSessionAdapter } from './adapters/traccar/sessionAdapter';
+import { traccarUsersAdapter } from './adapters/traccar/usersAdapter';
 
 const useStyles = makeStyles()(() => ({
   page: {
@@ -89,12 +91,11 @@ const App = () => {
   }, []);
 
   const acceptTerms = useCatch(async () => {
-    const response = await fetchOrThrow(`/api/users/${user.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...user, attributes: { ...user.attributes, termsAccepted: true } }),
+    const updatedUser = await traccarUsersAdapter.updateUser({
+      ...user,
+      attributes: { ...user.attributes, termsAccepted: true },
     });
-    dispatch(sessionActions.updateUser(await response.json()));
+    dispatch(sessionActions.updateUser(updatedUser));
   });
 
   // Consolidate initialization logic
@@ -112,12 +113,7 @@ const App = () => {
       let currentUser = user;
       if (!currentUser && !demoMode) {
         console.info('[App] Checking session status...');
-        const response = await fetch(apiUrl('/api/session'), {
-          headers: {
-            'x-tenant-slug': localStorage.getItem('tenantSlug') || DEFAULT_TENANT_SLUG,
-            'x-traccar-email': sessionStorage.getItem('traccarEmail') || localStorage.getItem('traccarEmail') || '',
-          },
-        });
+        const response = await traccarSessionAdapter.fetchSession();
         
         if (response.ok) {
           currentUser = await response.json();
@@ -138,8 +134,7 @@ const App = () => {
         if (!demoMode) {
           console.info('[App] Loading computed attributes...');
           try {
-            const response = await fetchOrThrow('/api/attributes/computed?all=true');
-            const data = await response.json();
+            const data = await traccarSessionAdapter.fetchComputedAttributes();
             console.info(`[App] ${data.length} attributes loaded.`);
             dispatch(sessionActions.updateAttributes(data));
           } catch (e) {

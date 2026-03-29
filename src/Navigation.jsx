@@ -65,12 +65,13 @@ import InstallPage from './pwa/InstallPage';
 import Loader from './common/components/Loader';
 import { generateLoginToken } from './common/components/NativeInterface';
 import { useLocalization } from './common/components/LocalizationProvider';
-import fetchOrThrow from './common/util/fetchOrThrow';
 import { useTenant } from './common/components/TenantProvider';
 import useDynamicManifest from './common/util/useDynamicManifest';
 
 import AuditPage from './reports/AuditPage';
 import GeofenceScreen from './features/geofence/GeofenceScreen';
+import { traccarSessionAdapter } from './adapters/traccar/sessionAdapter';
+import { traccarDevicesAdapter } from './adapters/traccar/devicesAdapter';
 
 const Navigation = () => {
   const dispatch = useDispatch();
@@ -98,13 +99,12 @@ const Navigation = () => {
 
     if (searchParams.has('token')) {
       const token = searchParams.get('token');
-      await fetchOrThrow(`/api/session?token=${encodeURIComponent(token)}`);
+      await traccarSessionAdapter.loginWithToken(token);
       newParams.delete('token');
     }
 
     if (searchParams.has('uniqueId')) {
-      const response = await fetchOrThrow(`/api/devices?uniqueId=${searchParams.get('uniqueId')}`);
-      const items = await response.json();
+      const items = await traccarDevicesAdapter.fetchByUniqueId(searchParams.get('uniqueId'));
       if (items.length > 0) {
         dispatch(devicesActions.selectId(items[0].id));
       }

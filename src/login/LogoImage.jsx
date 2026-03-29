@@ -1,7 +1,6 @@
 import { useTheme, useMediaQuery } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
-import Logo from '../resources/images/logo.svg?react';
 import { useTenant } from '../common/components/TenantProvider';
 
 const useStyles = makeStyles()((theme) => ({
@@ -28,7 +27,7 @@ const LogoImage = ({ color, size, className, style }) => {
   const logo = useSelector((state) => state.session.server?.attributes?.logo);
   const logoInverted = useSelector((state) => state.session.server?.attributes?.logoInverted);
 
-  // Priority: tenant logo > Traccar server logo > default SVG
+  // Priority: tenant logo > Traccar server logo > nothing
   const effectiveLogo = tenantLogo || logo;
   const effectiveInverted = tenantLogo || logoInverted;
 
@@ -59,12 +58,8 @@ const LogoImage = ({ color, size, className, style }) => {
     );
   }
 
-  return (
-    <Logo 
-      className={cx(classes.image, className)} 
-      style={{ color: color || 'inherit', height: size || 28, ...style }} 
-    />
-  );
+  // Devolve vazio se não houver logo configurada, removendo a logo original da Traccar.
+  return null;
 };
 
 export default LogoImage;

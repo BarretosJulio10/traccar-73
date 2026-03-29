@@ -36,8 +36,8 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#0d9488" />
   <meta name="description" content="Alertas de rastreamento veicular em tempo real">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" sizes="180x180" />
+  <link id="favicon" rel="icon" type="image/x-icon" href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeg6Q9YAAAAASUVORK5CYII=">
+  <link id="apple-icon" rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==" sizes="180x180" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Alerta App">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -45,28 +45,46 @@
   <meta name="onesignal-site-verification" content="caba8e5b-5b0b-46f3-a879-b610a2a529b6" />
   <link id="pwa-manifest" rel="manifest" href="/manifest.webmanifest" />
   <script>
-    // Dynamic PWA Manifest to preserve Tenant context
+    // Early Branding & Dynamic PWA Manifest to preserve Tenant context
     (function() {
       const params = new URLSearchParams(window.location.search);
       const tenant = params.get('tenant') || localStorage.getItem('tenantSlug') || 'mabtracker';
+      const cachedLogo = localStorage.getItem('tenantLogo');
+      const cachedName = localStorage.getItem('tenantName');
       
       if (params.get('tenant')) {
         localStorage.setItem('tenantSlug', params.get('tenant'));
       }
 
+      // 1. Immediate Branding Application (avoid Traccar flash)
+      if (cachedLogo) {
+        document.getElementById('favicon').href = cachedLogo;
+        document.getElementById('apple-icon').href = cachedLogo;
+      }
+      if (cachedName) {
+        document.title = cachedName;
+      }
+
+      // 2. Dynamic PWA Manifest Injection
       const manifestLink = document.getElementById('pwa-manifest');
       if (manifestLink) {
-        // Use the actual manifest URL from the link
         const originalHref = manifestLink.getAttribute('href');
         fetch(originalHref)
           .then(response => response.json())
           .then(manifest => {
-            // Update start_url and id with tenant context to ensure it opens in the right place
             const connector = manifest.start_url.includes('?') ? '&' : '?';
             manifest.start_url = `${manifest.start_url}${connector}tenant=${tenant}`;
-            // Keep ID stable but prefixed with tenant for unique app per tenant if desired
-            // or keep it same as start_url for direct matching
             manifest.id = manifest.start_url;
+            
+            // Inject tenant branding into manifest icons if available
+            if (cachedLogo) {
+              manifest.name = cachedName || manifest.name;
+              manifest.short_name = cachedName ? (cachedName.length > 12 ? cachedName.slice(0, 11) + '…' : cachedName) : manifest.short_name;
+              manifest.icons = [
+                { src: cachedLogo, sizes: '192x192', type: 'image/png', purpose: 'any' },
+                { src: cachedLogo, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+              ];
+            }
             
             const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
             const manifestUrl = URL.createObjectURL(blob);

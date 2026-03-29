@@ -4,6 +4,31 @@ Formato: [Semantic Versioning](https://semver.org/)
 
 ---
 
+## [0.15.0] — 2026-03-29
+
+### Added
+- **Branding: Utilitário `branding.js` para Identidade Visual Dinâmica**
+  - **Contexto:** Necessidade de transformar o sistema em uma plataforma White Label completa, removendo referências fixas à Traccar.
+  - **Implementação:** Novo utilitário em `src/common/util/branding.js` que gerencia atualizações de favicon, apple-touch-icon e título da página via DOM.
+- **Branding: Cache de Marca no Carregamento Inicial (index.html)**
+  - **Contexto:** Evitar o "flash" da marca original antes do carregamento do React e do fetch do tenant.
+  - **Implementação:** Script inline no `index.html` que lê `tenantLogo` e `tenantName` do `localStorage` e aplica imediatamente ao carregar a página.
+
+### Changed
+- **Branding: Refatoração do `TenantProvider.jsx`**
+  - **Contexto:** Sincronizar os dados do banco de dados com o cache local de marca.
+  - **Mudança:** Ao buscar o tenant, os metadados de branding são salvos no `localStorage` e a função `applyBranding` é disparada.
+- **PWA: Manifesto Dinâmico com Ícones do Tenant**
+  - **Mudança:** `useDynamicManifest.js` aprimorado para injetar o `logo_url` do tenant como ícones (192x192, 512x512) no manifesto JSON e atualizar o favicon.
+- **UI: Desvinculação Total da Logo Traccar**
+  - **Mudança:** Componente `LogoImage.jsx` não possui mais fallback para a logo SVG da Traccar. Se não houver logo definida (Tenant ou Servidor), o componente retorna nulo.
+
+### Removed
+- **Assets: Remoção de Logos Legadas**
+  - **Mudança:** Exclusão física do arquivo `src/resources/images/logo.svg` para garantir conformidade White Label.
+
+---
+
 ## [0.14.0] — 2026-03-21
  
 ### Added

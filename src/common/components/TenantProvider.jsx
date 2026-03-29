@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { EDGE_FUNCTION_BASE } from '../util/apiUrl';
 import { DEFAULT_TENANT_SLUG } from '../util/constants';
+import { applyBranding } from '../util/branding';
 
 const TenantContext = createContext(null);
 
@@ -48,8 +49,16 @@ export const TenantProvider = ({ children }) => {
         if (response.ok) {
           const data = await response.json();
           if (data && data.length > 0) {
-            setTenant(data[0]);
-            localStorage.setItem('tenantSlug', data[0].slug);
+            const tenantData = data[0];
+            setTenant(tenantData);
+            
+            // Store branding info for fast access in index.html script
+            localStorage.setItem('tenantSlug', tenantData.slug);
+            if (tenantData.logo_url) localStorage.setItem('tenantLogo', tenantData.logo_url);
+            if (tenantData.company_name) localStorage.setItem('tenantName', tenantData.company_name);
+            
+            // Apply branding immediately to current page
+            applyBranding(tenantData);
           }
         }
       } catch {

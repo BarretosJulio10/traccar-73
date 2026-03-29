@@ -10,6 +10,7 @@
  */
 
 import { useEffect } from 'react';
+import { updateFavicon, updateAppleTouchIcon, updatePageTitle } from './branding';
 
 const BASE_MANIFEST = {
   id: '/',
@@ -30,6 +31,11 @@ const useDynamicManifest = (tenant) => {
     const name = tenant.company_name || 'Alerta App';
     const shortName = name.length > 12 ? `${name.slice(0, 11)}…` : name;
     const slug = tenant.slug || '';
+
+    // Update Page Branding
+    updatePageTitle(name);
+    updateFavicon(tenant.logo_url);
+    updateAppleTouchIcon(tenant.logo_url);
 
     const manifest = {
       ...BASE_MANIFEST,
@@ -64,11 +70,9 @@ const useDynamicManifest = (tenant) => {
       if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
     }
 
-    // Atualiza apple-touch-icon (iOS Safari — best effort)
-    const appleLink = document.querySelector('link[rel="apple-touch-icon"]');
-    if (appleLink) appleLink.setAttribute('href', tenant.logo_url);
-
-    return () => URL.revokeObjectURL(blobUrl);
+    return () => {
+      URL.revokeObjectURL(blobUrl);
+    };
   }, [tenant?.logo_url, tenant?.company_name, tenant?.slug]);
 };
 

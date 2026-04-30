@@ -193,6 +193,12 @@ body.theme-dark {
   height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
+  filter: var(--ctrl-icon-filter) !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group > button:hover .maplibregl-ctrl-icon,
+.maplibregl-ctrl-top-right button:hover .maplibregl-ctrl-icon {
+  filter: var(--ctrl-icon-hover-filter) !important;
 }
 
 /* Controle de Escala (100 km) — 5px da margem esquerda */

@@ -10,18 +10,35 @@ const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'flex',
     height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
   },
   sidebar: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: theme.dimensions.sidebarWidth,
+    justifyContent: 'center',
+    gap: theme.spacing(4),
+    width: '420px',
+    maxWidth: '92%',
+    maxHeight: '92vh',
     position: 'relative',
-    overflow: 'auto',
-    padding: theme.spacing(5, 3),
+    overflow: 'y',
+    zIndex: 10,
+    padding: theme.spacing(6, 4),
+    borderRadius: 24,
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
     [theme.breakpoints.down('lg')]: {
       width: '100%',
+      minHeight: '100%',
+      maxHeight: '100%',
+      maxWidth: '100%',
+      borderRadius: 0,
+      border: 'none',
+      boxShadow: 'none',
+      justifyContent: 'space-between',
     },
   },
   sidebarOverlay: {
@@ -29,29 +46,37 @@ const useStyles = makeStyles()((theme) => ({
     inset: 0,
     background: 'radial-gradient(circle at 10% 10%, rgba(6,182,212,0.05) 0%, transparent 50%)',
     pointerEvents: 'none',
+    borderRadius: 'inherit',
   },
   logoZone: {
-    flex: '0 0 auto',
+    flex: 'none',
     position: 'relative',
     zIndex: 1,
     textAlign: 'center',
+    marginTop: theme.spacing(2),
+    [theme.breakpoints.down('lg')]: {
+      marginTop: 'auto',
+      marginBottom: 'auto',
+    }
   },
   formZone: {
-    flex: 1,
+    flex: 'none',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     position: 'relative',
     zIndex: 1,
+    marginBottom: theme.spacing(2),
   },
   form: {
     width: '100%',
     maxWidth: '340px',
   },
   contentArea: {
-    flex: 1,
-    position: 'relative',
+    position: 'absolute',
+    inset: 0,
+    zIndex: 0,
     [theme.breakpoints.down('lg')]: {
       display: 'none',
     },
@@ -59,7 +84,7 @@ const useStyles = makeStyles()((theme) => ({
   bgOverlay: {
     position: 'absolute',
     inset: 0,
-    background: 'rgba(255,255,255,0.2)',
+    background: 'rgba(0,0,0,0.1)',
     zIndex: 0,
   },
 }));
@@ -97,7 +122,10 @@ const LoginLayout = ({ children }) => {
 
   return (
     <main className={classes.root}>
-      <div className={classes.sidebar} style={{ background: sidebarBg, borderRight: '1px solid rgba(0,0,0,0.05)' }}>
+      <div className={classes.contentArea} style={contentStyle}>
+        {bgImage && <div className={classes.bgOverlay} />}
+      </div>
+      <div className={classes.sidebar} style={{ background: sidebarBg }}>
         <div className={classes.sidebarOverlay} />
         <div className={classes.logoZone}>
           <LogoImage color={logoColor} />
@@ -117,9 +145,6 @@ const LoginLayout = ({ children }) => {
         <div className={classes.formZone}>
           <form className={classes.form}>{children}</form>
         </div>
-      </div>
-      <div className={classes.contentArea} style={contentStyle}>
-        {bgImage && <div className={classes.bgOverlay} />}
       </div>
     </main>
   );

@@ -17,6 +17,7 @@ import MapPositions from '../map/MapPositions';
 import MapOverlay from '../map/overlay/MapOverlay';
 import MapScale from '../map/MapScale';
 import MapNotification from '../map/notification/MapNotification';
+import MapWhatsApp from '../map/whatsapp/MapWhatsApp';
 import MapHoverPopup from '../map/MapHoverPopup';
 import useFeatures from '../common/util/useFeatures';
 import MapLiveTrailToggle from '../map/main/MapLiveTrailToggle';
@@ -72,6 +73,7 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
       {!features.disableEvents && (
         <MapNotification enabled={eventsAvailable} onClick={onEventsClick} />
       )}
+      <MapWhatsApp />
       {desktop && (
         <MapPadding
           top={8}

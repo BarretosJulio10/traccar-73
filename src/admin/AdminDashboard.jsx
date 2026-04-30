@@ -111,6 +111,8 @@ const AdminDashboard = () => {
           login_bg_image: tenant.login_bg_image,
           login_bg_color: tenant.login_bg_color,
           ui_model: tenant.ui_model || 'default',
+          whatsapp_number: tenant.whatsapp_number,
+          whatsapp_message: tenant.whatsapp_message,
         })
         .eq('id', tenant.id);
       if (error) throw error;
@@ -963,6 +965,51 @@ const AdminDashboard = () => {
                       />
                       <p style={{ fontSize: 11, color: '#475569', marginTop: 6 }}>
                         {t('adminCustomDomainHint')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Support Config */}
+                <div style={cardStyle}>
+                  <h3
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: '#fff',
+                      margin: '0 0 20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    💬 Suporte Contato
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div>
+                      <label style={labelStyle}>WhatsApp de Suporte (DDI + DDD + Número)</label>
+                      <input
+                        type="text"
+                        value={tenant?.whatsapp_number || ''}
+                        onChange={(e) => updateField('whatsapp_number', e.target.value)}
+                        placeholder="Ex: 5511999999999"
+                        style={inputStyle}
+                      />
+                      <p style={{ fontSize: 11, color: '#475569', marginTop: 6 }}>
+                        Este número aparecerá no botão de Suporte para os usuários dentro do painel.
+                      </p>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Mensagem Padrão de Suporte</label>
+                      <input
+                        type="text"
+                        value={tenant?.whatsapp_message || ''}
+                        onChange={(e) => updateField('whatsapp_message', e.target.value)}
+                        placeholder="Olá, preciso de ajuda com o sistema..."
+                        style={inputStyle}
+                      />
+                      <p style={{ fontSize: 11, color: '#475569', marginTop: 6 }}>
+                        Mensagem pré-preenchida quando o usuário clicar em contatar suporte.
                       </p>
                     </div>
                   </div>

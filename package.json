@@ -14,7 +14,7 @@
     "@mui/lab": "^7.0.0-beta.17",
     "@mui/material": "^7.3.8",
     "@reduxjs/toolkit": "^2.11.2",
-    "@supabase/supabase-js": "^2.98.0",
+    "@supabase/supabase-js": "^2.100.0",
     "@tailwindcss/vite": "^4.2.2",
     "@tmcw/togeojson": "^7.1.2",
     "@turf/circle": "^7.3.4",
